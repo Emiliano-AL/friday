@@ -1,50 +1,100 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+<!--
+SYNC IMPACT REPORT
+==================
+Version change: (sin versionar, plantilla sin rellenar) → 1.0.0 (adopción inicial)
+Modified principles: ninguna (adopción inicial; los 5 principios reemplazan placeholders)
+Added sections: Core Principles (5), Stack Tecnológico Fijo, Workflow de Desarrollo y Quality Gates, Governance
+Removed sections: ninguna
+Follow-up TODOs: ninguno
+-->
+
+# Friday Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Monolith-First con Inertia (NON-NEGOTIABLE)
+Friday es y permanece como una aplicación monolítica. Toda la funcionalidad se entrega
+desde un único desplegable: el backend Laravel renderiza páginas mediante
+`Inertia::render()` y el estado fluye del servidor al cliente a través de props.
+Está prohibido introducir una API REST desacoplada o un frontend SPA autónomo
+sin una enmienda constitucional. Rationale: un solo desplegable reduce
+boilerplate y fricción operativa, y es la forma idiomática de escalar un MVP
+del dominio de Friday.
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+### II. Alineación con el Ecosistema Laravel
+Toda funcionalidad se construye con las herramientas first-party y del ecosistema:
+generadores `artisan make:*`, Eloquent, migraciones, form requests, policies y
+Vite. Las dependencias (Composer/npm) no se agregan ni cambian sin aprobación
+explícita. Rationale: maximiza la mantenibilidad, el onboarding y la
+previsibilidad del código para cualquier desarrollador del ecosistema.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+### III. Test-First con Pest (NON-NEGOTIABLE)
+Toda lógica de dominio nueva (proyectos, sprints, tareas, comentarios, métricas)
+debe estar cubierta por tests de feature escritos con Pest usando factories
+antes de integrarse. La regla es: tests escritos → fallan → implementación →
+verde. Durante el desarrollo se ejecuta el subconjunto mínimo de tests relevante;
+el suite completo (`php artisan test --compact`) debe pasar antes de considerar
+cerrada cualquier capacidad. Rationale: el dominio de Friday (flujos de estados,
+órdenes Kanban/Backlog, cierre de sprints) es propenso a regresiones silenciosas.
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+### IV. Tipado Estricto y Estados como Enums
+PHP 8.4 con tipado explícito: property promotion, type hints en parámetros y
+declaraciones de retorno en todos los métodos. Todo estado del dominio
+(`task.type`, `task.priority`, `task.status`, `project.status`, `sprint.status`)
+se modela como enum de PHP — nunca como strings sueltos. Rationale: la lógica
+del tablero Kanban, del backlog y de las métricas de avance depende de máquinas
+de estado bien definidas; los enums hacen los estados comprobables en tiempo
+de compilación.
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+### V. Simplicidad y YAGNI (Alcance MVP)
+Solo se construye lo que define el alcance del MVP: autenticación Socialite
+(Google/GitHub), CRUD de proyectos con métricas de avance, sprints con
+activación/cierre, tareas aisladas o por sprint con comentarios, y las vistas
+Backlog y Kanban. Toda abstracción, capa o configuración que supere esa
+necesidad debe justificarse ante la revisión. Rationale: la velocidad del MVP
+es la prioridad; la complejidad prematura es el principal riesgo del proyecto.
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+## Stack Tecnológico Fijo
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+- Backend: Laravel 13+ sobre PHP 8.4, con PostgreSQL como única base de datos.
+- Frontend: Vue 3 con Composition API (`<script setup>`) e Inertia.js V3 como
+  capa de integración; Tailwind CSS para estilos.
+- Autenticación: exclusivamente Laravel Socialite (Google/GitHub); no se
+  añaden proveedores ni flujos alternativos sin enmienda constitucional.
+- Tipado de rutas frontend mediante Wayfinder (`@/actions/`, `@/routes/`).
+- Cualquier desviación de este stack requiere aprobación explícita, igual que
+  el cambio de dependencias (Principio II).
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+## Workflow de Desarrollo y Quality Gates
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+- Estilo de código garantizado con Laravel Pint (`vendor/bin/pint --dirty`);
+  código PHP sin formatear no se integra.
+- Tests con Pest; los tests de feature son la capa principal de verificación y
+  preceden a scripts de verificación ad-hoc o a Tinker.
+- Estilos y formateo del frontend siguen las convenciones documentadas en
+  `AGENTS.md` / reglas de Laravel Boost del proyecto.
+- Errores de frontend se diagnostican con los logs de navegador de Boost antes
+  de introducir instrumentación temporal.
+- Las nuevas capacidades del dominio (PRs) deben demostrar su escenario
+  end-to-end funcionando, no solo compilar.
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+Esta constitución tiene precedencia sobre cualquier otra práctica, guía o
+convenio del repositorio. En caso de conflicto, la constitución gana y el
+documento conflictivo debe actualizarse.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+- Enmiendas: toda modificación requiere actualizar este documento, justificar
+  el cambio y registrarlo en el Sync Impact Report del propio archivo.
+- Versionado semántico de la constitución: MAJOR para cambios incompatibles
+  de gobernanza (eliminación o redefinición de principios), MINOR para
+  principios o secciones nuevos o ampliaciones sustanciales, PATCH para
+  aclaraciones y correcciones de redacción.
+- Cumplimiento: toda revisión de código verifica que el cambio respeta los
+  principios activos; la complejidad que contradiga el Principio V debe
+  justificarse explícitamente en la revisión.
+- Las reglas operativas de runtime (formato, tests, flujo diario) viven en
+  `AGENTS.md` y `.ai/rules`; esta constitución define las reglas no
+  negociables que esos documentos no pueden contradecir.
+
+**Version**: 1.0.0 | **Ratified**: 2026-09-19 | **Last Amended**: 2026-09-19
