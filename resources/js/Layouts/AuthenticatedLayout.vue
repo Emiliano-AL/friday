@@ -6,6 +6,7 @@ import DropdownLink from '@/Components/DropdownLink.vue';
 import NavLink from '@/Components/NavLink.vue';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink.vue';
 import { home, logout } from '@/routes';
+import { index as projectsIndex } from '@/routes/projects';
 import { Link, usePage } from '@inertiajs/vue3';
 
 const page = usePage();
@@ -39,6 +40,12 @@ const showingNavigationDropdown = ref(false);
                                     :active="page.url === home.url()"
                                 >
                                     Inicio
+                                </NavLink>
+                                <NavLink
+                                    :href="projectsIndex.url()"
+                                    :active="page.url.startsWith('/projects')"
+                                >
+                                    Proyectos
                                 </NavLink>
                             </div>
                         </div>
@@ -141,6 +148,12 @@ const showingNavigationDropdown = ref(false);
                             :active="page.url === home.url()"
                         >
                             Inicio
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            :href="projectsIndex.url()"
+                            :active="page.url.startsWith('/projects')"
+                        >
+                            Proyectos
                         </ResponsiveNavLink>
                     </div>
 

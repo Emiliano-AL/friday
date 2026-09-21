@@ -6,7 +6,10 @@ use App\Enums\OAuthProvider;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
@@ -23,6 +26,8 @@ use Illuminate\Support\Carbon;
  * @property string|null $remember_token
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
+ * @property-read Collection<int, Project> $ownedProjects
+ * @property-read Collection<int, Project> $memberProjects
  */
 #[Fillable(['name', 'email', 'password', 'avatar', 'oauth_provider', 'oauth_id'])]
 #[Hidden(['password', 'remember_token'])]
@@ -43,5 +48,25 @@ class User extends Authenticatable
             'password' => 'hashed',
             'oauth_provider' => OAuthProvider::class,
         ];
+    }
+
+    /**
+     * Get the projects owned by the user.
+     *
+     * @return HasMany<Project, $this>
+     */
+    public function ownedProjects(): HasMany
+    {
+        return $this->hasMany(Project::class, 'owner_id');
+    }
+
+    /**
+     * Get the projects where the user is a collaborator.
+     *
+     * @return BelongsToMany<Project, $this>
+     */
+    public function memberProjects(): BelongsToMany
+    {
+        return $this->belongsToMany(Project::class, 'project_user')->withTimestamps();
     }
 }
