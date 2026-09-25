@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import Checkbox from '@/Components/Checkbox.vue';
+import AuthCard from '@/Components/Auth/AuthCard.vue';
+import AuthCheckbox from '@/Components/Auth/AuthCheckbox.vue';
+import AuthIcon from '@/Components/Auth/AuthIcon.vue';
+import AuthTextInput from '@/Components/Auth/AuthTextInput.vue';
+import SocialGoogleButton from '@/Components/Auth/SocialGoogleButton.vue';
 import GuestLayout from '@/Layouts/GuestLayout.vue';
-import InputError from '@/Components/InputError.vue';
-import InputLabel from '@/Components/InputLabel.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
-import TextInput from '@/Components/TextInput.vue';
-import { redirect as googleRedirect } from '@/routes/google';
-import { login } from '@/routes';
+import { login, register } from '@/routes';
 import { request as passwordRequest } from '@/routes/password';
 import { Head, Link, useForm } from '@inertiajs/vue3';
+import { ref } from 'vue';
 
 defineProps<{
     canResetPassword?: boolean;
@@ -21,6 +21,8 @@ const form = useForm({
     remember: false,
 });
 
+const showPassword = ref(false);
+
 const submit = () => {
     form.post(login.url(), {
         onFinish: () => form.reset('password'),
@@ -32,81 +34,115 @@ const submit = () => {
     <GuestLayout>
         <Head title="Iniciar sesión" />
 
-        <div v-if="status" class="mb-4 text-sm font-medium text-green-600">
-            {{ status }}
-        </div>
+        <AuthCard
+            title="Iniciar sesión en Friday"
+            subtitle="Tu espacio de trabajo ágil y productivo"
+        >
+            <SocialGoogleButton />
 
-        <form @submit.prevent="submit">
-            <div>
-                <InputLabel for="email" value="Correo" />
+            <div class="my-space-xs flex items-center gap-space-md">
+                <div class="h-px flex-1 bg-surface-container-high" />
+                <span
+                    class="text-label-xs uppercase tracking-wider text-on-surface-variant"
+                >
+                    o continuar con correo
+                </span>
+                <div class="h-px flex-1 bg-surface-container-high" />
+            </div>
 
-                <TextInput
+            <div
+                v-if="status"
+                class="rounded-lg bg-primary-fixed/40 px-space-md py-space-sm text-body-sm text-primary-container"
+            >
+                {{ status }}
+            </div>
+
+            <form class="flex flex-col gap-space-md" @submit.prevent="submit">
+                <AuthTextInput
                     id="email"
-                    type="email"
-                    class="mt-1 block w-full"
                     v-model="form.email"
+                    icon="mail"
+                    type="email"
+                    label="Correo electrónico de trabajo"
+                    placeholder="nombre@empresa.com"
+                    autocomplete="username"
                     required
                     autofocus
-                    autocomplete="username"
+                    :error="form.errors.email"
                 />
 
-                <InputError class="mt-2" :message="form.errors.email" />
-            </div>
-
-            <div class="mt-4">
-                <InputLabel for="password" value="Contraseña" />
-
-                <TextInput
+                <AuthTextInput
                     id="password"
-                    type="password"
-                    class="mt-1 block w-full"
                     v-model="form.password"
-                    required
+                    icon="lock"
+                    :type="showPassword ? 'text' : 'password'"
+                    label="Contraseña"
+                    placeholder="••••••••"
                     autocomplete="current-password"
-                />
-
-                <InputError class="mt-2" :message="form.errors.password" />
-            </div>
-
-            <div class="mt-4 block">
-                <label class="flex items-center">
-                    <Checkbox name="remember" v-model:checked="form.remember" />
-                    <span class="ms-2 text-sm text-gray-600">Recuérdame</span>
-                </label>
-            </div>
-
-            <div class="mt-4 flex items-center justify-end">
-                <Link
-                    v-if="canResetPassword"
-                    :href="passwordRequest.url()"
-                    class="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
+                    required
+                    :error="form.errors.password"
                 >
-                    ¿Olvidaste tu contraseña?
-                </Link>
+                    <template #label-trailing>
+                        <Link
+                            v-if="canResetPassword"
+                            :href="passwordRequest.url()"
+                            class="inline-flex min-h-6 items-center text-label-xs text-primary-container transition-all hover:underline"
+                        >
+                            ¿Olvidaste tu contraseña?
+                        </Link>
+                    </template>
+                    <template #trailing>
+                        <button
+                            type="button"
+                            :aria-pressed="showPassword"
+                            aria-label="Alternar visibilidad de contraseña"
+                            class="mr-space-xs flex items-center justify-center rounded p-space-sm text-on-surface-variant transition-colors hover:text-on-surface"
+                            @click="showPassword = !showPassword"
+                        >
+                            <AuthIcon
+                                :name="showPassword ? 'eye-off' : 'eye'"
+                                :size="18"
+                            />
+                        </button>
+                    </template>
+                </AuthTextInput>
 
-                <PrimaryButton
-                    class="ms-4"
-                    :class="{ 'opacity-25': form.processing }"
+                <div class="flex items-center justify-between pt-space-2xs">
+                    <AuthCheckbox
+                        id="remember"
+                        v-model="form.remember"
+                        label="Recordar este dispositivo"
+                    />
+                </div>
+
+                <button
+                    type="submit"
                     :disabled="form.processing"
+                    class="group mt-space-xs flex h-11 w-full items-center justify-center gap-space-sm rounded-lg bg-primary-container text-label-md text-on-primary shadow-md shadow-primary-container/20 transition-all duration-150 hover:bg-primary active:scale-[0.99] disabled:opacity-25"
                 >
-                    Iniciar sesión
-                </PrimaryButton>
-            </div>
-        </form>
+                    <span>Iniciar sesión</span>
+                    <AuthIcon
+                        name="arrow-right"
+                        :size="16"
+                        class="transition-transform group-hover:translate-x-0.5"
+                    />
+                    <kbd
+                        class="ml-space-xs hidden items-center justify-center rounded bg-on-primary/20 px-1.5 py-0.5 text-label-xs sm:inline-flex"
+                    >
+                        ↵
+                    </kbd>
+                </button>
+            </form>
 
-        <div class="mt-6 flex items-center">
-            <div class="h-px flex-1 bg-gray-300"></div>
-            <span class="px-3 text-sm text-gray-500">o</span>
-            <div class="h-px flex-1 bg-gray-300"></div>
-        </div>
-
-        <div class="mt-6">
-            <Link
-                :href="googleRedirect.url()"
-                class="flex w-full items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
-            >
-                Continuar con Google
-            </Link>
-        </div>
+            <p class="text-center text-body-sm text-on-surface-variant">
+                ¿No tienes cuenta de equipo?
+                <Link
+                    :href="register.url()"
+                    class="ml-1 inline-flex min-h-6 items-center text-label-sm text-primary-container hover:underline"
+                >
+                    Regístrate gratis
+                </Link>
+            </p>
+        </AuthCard>
     </GuestLayout>
 </template>
