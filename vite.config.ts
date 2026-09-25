@@ -18,6 +18,9 @@ export default defineConfig({
                 bunny('Inter', {
                     weights: [400, 500, 600],
                 }),
+                bunny('Material Symbols Outlined', {
+                    weights: [400],
+                }),
             ],
         }),
         inertia(),

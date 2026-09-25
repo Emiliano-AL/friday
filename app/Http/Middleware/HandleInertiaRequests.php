@@ -2,6 +2,8 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Project;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -29,12 +31,31 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $user = $request->user();
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
             'auth' => [
-                'user' => $request->user(),
+                'user' => $user,
             ],
+            ...($user !== null ? ['projects' => $this->projectSummaries($user)] : []),
         ];
+    }
+
+    /**
+     * Lightweight project list for the workspace context switcher.
+     *
+     * @return array<int, array{id: int, title: string}>
+     */
+    private function projectSummaries(User $user): array
+    {
+        return Project::query()
+            ->where('owner_id', $user->id)
+            ->orWhereHas('members', fn ($query) => $query->whereKey($user->id))
+            ->orderBy('title')
+            ->limit(50)
+            ->get(['id', 'title'])
+            ->all();
     }
 }

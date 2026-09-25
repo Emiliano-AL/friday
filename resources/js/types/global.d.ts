@@ -1,4 +1,5 @@
 import type { Auth } from '@/types/auth';
+import type { ProjectSummary } from '@/types/shell';
 
 // Extend ImportMeta interface for Vite...
 declare module 'vite/client' {
@@ -19,6 +20,7 @@ declare module '@inertiajs/core' {
             name: string;
             auth: Auth;
             sidebarOpen: boolean;
+            projects?: ProjectSummary[];
             [key: string]: unknown;
         };
     }
