@@ -5,7 +5,10 @@ namespace App\Http\Controllers;
 use App\Enums\ProjectStatus;
 use App\Http\Requests\StoreProjectRequest;
 use App\Http\Requests\UpdateProjectRequest;
+use App\Models\Comment;
 use App\Models\Project;
+use App\Models\Sprint;
+use App\Models\Task;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -151,7 +154,15 @@ class ProjectController extends Controller
      */
     private function projectPayload(Request $request, Project $project): array
     {
-        $project->loadMissing(['owner', 'members']);
+        $project->loadMissing([
+            'owner',
+            'members',
+            'sprints' => fn ($query) => $query->orderBy('start_date'),
+            'tasks' => fn ($query) => $query->orderByDesc('updated_at'),
+            'tasks.assignee',
+            'tasks.sprint',
+            'tasks.comments.author',
+        ]);
 
         return [
             'id' => $project->id,
@@ -169,6 +180,40 @@ class ProjectController extends Controller
                 'id' => $member->id,
                 'name' => $member->name,
                 'email' => $member->email,
+            ])->values(),
+            'sprints' => $project->sprints->map(fn (Sprint $sprint) => [
+                'id' => $sprint->id,
+                'name' => $sprint->name,
+                'startDate' => $sprint->start_date->toDateString(),
+                'endDate' => $sprint->end_date->toDateString(),
+            ])->values(),
+            'tasks' => $project->tasks->map(fn (Task $task) => [
+                'id' => $task->id,
+                'title' => $task->title,
+                'description' => $task->description,
+                'type' => $task->type->value,
+                'typeLabel' => $task->type->label(),
+                'priority' => $task->priority->value,
+                'priorityLabel' => $task->priority->label(),
+                'status' => $task->status->value,
+                'statusLabel' => $task->status->label(),
+                'assignee' => $task->assignee ? [
+                    'id' => $task->assignee->id,
+                    'name' => $task->assignee->name,
+                ] : null,
+                'sprint' => $task->sprint ? [
+                    'id' => $task->sprint->id,
+                    'name' => $task->sprint->name,
+                ] : null,
+                'comments' => $task->comments->sortBy('created_at')->map(fn (Comment $comment) => [
+                    'id' => $comment->id,
+                    'body' => $comment->body,
+                    'author' => [
+                        'id' => $comment->author->id,
+                        'name' => $comment->author->name,
+                    ],
+                    'createdAt' => $comment->created_at->toIso8601String(),
+                ])->values(),
             ])->values(),
             'allowedTransitions' => array_map(
                 fn (ProjectStatus $status) => $status->value,

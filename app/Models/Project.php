@@ -5,10 +5,12 @@ namespace App\Models;
 use App\Enums\ProjectStatus;
 use Database\Factories\ProjectFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 
 /**
@@ -20,6 +22,8 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read User $owner
+ * @property-read Collection<int, Sprint> $sprints
+ * @property-read Collection<int, Task> $tasks
  */
 #[Fillable(['owner_id', 'title', 'description', 'status'])]
 class Project extends Model
@@ -57,6 +61,26 @@ class Project extends Model
     public function members(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'project_user')->withTimestamps();
+    }
+
+    /**
+     * Get the sprints of the project (no global order; apply orderBy('start_date') when listing).
+     *
+     * @return HasMany<Sprint, $this>
+     */
+    public function sprints(): HasMany
+    {
+        return $this->hasMany(Sprint::class);
+    }
+
+    /**
+     * Get the tasks of the project (no global order; apply orderByDesc('updated_at') when listing).
+     *
+     * @return HasMany<Task, $this>
+     */
+    public function tasks(): HasMany
+    {
+        return $this->hasMany(Task::class);
     }
 
     /**
