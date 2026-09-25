@@ -14,7 +14,7 @@ Contrato visual/estructural por página. Sirve como checklist de aceptación vis
 
 ## Página: Login (`/login`)
 
-- [ ] Tarjeta blanca (`surface-container-lowest`), ancho máx. ~440px, radio elevado (~`rounded-xl`/0.75rem), sombra suave tinte primario.
+- [ ] Tarjeta blanca (`surface-container-lowest`), ancho máx. ~~440px, radio elevado (~~`rounded-xl`/0.75rem), sombra suave tinte primario.
 - [ ] Logo marca (48px, tinte primario 10%) + título "Iniciar sesión en Friday" (headline-lg) + subtítulo "Tu espacio de trabajo ágil y productivo".
 - [ ] Botón "Continuar con Google": alto 44px, borde sutil, logo Google, distintivo flotante "Recomendado" (píldora con punto de acento).
 - [ ] Divisor: líneas hairline + texto "o continuar con correo" (label-xs).

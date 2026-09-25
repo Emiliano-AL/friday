@@ -32,13 +32,13 @@ Rediseño puramente visual de las 4 páginas de autenticación de invitado (logi
 
 _GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 
-| # | Principle | Status | Notes |
-| --- | --------- | ------ | ----- |
-| I | Monolith-First con Inertia | PASS | Solo páginas Vue servidas por Inertia; sin API desacoplada |
-| II | Alineación ecosistema Laravel | PASS | Sin dependencias nuevas; Inter vía Google Fonts `<link>` (no es paquete). Tokens en `@theme` de Tailwind v4 (idiomático) |
-| III | Test-First con Pest | PASS | No hay lógica de dominio nueva; los 4 tests de feature de Auth existentes actúan como red de regresión y deben seguir en verde sin cambios |
-| IV | Tipado estricto / enums | PASS | Sin PHP nuevo; componentes Vue con `lang="ts"` y props tipadas |
-| V | Simplicidad / YAGNI | PASS | Solo presentación de 4 páginas + shell compartido; sin tests Dusk ni snapshot visual (justificado en research.md §5) |
+| #   | Principle                     | Status | Notes                                                                                                                                      |
+| --- | ----------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| I   | Monolith-First con Inertia    | PASS   | Solo páginas Vue servidas por Inertia; sin API desacoplada                                                                                 |
+| II  | Alineación ecosistema Laravel | PASS   | Sin dependencias nuevas; Inter vía Google Fonts `<link>` (no es paquete). Tokens en `@theme` de Tailwind v4 (idiomático)                   |
+| III | Test-First con Pest           | PASS   | No hay lógica de dominio nueva; los 4 tests de feature de Auth existentes actúan como red de regresión y deben seguir en verde sin cambios |
+| IV  | Tipado estricto / enums       | PASS   | Sin PHP nuevo; componentes Vue con `lang="ts"` y props tipadas                                                                             |
+| V   | Simplicidad / YAGNI           | PASS   | Solo presentación de 4 páginas + shell compartido; sin tests Dusk ni snapshot visual (justificado en research.md §5)                       |
 
 Re-evaluación post-Phase 1: sin violaciones que justificar. Complejidad Tracking: no aplica.
 

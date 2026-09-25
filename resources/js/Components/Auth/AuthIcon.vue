@@ -51,7 +51,9 @@ withDefaults(
             <circle cx="12" cy="12" r="3" />
         </template>
         <template v-else-if="name === 'eye-off'">
-            <path d="M2 12s3.5-7 10-7c2 0 3.7.6 5.2 1.5M22 12s-3.5 7-10 7c-2 0-3.7-.6-5.2-1.5" />
+            <path
+                d="M2 12s3.5-7 10-7c2 0 3.7.6 5.2 1.5M22 12s-3.5 7-10 7c-2 0-3.7-.6-5.2-1.5"
+            />
             <path d="m3 3 18 18" />
         </template>
         <template v-else-if="name === 'arrow-right'">
@@ -64,9 +66,7 @@ withDefaults(
         <template v-else>
             <circle cx="12" cy="12" r="9" />
             <path d="M3 12h18" />
-            <path
-                d="M12 3c3 3.5 3 14.5 0 18-3-3.5-3-14.5 0-18Z"
-            />
+            <path d="M12 3c3 3.5 3 14.5 0 18-3-3.5-3-14.5 0-18Z" />
         </template>
     </svg>
 </template>

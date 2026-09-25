@@ -173,9 +173,9 @@ Developer C: T014 ForgotPassword ∥ T015 ResetPassword + T016 validación US3
 ### Incremental Delivery
 
 1. Setup + Foundational → base lista.
-2. + US1 → validar → MVP entregable.
-3. + US2 → validar.
-4. + US3 → validar.
+2.  - US1 → validar → MVP entregable.
+3.  - US2 → validar.
+4.  - US3 → validar.
 5. Polish (regresión completa, scope isolation, responsive/a11y).
 
 Cada story agrega valor sin romper las anteriores; el comportamiento funcional nunca cambia (FR-005).

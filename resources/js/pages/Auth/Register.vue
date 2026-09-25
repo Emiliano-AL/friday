@@ -35,17 +35,17 @@ const submit = () => {
         >
             <SocialGoogleButton />
 
-            <div class="my-space-xs flex items-center gap-space-md">
-                <div class="h-px flex-1 bg-surface-container-high" />
+            <div class="my-space-xs gap-space-md flex items-center">
+                <div class="bg-surface-container-high h-px flex-1" />
                 <span
-                    class="text-label-xs uppercase tracking-wider text-on-surface-variant"
+                    class="text-label-xs text-on-surface-variant tracking-wider uppercase"
                 >
                     o continuar con correo
                 </span>
-                <div class="h-px flex-1 bg-surface-container-high" />
+                <div class="bg-surface-container-high h-px flex-1" />
             </div>
 
-            <form class="flex flex-col gap-space-md" @submit.prevent="submit">
+            <form class="gap-space-md flex flex-col" @submit.prevent="submit">
                 <AuthTextInput
                     id="name"
                     v-model="form.name"
@@ -87,7 +87,7 @@ const submit = () => {
                             type="button"
                             :aria-pressed="showPassword"
                             aria-label="Alternar visibilidad de contraseña"
-                            class="mr-space-xs flex items-center justify-center rounded p-space-sm text-on-surface-variant transition-colors hover:text-on-surface"
+                            class="mr-space-xs p-space-sm text-on-surface-variant hover:text-on-surface flex items-center justify-center rounded transition-colors"
                             @click="showPassword = !showPassword"
                         >
                             <AuthIcon
@@ -114,13 +114,16 @@ const submit = () => {
                             type="button"
                             :aria-pressed="showPasswordConfirmation"
                             aria-label="Alternar visibilidad de contraseña"
-                            class="mr-space-xs flex items-center justify-center rounded p-space-sm text-on-surface-variant transition-colors hover:text-on-surface"
+                            class="mr-space-xs p-space-sm text-on-surface-variant hover:text-on-surface flex items-center justify-center rounded transition-colors"
                             @click="
-                                showPasswordConfirmation = !showPasswordConfirmation
+                                showPasswordConfirmation =
+                                    !showPasswordConfirmation
                             "
                         >
                             <AuthIcon
-                                :name="showPasswordConfirmation ? 'eye-off' : 'eye'"
+                                :name="
+                                    showPasswordConfirmation ? 'eye-off' : 'eye'
+                                "
                                 :size="18"
                             />
                         </button>
@@ -130,7 +133,7 @@ const submit = () => {
                 <button
                     type="submit"
                     :disabled="form.processing"
-                    class="group mt-space-xs flex h-11 w-full items-center justify-center gap-space-sm rounded-lg bg-primary-container text-label-md text-on-primary shadow-md shadow-primary-container/20 transition-all duration-150 hover:bg-primary active:scale-[0.99] disabled:opacity-25"
+                    class="group mt-space-xs gap-space-sm bg-primary-container text-label-md text-on-primary shadow-primary-container/20 hover:bg-primary flex h-11 w-full items-center justify-center rounded-lg shadow-md transition-all duration-150 active:scale-[0.99] disabled:opacity-25"
                 >
                     <span>Crear cuenta</span>
                     <AuthIcon
@@ -141,11 +144,11 @@ const submit = () => {
                 </button>
             </form>
 
-            <p class="text-center text-body-sm text-on-surface-variant">
+            <p class="text-body-sm text-on-surface-variant text-center">
                 ¿Ya tienes cuenta?
                 <Link
                     :href="login.url()"
-                    class="ml-1 inline-flex min-h-6 items-center text-label-sm text-primary-container hover:underline"
+                    class="text-label-sm text-primary-container ml-1 inline-flex min-h-6 items-center hover:underline"
                 >
                     Inicia sesión
                 </Link>

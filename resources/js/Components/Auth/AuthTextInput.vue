@@ -39,7 +39,7 @@ defineExpose({ focus: () => input.value?.focus() });
 </script>
 
 <template>
-    <div class="flex flex-col gap-space-2xs">
+    <div class="gap-space-2xs flex flex-col">
         <div class="flex items-center justify-between">
             <label :for="id" class="text-label-sm text-on-surface">
                 {{ label }}
@@ -47,12 +47,12 @@ defineExpose({ focus: () => input.value?.focus() });
             <slot name="label-trailing" />
         </div>
         <div
-            class="relative flex items-center rounded-lg bg-surface-container-low transition-all focus-within:bg-surface-container-lowest focus-within:shadow-md"
+            class="bg-surface-container-low focus-within:bg-surface-container-lowest relative flex items-center rounded-lg transition-all focus-within:shadow-md"
         >
             <AuthIcon
                 :name="icon"
                 :size="18"
-                class="ml-space-md shrink-0 text-on-surface-variant"
+                class="ml-space-md text-on-surface-variant shrink-0"
             />
             <input
                 :id="id"
@@ -64,7 +64,7 @@ defineExpose({ focus: () => input.value?.focus() });
                 :required="required"
                 :aria-invalid="error ? true : undefined"
                 :aria-describedby="error ? `${id}-error` : undefined"
-                class="h-11 w-full bg-transparent px-space-sm text-body-md text-on-surface outline-none placeholder:text-outline"
+                class="px-space-sm text-body-md text-on-surface placeholder:text-outline h-11 w-full bg-transparent outline-none"
             />
             <slot name="trailing" />
         </div>

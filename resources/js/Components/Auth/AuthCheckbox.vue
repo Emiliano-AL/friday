@@ -12,7 +12,7 @@ defineProps<{
 <template>
     <label
         :for="id"
-        class="group flex cursor-pointer items-center gap-space-sm select-none"
+        class="group gap-space-sm flex cursor-pointer items-center select-none"
     >
         <span class="relative grid place-items-center">
             <input
@@ -22,17 +22,17 @@ defineProps<{
                 class="peer sr-only"
             />
             <span
-                class="col-start-1 row-start-1 flex h-4 w-4 items-center justify-center rounded bg-surface-container-low shadow-sm transition-colors peer-checked:bg-primary-container"
+                class="bg-surface-container-low peer-checked:bg-primary-container col-start-1 row-start-1 flex h-4 w-4 items-center justify-center rounded shadow-sm transition-colors"
             />
             <AuthIcon
                 name="check"
                 :size="12"
                 :stroke-width="3"
-                class="col-start-1 row-start-1 text-on-primary opacity-0 transition-opacity peer-checked:opacity-100"
+                class="text-on-primary col-start-1 row-start-1 opacity-0 transition-opacity peer-checked:opacity-100"
             />
         </span>
         <span
-            class="text-label-sm text-on-surface-variant transition-colors group-hover:text-on-surface"
+            class="text-label-sm text-on-surface-variant group-hover:text-on-surface transition-colors"
         >
             {{ label }}
         </span>

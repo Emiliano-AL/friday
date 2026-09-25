@@ -37,14 +37,15 @@ vendor/bin/pint --dirty
 
 Abrir en navegador (y en DevTools con viewport 375px y 1440px), comparando con `screen.png` y el contrato [contracts/auth-pages-ui.md](contracts/auth-pages-ui.md):
 
-| URL | Qué validar |
-| --- | --- |
-| `/login` | Tarjeta centrada 440px, halo, botón Google con "Recomendado", divisor, iconos en campos, toggle ojo funciona, casilla remember, flecha en botón, footer con píldora de estado |
-| `/register` | Mismo shell; campos nombre/correo/contraseña/confirmación; toggle ojo; enlace a login |
-| `/forgot-password` | Tarjeta simplificada con explicación y campo correo |
-| `/reset-password/{token}` | Campos nueva contraseña con toggles (generar token real vía flujo de forgot) |
+| URL                       | Qué validar                                                                                                                                                                   |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/login`                  | Tarjeta centrada 440px, halo, botón Google con "Recomendado", divisor, iconos en campos, toggle ojo funciona, casilla remember, flecha en botón, footer con píldora de estado |
+| `/register`               | Mismo shell; campos nombre/correo/contraseña/confirmación; toggle ojo; enlace a login                                                                                         |
+| `/forgot-password`        | Tarjeta simplificada con explicación y campo correo                                                                                                                           |
+| `/reset-password/{token}` | Campos nueva contraseña con toggles (generar token real vía flujo de forgot)                                                                                                  |
 
 **Flujos interactivos mínimos**:
+
 1. Login con credenciales inválidas → errores rojos por campo dentro de la tarjeta, layout intacto.
 2. Login válido → redirige al dashboard.
 3. "Continuar con Google" → redirige a Google OAuth (mismo comportamiento previo).

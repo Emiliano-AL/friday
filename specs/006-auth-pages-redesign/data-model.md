@@ -11,12 +11,12 @@
 
 Los contratos de datos entre servidor y página se mantienen exactamente igual; las páginas siguen consumiendo los mismos props de Inertia:
 
-| Página | Props de entrada | Campos de formulario | Endpoint (POST) |
-| --- | --- | --- | --- |
-| `Login.vue` | `canResetPassword?: boolean`, `status?: string`, `errors` | `email`, `password`, `remember: boolean` | `login` |
-| `Register.vue` | `errors` | `name`, `email`, `password`, `password_confirmation` | `register` |
-| `ForgotPassword.vue` | `status?: string`, `errors` | `email` | `password.email` |
-| `ResetPassword.vue` | `email: string`, `token: string`, `errors` | `email` (oculto), `token` (oculto), `password`, `password_confirmation` | `password.store` |
+| Página               | Props de entrada                                          | Campos de formulario                                                    | Endpoint (POST)  |
+| -------------------- | --------------------------------------------------------- | ----------------------------------------------------------------------- | ---------------- |
+| `Login.vue`          | `canResetPassword?: boolean`, `status?: string`, `errors` | `email`, `password`, `remember: boolean`                                | `login`          |
+| `Register.vue`       | `errors`                                                  | `name`, `email`, `password`, `password_confirmation`                    | `register`       |
+| `ForgotPassword.vue` | `status?: string`, `errors`                               | `email`                                                                 | `password.email` |
+| `ResetPassword.vue`  | `email: string`, `token: string`, `errors`                | `email` (oculto), `token` (oculto), `password`, `password_confirmation` | `password.store` |
 
 ## Reglas de validación (heredadas, sin cambios)
 

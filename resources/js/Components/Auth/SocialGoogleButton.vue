@@ -6,9 +6,13 @@ import { redirect as googleRedirect } from '@/routes/google';
     <div class="relative w-full">
         <a
             :href="googleRedirect.url()"
-            class="flex h-11 w-full items-center justify-center gap-space-md rounded-lg bg-surface-container-lowest px-space-lg shadow-sm transition-all duration-150 hover:bg-surface-container-low active:scale-[0.99]"
+            class="gap-space-md bg-surface-container-lowest px-space-lg hover:bg-surface-container-low flex h-11 w-full items-center justify-center rounded-lg shadow-sm transition-all duration-150 active:scale-[0.99]"
         >
-            <svg class="h-4 w-4 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
+            <svg
+                class="h-4 w-4 shrink-0"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+            >
                 <path
                     d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"
                     fill="#4285F4"
@@ -26,12 +30,14 @@ import { redirect as googleRedirect } from '@/routes/google';
                     fill="#EA4335"
                 />
             </svg>
-            <span class="text-label-md text-on-surface">Continuar con Google</span>
+            <span class="text-label-md text-on-surface"
+                >Continuar con Google</span
+            >
         </a>
         <div
-            class="pointer-events-none absolute -top-2.5 right-3 flex items-center gap-1 rounded-full bg-surface-container-high px-2 py-0.5 shadow-sm"
+            class="bg-surface-container-high pointer-events-none absolute -top-2.5 right-3 flex items-center gap-1 rounded-full px-2 py-0.5 shadow-sm"
         >
-            <span class="h-1.5 w-1.5 rounded-full bg-primary-container" />
+            <span class="bg-primary-container h-1.5 w-1.5 rounded-full" />
             <span class="text-label-xs text-primary">Recomendado</span>
         </div>
     </div>

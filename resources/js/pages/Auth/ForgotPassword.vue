@@ -30,12 +30,12 @@ const submit = () => {
         >
             <div
                 v-if="status"
-                class="rounded-lg bg-primary-fixed/40 px-space-md py-space-sm text-body-sm text-primary-container"
+                class="bg-primary-fixed/40 px-space-md py-space-sm text-body-sm text-primary-container rounded-lg"
             >
                 {{ status }}
             </div>
 
-            <form class="flex flex-col gap-space-md" @submit.prevent="submit">
+            <form class="gap-space-md flex flex-col" @submit.prevent="submit">
                 <AuthTextInput
                     id="email"
                     v-model="form.email"
@@ -52,7 +52,7 @@ const submit = () => {
                 <button
                     type="submit"
                     :disabled="form.processing"
-                    class="group mt-space-xs flex h-11 w-full items-center justify-center gap-space-sm rounded-lg bg-primary-container text-label-md text-on-primary shadow-md shadow-primary-container/20 transition-all duration-150 hover:bg-primary active:scale-[0.99] disabled:opacity-25"
+                    class="group mt-space-xs gap-space-sm bg-primary-container text-label-md text-on-primary shadow-primary-container/20 hover:bg-primary flex h-11 w-full items-center justify-center rounded-lg shadow-md transition-all duration-150 active:scale-[0.99] disabled:opacity-25"
                 >
                     <span>Enviar enlace de recuperación</span>
                     <AuthIcon
@@ -63,10 +63,10 @@ const submit = () => {
                 </button>
             </form>
 
-            <p class="text-center text-body-sm text-on-surface-variant">
+            <p class="text-body-sm text-on-surface-variant text-center">
                 <Link
                     :href="login.url()"
-                    class="inline-flex min-h-6 items-center text-label-sm text-primary-container hover:underline"
+                    class="text-label-sm text-primary-container inline-flex min-h-6 items-center hover:underline"
                 >
                     Volver a iniciar sesión
                 </Link>

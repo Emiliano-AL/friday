@@ -4,18 +4,18 @@ import AuthIcon from '@/Components/Auth/AuthIcon.vue';
 
 <template>
     <header
-        class="flex w-full items-center justify-between px-margin-mobile py-space-lg lg:px-margin"
+        class="px-margin-mobile py-space-lg lg:px-margin flex w-full items-center justify-between"
     >
-        <div class="flex items-center gap-space-sm">
-            <span class="h-2 w-2 animate-pulse rounded-full bg-primary" />
+        <div class="gap-space-sm flex items-center">
+            <span class="bg-primary h-2 w-2 animate-pulse rounded-full" />
             <span
-                class="text-label-xs uppercase tracking-wider text-on-surface-variant"
+                class="text-label-xs text-on-surface-variant tracking-wider uppercase"
             >
                 Friday Cloud OS
             </span>
         </div>
         <div
-            class="flex items-center gap-space-sm text-label-xs text-on-surface-variant"
+            class="gap-space-sm text-label-xs text-on-surface-variant flex items-center"
         >
             <AuthIcon name="lock" :size="14" class="text-primary" />
             <span>Conexión segura SSL</span>

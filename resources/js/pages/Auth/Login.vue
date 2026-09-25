@@ -40,24 +40,24 @@ const submit = () => {
         >
             <SocialGoogleButton />
 
-            <div class="my-space-xs flex items-center gap-space-md">
-                <div class="h-px flex-1 bg-surface-container-high" />
+            <div class="my-space-xs gap-space-md flex items-center">
+                <div class="bg-surface-container-high h-px flex-1" />
                 <span
-                    class="text-label-xs uppercase tracking-wider text-on-surface-variant"
+                    class="text-label-xs text-on-surface-variant tracking-wider uppercase"
                 >
                     o continuar con correo
                 </span>
-                <div class="h-px flex-1 bg-surface-container-high" />
+                <div class="bg-surface-container-high h-px flex-1" />
             </div>
 
             <div
                 v-if="status"
-                class="rounded-lg bg-primary-fixed/40 px-space-md py-space-sm text-body-sm text-primary-container"
+                class="bg-primary-fixed/40 px-space-md py-space-sm text-body-sm text-primary-container rounded-lg"
             >
                 {{ status }}
             </div>
 
-            <form class="flex flex-col gap-space-md" @submit.prevent="submit">
+            <form class="gap-space-md flex flex-col" @submit.prevent="submit">
                 <AuthTextInput
                     id="email"
                     v-model="form.email"
@@ -86,7 +86,7 @@ const submit = () => {
                         <Link
                             v-if="canResetPassword"
                             :href="passwordRequest.url()"
-                            class="inline-flex min-h-6 items-center text-label-xs text-primary-container transition-all hover:underline"
+                            class="text-label-xs text-primary-container inline-flex min-h-6 items-center transition-all hover:underline"
                         >
                             ¿Olvidaste tu contraseña?
                         </Link>
@@ -96,7 +96,7 @@ const submit = () => {
                             type="button"
                             :aria-pressed="showPassword"
                             aria-label="Alternar visibilidad de contraseña"
-                            class="mr-space-xs flex items-center justify-center rounded p-space-sm text-on-surface-variant transition-colors hover:text-on-surface"
+                            class="mr-space-xs p-space-sm text-on-surface-variant hover:text-on-surface flex items-center justify-center rounded transition-colors"
                             @click="showPassword = !showPassword"
                         >
                             <AuthIcon
@@ -107,7 +107,7 @@ const submit = () => {
                     </template>
                 </AuthTextInput>
 
-                <div class="flex items-center justify-between pt-space-2xs">
+                <div class="pt-space-2xs flex items-center justify-between">
                     <AuthCheckbox
                         id="remember"
                         v-model="form.remember"
@@ -118,7 +118,7 @@ const submit = () => {
                 <button
                     type="submit"
                     :disabled="form.processing"
-                    class="group mt-space-xs flex h-11 w-full items-center justify-center gap-space-sm rounded-lg bg-primary-container text-label-md text-on-primary shadow-md shadow-primary-container/20 transition-all duration-150 hover:bg-primary active:scale-[0.99] disabled:opacity-25"
+                    class="group mt-space-xs gap-space-sm bg-primary-container text-label-md text-on-primary shadow-primary-container/20 hover:bg-primary flex h-11 w-full items-center justify-center rounded-lg shadow-md transition-all duration-150 active:scale-[0.99] disabled:opacity-25"
                 >
                     <span>Iniciar sesión</span>
                     <AuthIcon
@@ -127,18 +127,18 @@ const submit = () => {
                         class="transition-transform group-hover:translate-x-0.5"
                     />
                     <kbd
-                        class="ml-space-xs hidden items-center justify-center rounded bg-on-primary/20 px-1.5 py-0.5 text-label-xs sm:inline-flex"
+                        class="ml-space-xs bg-on-primary/20 text-label-xs hidden items-center justify-center rounded px-1.5 py-0.5 sm:inline-flex"
                     >
                         ↵
                     </kbd>
                 </button>
             </form>
 
-            <p class="text-center text-body-sm text-on-surface-variant">
+            <p class="text-body-sm text-on-surface-variant text-center">
                 ¿No tienes cuenta de equipo?
                 <Link
                     :href="register.url()"
-                    class="ml-1 inline-flex min-h-6 items-center text-label-sm text-primary-container hover:underline"
+                    class="text-label-sm text-primary-container ml-1 inline-flex min-h-6 items-center hover:underline"
                 >
                     Regístrate gratis
                 </Link>
