@@ -123,10 +123,10 @@ description: 'Task list template for feature implementation'
 
 **Purpose**: Gates de calidad, responsive/accesibilidad y validación del quickstart
 
-- [ ] T031 [P] Quality gates: `vendor/bin/pint --dirty --format agent`, `npm run check:fix`, `npm run types:check` y `npm run build` sin errores
-- [ ] T032 [P] Pase responsive/accesibilidad: a 375px sin scroll horizontal en directorio/diálogo/detalle; recorrido completo solo con teclado (N, ⌘F, ESC, ⋯, diálogo, tabs); anillos de foco visibles; `mcp__laravel-boost__browser-logs` y consola sin errores en todo el recorrido
-- [ ] T033 [P] Validar `quickstart.md` (§0-§7) contra la implementación real y actualizar el archivo si algún paso difiere
-- [ ] T034 `php artisan test --compact` completo en verde y commit final de la feature
+- [X] T031 [P] Quality gates: `vendor/bin/pint --dirty --format agent`, `npm run check:fix`, `npm run types:check` y `npm run build` sin errores
+- [X] T032 [P] Pase responsive/accesibilidad: a 375px sin scroll horizontal en directorio/diálogo/detalle; recorrido completo solo con teclado (N, ⌘F, ESC, ⋯, diálogo, tabs); anillos de foco visibles; `mcp__laravel-boost__browser-logs` y consola sin errores en todo el recorrido
+- [X] T033 [P] Validar `quickstart.md` (§0-§7) contra la implementación real y actualizar el archivo si algún paso difiere
+- [X] T034 `php artisan test --compact` completo en verde y commit final de la feature
 
 ---
 
