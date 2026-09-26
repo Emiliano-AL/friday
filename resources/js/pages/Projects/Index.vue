@@ -119,6 +119,10 @@ function onGlobalKeydown(event: KeyboardEvent): void {
         return;
     }
 
+    if (document.querySelector('dialog[open]') !== null) {
+        return;
+    }
+
     if (event.key.toLowerCase() === 'n') {
         event.preventDefault();
         openCreate();

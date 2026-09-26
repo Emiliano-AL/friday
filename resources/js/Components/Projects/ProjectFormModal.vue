@@ -4,7 +4,7 @@ import UiBadge from '@/Components/Projects/UiBadge.vue';
 import Modal from '@/Components/Modal.vue';
 import { destroy, store, update } from '@/routes/projects';
 import { useForm } from '@inertiajs/vue3';
-import { watch } from 'vue';
+import { nextTick, ref, watch } from 'vue';
 
 const props = defineProps<{
     open: boolean;
@@ -16,6 +16,8 @@ const emit = defineEmits<{
     close: [];
 }>();
 
+const titleInput = ref<HTMLInputElement | null>(null);
+
 const form = useForm({
     title: '',
     description: '',
@@ -23,11 +25,13 @@ const form = useForm({
 
 watch(
     () => props.open,
-    (open) => {
+    async (open) => {
         if (open) {
             form.title = props.project?.title ?? '';
             form.description = props.project?.description ?? '';
             form.clearErrors();
+            await nextTick();
+            titleInput.value?.focus();
         }
     },
 );
@@ -171,6 +175,7 @@ function removeProject(): void {
                 </label>
                 <input
                     id="project-title"
+                    ref="titleInput"
                     v-model="form.title"
                     type="text"
                     required
