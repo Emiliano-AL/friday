@@ -6,6 +6,7 @@ import AppShellTopbar from '@/Components/AppShell/AppShellTopbar.vue';
 import ProfileMenu from '@/Components/AppShell/ProfileMenu.vue';
 import CommandPalette from '@/Components/AppShell/CommandPalette.vue';
 import NotificationsPopover from '@/Components/AppShell/NotificationsPopover.vue';
+import FlashMessage from '@/Components/AppShell/FlashMessage.vue';
 import type {
     CommandAction,
     NavItem,
@@ -13,6 +14,7 @@ import type {
     ShellPopover,
     ShellUser,
 } from '@/types/shell';
+import type { FlashMessage as FlashMessageProps } from '@/types/project';
 import { home } from '@/routes';
 import { index as projectsIndex } from '@/routes/projects';
 
@@ -29,6 +31,14 @@ const user = computed<ShellUser>(() => {
 });
 
 const projects = computed<ProjectSummary[]>(() => page.props.projects ?? []);
+
+const flash = computed<FlashMessageProps>(
+    () =>
+        (page.props.flash as FlashMessageProps | undefined) ?? {
+            success: null,
+            error: null,
+        },
+);
 
 const navItems: NavItem[] = [
     { label: 'Panel', icon: 'space_dashboard', to: home.url(), match: '/' },
@@ -107,6 +117,13 @@ function openPalette(): void {
 provide('friday:open-palette', openPalette);
 
 const commandActions: CommandAction[] = [
+    {
+        label: 'Crear nuevo proyecto',
+        icon: 'add',
+        shortcut: 'N',
+        keywords: ['crear', 'nuevo', 'proyecto', 'project'],
+        run: () => router.visit(`${projectsIndex.url()}?new=1`),
+    },
     {
         label: 'Crear nueva tarea',
         icon: 'add_circle',
@@ -230,6 +247,8 @@ onBeforeUnmount(() => {
                 @toggle-profile="toggleProfile"
                 @open-search="openPalette"
             />
+
+            <FlashMessage :success="flash.success" :error="flash.error" />
 
             <main class="px-space-xl pb-space-2xl pt-space-md flex-1">
                 <slot />

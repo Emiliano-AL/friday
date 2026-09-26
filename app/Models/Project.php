@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\ProjectStatus;
+use App\Enums\TaskStatus;
 use Database\Factories\ProjectFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Collection;
@@ -11,6 +12,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
 
 /**
@@ -100,14 +102,32 @@ class Project extends Model
     }
 
     /**
+     * Get the sprint currently considered active for display purposes.
+     *
+     * Display-only derivation (the domain has no sprint status yet): the
+     * sprint with the greatest start_date whose start_date is today or
+     * earlier. Overdue sprints remain active until the team closes them.
+     *
+     * @return HasOne<Sprint, $this>
+     */
+    public function activeSprint(): HasOne
+    {
+        return $this->hasOne(Sprint::class)
+            ->where('start_date', '<=', now()->toDateString())
+            ->orderByDesc('start_date');
+    }
+
+    /**
      * Get the completion percentage of the project.
      *
-     * Returns 0 until the tasks module exists; the formula will be
-     * round(done / total * 100) with total = 0 resulting in 0, always
-     * within the 0-100 range.
+     * Round(done / total * 100); total = 0 results in 0, always within the
+     * 0-100 range. Only tasks with status TaskStatus::Done count as done.
      */
     public function progressPercentage(): int
     {
-        return 0;
+        $total = $this->tasks()->count();
+        $done = $this->tasks()->where('status', TaskStatus::Done)->count();
+
+        return $total === 0 ? 0 : (int) round($done / $total * 100);
     }
 }

@@ -8,11 +8,11 @@ test('owners can archive an active project', function () {
     $user = User::factory()->create();
     $project = Project::factory()->for($user, 'owner')->create();
 
-    $response = $this->actingAs($user)->put("/projects/{$project->id}/status", [
+    $response = $this->actingAs($user)->from('/projects')->put("/projects/{$project->id}/status", [
         'status' => ProjectStatus::Archived->value,
     ]);
 
-    $response->assertRedirect(route('projects.show', $project, absolute: false));
+    $response->assertRedirect('/projects');
     $this->assertDatabaseHas('projects', ['id' => $project->id, 'status' => ProjectStatus::Archived->value]);
 });
 

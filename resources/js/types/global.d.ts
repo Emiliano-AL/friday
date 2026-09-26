@@ -1,4 +1,5 @@
 import type { Auth } from '@/types/auth';
+import type { FlashMessage } from '@/types/project';
 import type { ProjectSummary } from '@/types/shell';
 
 // Extend ImportMeta interface for Vite...
@@ -21,6 +22,7 @@ declare module '@inertiajs/core' {
             auth: Auth;
             sidebarOpen: boolean;
             projects?: ProjectSummary[];
+            flash?: FlashMessage;
             [key: string]: unknown;
         };
     }

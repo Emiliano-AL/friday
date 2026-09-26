@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\ProjectStatus;
+use App\Enums\TaskStatus;
 use App\Http\Requests\StoreProjectRequest;
 use App\Http\Requests\UpdateProjectRequest;
 use App\Models\Comment;
@@ -18,36 +19,84 @@ use Inertia\Response;
 class ProjectController extends Controller
 {
     /**
-     * Display a listing of the projects the user is a member of.
+     * Display the directory of projects the user participates in (owner or member).
      */
     public function index(Request $request): Response
     {
         $user = $request->user();
 
-        $projects = Project::query()
+        $projectIds = Project::query()
             ->where('owner_id', $user->id)
             ->orWhereHas('members', fn ($query) => $query->whereKey($user->id))
+            ->pluck('id');
+
+        $projects = Project::query()
+            ->whereIn('id', $projectIds)
+            ->with(['activeSprint', 'owner', 'members'])
+            ->withCount([
+                'tasks',
+                'tasks as done_tasks_count' => fn ($query) => $query->where('status', TaskStatus::Done),
+            ])
             ->latest('updated_at')
             ->get()
             ->map(fn (Project $project) => [
                 'id' => $project->id,
                 'title' => $project->title,
+                'description' => $project->description,
                 'status' => $project->status->value,
                 'statusLabel' => $project->status->label(),
-                'progress' => $project->progressPercentage(),
+                'progress' => $project->tasks_count === 0
+                    ? 0
+                    : (int) round($project->done_tasks_count / $project->tasks_count * 100),
+                'taskDoneCount' => $project->done_tasks_count,
+                'taskTotalCount' => $project->tasks_count,
+                'activeSprint' => $project->activeSprint === null ? null : [
+                    'id' => $project->activeSprint->id,
+                    'name' => $project->activeSprint->name,
+                    'startDate' => $project->activeSprint->start_date->toDateString(),
+                    'endDate' => $project->activeSprint->end_date->toDateString(),
+                ],
+                'owner' => [
+                    'id' => $project->owner->id,
+                    'name' => $project->owner->name,
+                    'avatar' => $project->owner->avatar,
+                ],
+                'members' => $project->members->map(fn (User $member) => [
+                    'id' => $member->id,
+                    'name' => $member->name,
+                    'avatar' => $member->avatar,
+                ])->all(),
+                'isOwner' => $project->isOwnedBy($user),
             ]);
+
+        $counts = [
+            'active' => (int) $projects->where('status', ProjectStatus::Active->value)->count(),
+            'completed' => (int) $projects->where('status', ProjectStatus::Completed->value)->count(),
+            'archived' => (int) $projects->where('status', ProjectStatus::Archived->value)->count(),
+        ];
+
+        $kpis = [
+            'activeProjects' => $counts['active'],
+            'completedSprintsThisQuarter' => Sprint::query()
+                ->whereIn('project_id', $projectIds)
+                ->where('end_date', '<', now()->toDateString())
+                ->where('end_date', '>=', now()->startOfQuarter()->toDateString())
+                ->count(),
+        ];
 
         return Inertia::render('Projects/Index', [
             'projects' => $projects,
+            'counts' => $counts,
+            'kpis' => $kpis,
         ]);
     }
 
     /**
-     * Show the form for creating a new project.
+     * Redirect to the directory with the create dialog query param.
      */
-    public function create(): Response
+    public function create(): RedirectResponse
     {
-        return Inertia::render('Projects/Create');
+        return redirect()->route('projects.index', ['new' => 1]);
     }
 
     /**
@@ -61,7 +110,7 @@ class ProjectController extends Controller
             'description' => $request->input('description'),
         ]);
 
-        return redirect()->route('projects.show', $project);
+        return redirect()->route('projects.show', $project)->with('success', 'Proyecto creado.');
     }
 
     /**
@@ -77,15 +126,13 @@ class ProjectController extends Controller
     }
 
     /**
-     * Show the form for editing the project.
+     * Redirect owners to the show page with the edit dialog query param.
      */
-    public function edit(Request $request, Project $project): Response
+    public function edit(Request $request, Project $project): RedirectResponse
     {
         abort_unless($project->isOwnedBy($request->user()), 404);
 
-        return Inertia::render('Projects/Edit', [
-            'project' => $this->projectPayload($request, $project),
-        ]);
+        return redirect()->route('projects.show', ['project' => $project, 'edit' => 1]);
     }
 
     /**
@@ -102,7 +149,7 @@ class ProjectController extends Controller
             'description' => $request->input('description'),
         ]);
 
-        return redirect()->route('projects.show', $project);
+        return redirect()->route('projects.show', $project)->with('success', 'Proyecto actualizado.');
     }
 
     /**
@@ -130,7 +177,7 @@ class ProjectController extends Controller
 
         $project->update(['status' => $target]);
 
-        return redirect()->route('projects.show', $project);
+        return back()->with('success', "Proyecto {$target->label()}.");
     }
 
     /**
@@ -144,7 +191,7 @@ class ProjectController extends Controller
 
         $project->delete();
 
-        return redirect()->route('projects.index');
+        return redirect()->route('projects.index')->with('success', 'Proyecto eliminado.');
     }
 
     /**
@@ -157,6 +204,7 @@ class ProjectController extends Controller
         $project->loadMissing([
             'owner',
             'members',
+            'activeSprint',
             'sprints' => fn ($query) => $query->orderBy('start_date'),
             'tasks' => fn ($query) => $query->orderByDesc('updated_at'),
             'tasks.assignee',
@@ -171,15 +219,27 @@ class ProjectController extends Controller
             'status' => $project->status->value,
             'statusLabel' => $project->status->label(),
             'progress' => $project->progressPercentage(),
+            'taskDoneCount' => $project->tasks->filter(
+                fn (Task $task) => $task->status === TaskStatus::Done,
+            )->count(),
+            'taskTotalCount' => $project->tasks->count(),
+            'activeSprint' => $project->activeSprint === null ? null : [
+                'id' => $project->activeSprint->id,
+                'name' => $project->activeSprint->name,
+                'startDate' => $project->activeSprint->start_date->toDateString(),
+                'endDate' => $project->activeSprint->end_date->toDateString(),
+            ],
             'owner' => [
                 'id' => $project->owner->id,
                 'name' => $project->owner->name,
                 'email' => $project->owner->email,
+                'avatar' => $project->owner->avatar,
             ],
             'members' => $project->members->map(fn (User $member) => [
                 'id' => $member->id,
                 'name' => $member->name,
                 'email' => $member->email,
+                'avatar' => $member->avatar,
             ])->values(),
             'sprints' => $project->sprints->map(fn (Sprint $sprint) => [
                 'id' => $sprint->id,
@@ -200,6 +260,7 @@ class ProjectController extends Controller
                 'assignee' => $task->assignee ? [
                     'id' => $task->assignee->id,
                     'name' => $task->assignee->name,
+                    'avatar' => $task->assignee->avatar,
                 ] : null,
                 'sprint' => $task->sprint ? [
                     'id' => $task->sprint->id,

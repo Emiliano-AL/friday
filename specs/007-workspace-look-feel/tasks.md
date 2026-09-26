@@ -83,8 +83,8 @@ description: 'Task list for 007-workspace-look-feel'
 
 ### Implementation for User Story 2
 
-- [X] T015 [P] [US2] Crear `resources/js/Components/AppShell/ProfileMenu.vue`: sección de identidad (avatar/iniciales, nombre, correo), items "Detalles del perfil" y "Ajustes de cuenta" deshabilitados con "Próximamente", divisor, "Cerrar sesión" en `text-error` que hace POST a la ruta `logout` de Wayfinder; tarjeta blanca `shadow-popover rounded-xl` con animación de apertura (contrato §3)
-- [X] T016 [US2] Cablear en `resources/js/Layouts/AuthenticatedLayout.vue` (o `AppShellTopbar.vue` según quedó T013) el menú de perfil: `aria-expanded` en el avatar, cierre con clic fuera/`ESC`, retorno de foco al avatar, y estado activo de popover único (abrir perfil cierra notificaciones y viceversa) (FR-008)
+- [x] T015 [P] [US2] Crear `resources/js/Components/AppShell/ProfileMenu.vue`: sección de identidad (avatar/iniciales, nombre, correo), items "Detalles del perfil" y "Ajustes de cuenta" deshabilitados con "Próximamente", divisor, "Cerrar sesión" en `text-error` que hace POST a la ruta `logout` de Wayfinder; tarjeta blanca `shadow-popover rounded-xl` con animación de apertura (contrato §3)
+- [x] T016 [US2] Cablear en `resources/js/Layouts/AuthenticatedLayout.vue` (o `AppShellTopbar.vue` según quedó T013) el menú de perfil: `aria-expanded` en el avatar, cierre con clic fuera/`ESC`, retorno de foco al avatar, y estado activo de popover único (abrir perfil cierra notificaciones y viceversa) (FR-008)
 
 **Checkpoint**: US1 + US2 funcionan independientemente; flujos de autenticación existentes siguen verdes
 
@@ -98,10 +98,10 @@ description: 'Task list for 007-workspace-look-feel'
 
 ### Implementation for User Story 3
 
-- [X] T017 [P] [US3] Crear `resources/js/Components/AppShell/CommandPalette.vue`: estado `open` controlado por props/emits; lista `CommandAction` con acciones iniciales (Crear nueva tarea → navega a `projects.index`; Ir al Panel → `home`; Ir a Proyectos → `projects.index`); filtrado case-insensitive por `label` + `keywords`; teclado `↑`/`↓` seleccionan, `Enter` ejecuta `run()`, `ESC` cierra y devuelve foco; velo `bg-inverse-surface/20 backdrop-blur-sm`, tarjeta centrada `shadow-modal rounded-xl`, autofocus en el input (FR-009, contrato §3)
-- [X] T018 [P] [US3] Crear `resources/js/Components/AppShell/NotificationsPopover.vue`: popover anclado a la campana mostrando únicamente el estado vacío "Sin notificaciones" (sin lista, sin "marcar leídas", sin punto de no leídos) según FR-012 y contrato §3
-- [X] T019 [US3] Cablear atajos y paleta en `resources/js/Layouts/AuthenticatedLayout.vue`: listener global `⌘K`/`Ctrl+K` con `preventDefault` (abre/cierra), tecla `C` solo cuando el foco no está en input/textarea/contenteditable, botón "Nueva Tarea" del sidebar y trigger de búsqueda del topbar abren la paleta; el botón "Comandos rápidos" de `HomeCanvas.vue` abre la paleta (FR-009, FR-012)
-- [X] T020 [US3] Cablear la campana en `resources/js/Layouts/AuthenticatedLayout.vue`: clic abre `NotificationsPopover`, `aria-expanded`, cierre con clic fuera/`ESC`, exclusividad con el menú de perfil (FR-008)
+- [x] T017 [P] [US3] Crear `resources/js/Components/AppShell/CommandPalette.vue`: estado `open` controlado por props/emits; lista `CommandAction` con acciones iniciales (Crear nueva tarea → navega a `projects.index`; Ir al Panel → `home`; Ir a Proyectos → `projects.index`); filtrado case-insensitive por `label` + `keywords`; teclado `↑`/`↓` seleccionan, `Enter` ejecuta `run()`, `ESC` cierra y devuelve foco; velo `bg-inverse-surface/20 backdrop-blur-sm`, tarjeta centrada `shadow-modal rounded-xl`, autofocus en el input (FR-009, contrato §3)
+- [x] T018 [P] [US3] Crear `resources/js/Components/AppShell/NotificationsPopover.vue`: popover anclado a la campana mostrando únicamente el estado vacío "Sin notificaciones" (sin lista, sin "marcar leídas", sin punto de no leídos) según FR-012 y contrato §3
+- [x] T019 [US3] Cablear atajos y paleta en `resources/js/Layouts/AuthenticatedLayout.vue`: listener global `⌘K`/`Ctrl+K` con `preventDefault` (abre/cierra), tecla `C` solo cuando el foco no está en input/textarea/contenteditable, botón "Nueva Tarea" del sidebar y trigger de búsqueda del topbar abren la paleta; el botón "Comandos rápidos" de `HomeCanvas.vue` abre la paleta (FR-009, FR-012)
+- [x] T020 [US3] Cablear la campana en `resources/js/Layouts/AuthenticatedLayout.vue`: clic abre `NotificationsPopover`, `aria-expanded`, cierre con clic fuera/`ESC`, exclusividad con el menú de perfil (FR-008)
 
 **Checkpoint**: Las tres historias funcionan de forma independiente; el diseño de referencia queda completo en modo claro
 
@@ -111,11 +111,11 @@ description: 'Task list for 007-workspace-look-feel'
 
 **Purpose**: Calidad cruzada sobre las tres historias (SC-001–SC-006)
 
-- [X] T021 [P] Quality gates: `vendor/bin/pint --dirty --format agent`, `npm run types:check` y `npm run build` sin errores; el ordenamiento de clases Tailwind del formatter aplicado en los archivos tocados
-- [X] T022 [P] Pase de accesibilidad FR-007 sobre el shell: labels `aria-*` de regiones y botones, foco visible con anillo en todos los controles, contraste AA sobre `surface`/`surface-container-lowest`, cierre `ESC` en paleta/menús/drawer, y recorrido completo solo con teclado (documentar hallazgos en la PR)
-- [X] T023 [P] Pase responsive FR-006/SC-004: verificar 1280px (barra fija 256px), 800px (drawer con velo) y 375px/320px (un columnado, sin scroll horizontal ni superposición de regiones) con las herramientas de dispositivo del navegador; capturar evidencia
-- [X] T024 Validar `quickstart.md` completo (§1–§7) contra la implementación real y actualizar el archivo si algún paso difiere; verificar `browser-logs` de Boost sin errores de frontend durante el recorrido
-- [X] T025 `php artisan test --compact` completo en verde (incluye `ShellRenderingTest.php` y los 113 tests del baseline — SC-002) y commit final con los artefactos de la spec
+- [x] T021 [P] Quality gates: `vendor/bin/pint --dirty --format agent`, `npm run types:check` y `npm run build` sin errores; el ordenamiento de clases Tailwind del formatter aplicado en los archivos tocados
+- [x] T022 [P] Pase de accesibilidad FR-007 sobre el shell: labels `aria-*` de regiones y botones, foco visible con anillo en todos los controles, contraste AA sobre `surface`/`surface-container-lowest`, cierre `ESC` en paleta/menús/drawer, y recorrido completo solo con teclado (documentar hallazgos en la PR)
+- [x] T023 [P] Pase responsive FR-006/SC-004: verificar 1280px (barra fija 256px), 800px (drawer con velo) y 375px/320px (un columnado, sin scroll horizontal ni superposición de regiones) con las herramientas de dispositivo del navegador; capturar evidencia
+- [x] T024 Validar `quickstart.md` completo (§1–§7) contra la implementación real y actualizar el archivo si algún paso difiere; verificar `browser-logs` de Boost sin errores de frontend durante el recorrido
+- [x] T025 `php artisan test --compact` completo en verde (incluye `ShellRenderingTest.php` y los 113 tests del baseline — SC-002) y commit final con los artefactos de la spec
 
 ---
 
