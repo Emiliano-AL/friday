@@ -5,14 +5,22 @@ import Modal from '@/Components/Modal.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import { store as storeComment } from '@/routes/projects/tasks/comments';
 import { useForm } from '@inertiajs/vue3';
-import type { TaskItem } from './types';
+import { computed, ref, watch } from 'vue';
+import type { CommentItem, TaskItem } from './types';
 
-const props = defineProps<{
-    show: boolean;
-    task: TaskItem | null;
-    projectId: number;
-    canComment: boolean;
-}>();
+const props = withDefaults(
+    defineProps<{
+        show: boolean;
+        task: TaskItem | null;
+        projectId?: number;
+        canComment: boolean;
+        useGlobal?: boolean;
+        endpoints?: { show: string; store: string };
+    }>(),
+    {
+        useGlobal: false,
+    },
+);
 
 const emit = defineEmits(['close']);
 
@@ -20,12 +28,94 @@ const form = useForm({
     body: '',
 });
 
+const globalComments = ref<CommentItem[]>([]);
+const globalBody = ref('');
+const globalSubmitting = ref(false);
+
+const comments = computed<CommentItem[]>(() =>
+    props.useGlobal ? globalComments.value : (props.task?.comments ?? []),
+);
+
+const bodyModel = computed<string>({
+    get: () => (props.useGlobal ? globalBody.value : form.body),
+    set: (value: string) => {
+        if (props.useGlobal) {
+            globalBody.value = value;
+        } else {
+            form.body = value;
+        }
+    },
+});
+
+const isProcessing = computed(() =>
+    props.useGlobal ? globalSubmitting.value : form.processing,
+);
+
+const bodyError = computed(() =>
+    props.useGlobal ? undefined : form.errors.body,
+);
+
 const close = () => {
     emit('close');
 };
 
+watch(
+    () => props.show,
+    async (visible) => {
+        if (!visible || !props.useGlobal || !props.endpoints) {
+            return;
+        }
+
+        const response = await fetch(props.endpoints.show, {
+            headers: { Accept: 'application/json' },
+            credentials: 'same-origin',
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            globalComments.value = data.comments ?? [];
+        }
+    },
+);
+
+const submitGlobal = async () => {
+    if (!globalBody.value.trim() || !props.endpoints) {
+        return;
+    }
+
+    globalSubmitting.value = true;
+
+    try {
+        const response = await fetch(props.endpoints.store, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Accept: 'application/json',
+                'X-XSRF-TOKEN': decodeURIComponent(
+                    document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1] ?? '',
+                ),
+            },
+            body: JSON.stringify({ body: globalBody.value }),
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            globalComments.value = data.comments ?? globalComments.value;
+            globalBody.value = '';
+        }
+    } finally {
+        globalSubmitting.value = false;
+    }
+};
+
 const submit = () => {
-    if (!props.task) {
+    if (props.useGlobal) {
+        submitGlobal();
+
+        return;
+    }
+
+    if (!props.task || props.useGlobal || props.projectId === undefined) {
         return;
     }
 
@@ -45,7 +135,7 @@ const submit = () => {
 
             <ul class="mt-4 max-h-64 space-y-3 overflow-y-auto">
                 <li
-                    v-for="comment in task?.comments ?? []"
+                    v-for="comment in comments"
                     :key="comment.id"
                     class="text-sm"
                 >
@@ -57,10 +147,7 @@ const submit = () => {
                     </span>
                     <p class="text-gray-700">{{ comment.body }}</p>
                 </li>
-                <li
-                    v-if="!task || task.comments.length === 0"
-                    class="text-sm text-gray-500"
-                >
+                <li v-if="comments.length === 0" class="text-sm text-gray-500">
                     Sin comentarios todavía.
                 </li>
             </ul>
@@ -69,17 +156,17 @@ const submit = () => {
                 <InputLabel for="comment-body" value="Añadir comentario" />
                 <textarea
                     id="comment-body"
-                    v-model="form.body"
+                    v-model="bodyModel"
                     rows="3"
                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
                     required
                 ></textarea>
-                <InputError class="mt-2" :message="form.errors.body" />
+                <InputError class="mt-2" :message="bodyError" />
 
                 <div class="mt-3 flex justify-end">
                     <PrimaryButton
-                        :class="{ 'opacity-25': form.processing }"
-                        :disabled="form.processing"
+                        :class="{ 'opacity-25': isProcessing }"
+                        :disabled="isProcessing"
                     >
                         Comentar
                     </PrimaryButton>

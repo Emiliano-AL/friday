@@ -4,6 +4,7 @@ use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ProjectMemberController;
 use App\Http\Controllers\ProjectSprintController;
 use App\Http\Controllers\ProjectTaskController;
+use App\Http\Controllers\TaskController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -33,6 +34,14 @@ Route::middleware('auth')->group(function () {
         ->name('projects.tasks.destroy');
     Route::post('projects/{project}/tasks/{task}/comments', [ProjectTaskController::class, 'storeComment'])
         ->name('projects.tasks.comments.store');
+
+    Route::get('tasks', [TaskController::class, 'index'])->name('tasks.index');
+    Route::post('tasks', [TaskController::class, 'store'])->name('tasks.store');
+    Route::get('tasks/{task}', [TaskController::class, 'show'])->name('tasks.show');
+    Route::put('tasks/{task}', [TaskController::class, 'update'])->name('tasks.update');
+    Route::delete('tasks/{task}', [TaskController::class, 'destroy'])->name('tasks.destroy');
+    Route::post('tasks/{task}/comments', [TaskController::class, 'storeComment'])
+        ->name('tasks.comments.store');
 });
 
 require __DIR__.'/auth.php';

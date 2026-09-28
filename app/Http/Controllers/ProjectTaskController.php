@@ -45,7 +45,7 @@ class ProjectTaskController extends Controller
 
         $this->ensureProjectIsActive($project);
 
-        $this->authorize('update', [Task::class, $project]);
+        $this->authorize('update', $task);
 
         $task->update($request->validated());
 
@@ -84,7 +84,7 @@ class ProjectTaskController extends Controller
 
         $this->ensureProjectIsActive($project);
 
-        $this->authorize('delete', [Task::class, $project]);
+        $this->authorize('delete', $task);
 
         $task->delete();
 

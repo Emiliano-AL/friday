@@ -32,4 +32,15 @@ class TaskFactory extends Factory
             'status' => fake()->randomElement(TaskStatus::cases()),
         ];
     }
+
+    /**
+     * A standalone task that is not bound to any project.
+     */
+    public function standalone(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'project_id' => null,
+            'sprint_id' => null,
+        ]);
+    }
 }

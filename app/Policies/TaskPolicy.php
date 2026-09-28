@@ -3,6 +3,7 @@
 namespace App\Policies;
 
 use App\Models\Project;
+use App\Models\Task;
 use App\Models\User;
 
 class TaskPolicy
@@ -16,11 +17,15 @@ class TaskPolicy
     }
 
     /**
-     * Determine whether the user can view a task of the project.
+     * Determine whether the user can view a task (project member, or its assignee when standalone).
      */
-    public function view(User $user, Project $project): bool
+    public function view(User $user, Task $task): bool
     {
-        return $project->isMember($user);
+        if ($task->project === null) {
+            return $task->assignee_id === $user->id;
+        }
+
+        return $task->project->isMember($user);
     }
 
     /**
@@ -32,18 +37,26 @@ class TaskPolicy
     }
 
     /**
-     * Determine whether the user can update tasks of the project.
+     * Determine whether the user can update the task (project member on active projects, or its assignee when standalone).
      */
-    public function update(User $user, Project $project): bool
+    public function update(User $user, Task $task): bool
     {
-        return $project->isMember($user) && $project->status->isActive();
+        if ($task->project === null) {
+            return $task->assignee_id === $user->id;
+        }
+
+        return $task->project->isMember($user) && $task->project->status->isActive();
     }
 
     /**
-     * Determine whether the user can delete tasks of the project (owner only).
+     * Determine whether the user can delete the task (project owner on active projects, or its assignee when standalone).
      */
-    public function delete(User $user, Project $project): bool
+    public function delete(User $user, Task $task): bool
     {
-        return $project->isOwnedBy($user) && $project->status->isActive();
+        if ($task->project === null) {
+            return $task->assignee_id === $user->id;
+        }
+
+        return $task->project->isOwnedBy($user) && $task->project->status->isActive();
     }
 }
