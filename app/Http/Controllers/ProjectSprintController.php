@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\SprintStatus;
 use App\Http\Requests\StoreSprintRequest;
 use App\Http\Requests\UpdateSprintRequest;
 use App\Models\Project;
@@ -38,6 +39,8 @@ class ProjectSprintController extends Controller
 
         $this->ensureProjectIsActive($project);
 
+        $this->ensureSprintIsWritable($sprint);
+
         $this->authorize('update', [Sprint::class, $project]);
 
         $sprint->update($request->validated());
@@ -56,6 +59,8 @@ class ProjectSprintController extends Controller
 
         $this->ensureProjectIsActive($project);
 
+        $this->ensureSprintIsWritable($sprint);
+
         $this->authorize('delete', [Sprint::class, $project]);
 
         $sprint->delete();
@@ -71,6 +76,18 @@ class ProjectSprintController extends Controller
         if (! $project->status->isActive()) {
             back()->withErrors([
                 'project' => 'El proyecto no admite cambios en su estado actual.',
+            ])->throwResponse();
+        }
+    }
+
+    /**
+     * Block writes on a completed sprint, with a clear message.
+     */
+    private function ensureSprintIsWritable(Sprint $sprint): void
+    {
+        if ($sprint->status === SprintStatus::Completed) {
+            back()->withErrors([
+                'sprint' => 'El sprint ya está completado y es de solo lectura.',
             ])->throwResponse();
         }
     }

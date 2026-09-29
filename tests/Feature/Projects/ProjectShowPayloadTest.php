@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\SprintStatus;
 use App\Enums\TaskStatus;
 use App\Models\Project;
 use App\Models\Sprint;
@@ -19,6 +20,7 @@ test('show payload exposes the active sprint', function () {
         'name' => 'Sprint 14',
         'start_date' => '2026-09-20',
         'end_date' => '2026-10-04',
+        'status' => SprintStatus::Active,
     ]);
     Sprint::factory()->for($project)->create([
         'name' => 'Sprint 15',

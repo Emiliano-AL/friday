@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\ProjectStatus;
+use App\Enums\SprintStatus;
 use App\Enums\TaskStatus;
 use Database\Factories\ProjectFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -102,18 +103,17 @@ class Project extends Model
     }
 
     /**
-     * Get the sprint currently considered active for display purposes.
+     * Get the sprint currently active for the project.
      *
-     * Display-only derivation (the domain has no sprint status yet): the
-     * sprint with the greatest start_date whose start_date is today or
-     * earlier. Overdue sprints remain active until the team closes them.
+     * Status-based derivation: the sprint whose lifecycle status is active,
+     * most recent by start_date when more than one is active.
      *
      * @return HasOne<Sprint, $this>
      */
     public function activeSprint(): HasOne
     {
         return $this->hasOne(Sprint::class)
-            ->where('start_date', '<=', now()->toDateString())
+            ->where('status', SprintStatus::Active)
             ->orderByDesc('start_date');
     }
 

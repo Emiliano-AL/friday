@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\ProjectStatus;
+use App\Enums\SprintStatus;
 use App\Enums\TaskStatus;
 use App\Models\Project;
 use App\Models\Sprint;
@@ -29,6 +30,7 @@ test('directory payload exposes the full DirectoryProject shape', function () {
         'name' => 'Sprint 14',
         'start_date' => '2026-09-20',
         'end_date' => '2026-10-04',
+        'status' => SprintStatus::Active,
     ]);
 
     $this->actingAs($user)

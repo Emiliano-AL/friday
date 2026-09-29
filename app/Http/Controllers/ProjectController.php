@@ -55,6 +55,9 @@ class ProjectController extends Controller
                     'name' => $project->activeSprint->name,
                     'startDate' => $project->activeSprint->start_date->toDateString(),
                     'endDate' => $project->activeSprint->end_date->toDateString(),
+                    'status' => $project->activeSprint->status->value,
+                    'statusLabel' => $project->activeSprint->status->label(),
+                    'goal' => $project->activeSprint->goal,
                 ],
                 'owner' => [
                     'id' => $project->owner->id,
@@ -228,6 +231,9 @@ class ProjectController extends Controller
                 'name' => $project->activeSprint->name,
                 'startDate' => $project->activeSprint->start_date->toDateString(),
                 'endDate' => $project->activeSprint->end_date->toDateString(),
+                'status' => $project->activeSprint->status->value,
+                'statusLabel' => $project->activeSprint->status->label(),
+                'goal' => $project->activeSprint->goal,
             ],
             'owner' => [
                 'id' => $project->owner->id,
@@ -246,6 +252,9 @@ class ProjectController extends Controller
                 'name' => $sprint->name,
                 'startDate' => $sprint->start_date->toDateString(),
                 'endDate' => $sprint->end_date->toDateString(),
+                'status' => $sprint->status->value,
+                'statusLabel' => $sprint->status->label(),
+                'goal' => $sprint->goal,
             ])->values(),
             'tasks' => $project->tasks->map(fn (Task $task) => [
                 'id' => $task->id,
