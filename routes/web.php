@@ -22,10 +22,16 @@ Route::middleware('auth')->group(function () {
         ->name('projects.members.destroy');
     Route::post('projects/{project}/sprints', [ProjectSprintController::class, 'store'])
         ->name('projects.sprints.store');
+    Route::get('projects/{project}/sprints/{sprint}', [ProjectSprintController::class, 'show'])
+        ->name('projects.sprints.show');
     Route::put('projects/{project}/sprints/{sprint}', [ProjectSprintController::class, 'update'])
         ->name('projects.sprints.update');
     Route::delete('projects/{project}/sprints/{sprint}', [ProjectSprintController::class, 'destroy'])
         ->name('projects.sprints.destroy');
+    Route::post('projects/{project}/sprints/{sprint}/start', [ProjectSprintController::class, 'start'])
+        ->name('projects.sprints.start');
+    Route::post('projects/{project}/sprints/{sprint}/complete', [ProjectSprintController::class, 'complete'])
+        ->name('projects.sprints.complete');
     Route::post('projects/{project}/tasks', [ProjectTaskController::class, 'store'])
         ->name('projects.tasks.store');
     Route::put('projects/{project}/tasks/{task}', [ProjectTaskController::class, 'update'])

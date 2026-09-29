@@ -2,7 +2,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
-import Modal from '@/Components/Modal.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import AppIcon from '@/Components/AppShell/AppIcon.vue';
@@ -17,9 +16,8 @@ import {
     destroy as destroyMember,
 } from '@/routes/projects/members';
 import {
-    store as storeSprint,
-    update as updateSprint,
     destroy as destroySprint,
+    show as showSprint,
 } from '@/routes/projects/sprints';
 import {
     store as storeTask,
@@ -30,6 +28,7 @@ import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
 import { computed, onMounted, ref } from 'vue';
 import BacklogView from '@/Components/Tasks/BacklogView.vue';
 import KanbanBoard from '@/Components/Tasks/KanbanBoard.vue';
+import SprintFormModal from '@/Components/Sprints/SprintFormModal.vue';
 import TaskCommentsModal from '@/Components/Tasks/TaskCommentsModal.vue';
 import TaskList from '@/Components/Tasks/TaskList.vue';
 import TaskModal from '@/Components/Tasks/TaskModal.vue';
@@ -145,42 +144,17 @@ const memberForm = useForm({
     email: '',
 });
 
-const sprintForm = useForm({
-    name: '',
-    start_date: '',
-    end_date: '',
-});
+const sprintModalOpen = ref(false);
+const sprintModalSprint = ref<SprintSummary | null>(null);
 
-const editingSprint = ref<SprintSummary | null>(null);
-
-const sprintEditForm = useForm({
-    name: '',
-    start_date: '',
-    end_date: '',
-});
+const openSprintCreate = () => {
+    sprintModalSprint.value = null;
+    sprintModalOpen.value = true;
+};
 
 const openSprintEdit = (sprint: SprintSummary) => {
-    sprintEditForm.name = sprint.name;
-    sprintEditForm.start_date = sprint.startDate;
-    sprintEditForm.end_date = sprint.endDate;
-    editingSprint.value = sprint;
-};
-
-const closeSprintEdit = () => {
-    editingSprint.value = null;
-    sprintEditForm.reset();
-    sprintEditForm.clearErrors();
-};
-
-const submitSprintEdit = (projectId: number) => {
-    if (!editingSprint.value) {
-        return;
-    }
-
-    sprintEditForm.put(updateSprint.url([projectId, editingSprint.value.id]), {
-        onSuccess: closeSprintEdit,
-        preserveScroll: true,
-    });
+    sprintModalSprint.value = sprint;
+    sprintModalOpen.value = true;
 };
 
 const transitionLabels: Record<string, string> = {
@@ -203,13 +177,6 @@ const statusTone = computed<'primary' | 'tertiary' | 'outline'>(() => {
 const submitMember = (projectId: number) => {
     memberForm.post(storeMember.url(projectId), {
         onSuccess: () => memberForm.reset('email'),
-        preserveScroll: true,
-    });
-};
-
-const submitSprint = (projectId: number) => {
-    sprintForm.post(storeSprint.url(projectId), {
-        onSuccess: () => sprintForm.reset('name', 'start_date', 'end_date'),
         preserveScroll: true,
     });
 };
@@ -802,15 +769,38 @@ onMounted(() => {
                             class="gap-space-sm flex items-center justify-between"
                         >
                             <span
-                                class="text-body-sm font-body-sm text-on-surface"
+                                class="text-body-sm font-body-sm text-on-surface flex min-w-0 items-center gap-2"
                             >
-                                {{ sprint.name }}
-                                <span class="text-on-surface-variant">
+                                <a
+                                    :href="
+                                        showSprint.url([project.id, sprint.id])
+                                    "
+                                    class="text-primary truncate font-medium hover:underline"
+                                >
+                                    {{ sprint.name }}
+                                </a>
+                                <UiBadge
+                                    :label="sprint.statusLabel"
+                                    :tone="
+                                        sprint.status === 'active'
+                                            ? 'primary'
+                                            : sprint.status === 'completed'
+                                              ? 'outline'
+                                              : 'neutral'
+                                    "
+                                />
+                                <span class="text-on-surface-variant truncate">
                                     ({{ sprint.startDate }} —
                                     {{ sprint.endDate }})
                                 </span>
                             </span>
-                            <span v-if="canWriteSprints" class="flex gap-3">
+                            <span
+                                v-if="
+                                    canWriteSprints &&
+                                    sprint.status !== 'completed'
+                                "
+                                class="flex shrink-0 gap-3"
+                            >
                                 <button
                                     type="button"
                                     class="text-label-xs font-label-xs text-on-surface-variant hover:text-on-surface hover:underline"
@@ -837,62 +827,15 @@ onMounted(() => {
                         </li>
                     </ul>
 
-                    <form
+                    <button
                         v-if="canWriteSprints"
-                        class="gap-space-sm mt-2 flex max-w-xl flex-wrap items-end"
-                        @submit.prevent="submitSprint(project.id)"
+                        type="button"
+                        class="bg-primary-container hover:bg-primary mt-2 flex w-fit items-center gap-1.5 self-start rounded-lg px-3 py-2 text-white shadow-md transition-colors"
+                        @click="openSprintCreate"
                     >
-                        <div class="min-w-40 flex-1">
-                            <InputLabel for="sprint-name" value="Nombre" />
-                            <TextInput
-                                id="sprint-name"
-                                type="text"
-                                class="mt-1 block w-full"
-                                v-model="sprintForm.name"
-                                required
-                            />
-                            <InputError
-                                class="mt-2"
-                                :message="sprintForm.errors.name"
-                            />
-                        </div>
-                        <div>
-                            <InputLabel for="sprint-start" value="Inicio" />
-                            <TextInput
-                                id="sprint-start"
-                                type="date"
-                                class="mt-1 block w-full"
-                                v-model="sprintForm.start_date"
-                                required
-                            />
-                            <InputError
-                                class="mt-2"
-                                :message="sprintForm.errors.start_date"
-                            />
-                        </div>
-                        <div>
-                            <InputLabel for="sprint-end" value="Fin" />
-                            <TextInput
-                                id="sprint-end"
-                                type="date"
-                                class="mt-1 block w-full"
-                                v-model="sprintForm.end_date"
-                                required
-                            />
-                            <InputError
-                                class="mt-2"
-                                :message="sprintForm.errors.end_date"
-                            />
-                        </div>
-                        <PrimaryButton
-                            :class="{
-                                'opacity-25': sprintForm.processing,
-                            }"
-                            :disabled="sprintForm.processing"
-                        >
-                            Añadir
-                        </PrimaryButton>
-                    </form>
+                        <AppIcon name="add" :size="15" />
+                        Planificar un sprint
+                    </button>
                 </section>
 
                 <section
@@ -1111,82 +1054,12 @@ onMounted(() => {
                 </section>
             </div>
 
-            <Modal :show="editingSprint !== null" @close="closeSprintEdit">
-                <div class="p-6">
-                    <h2 class="text-lg font-medium text-gray-900">
-                        Editar sprint
-                    </h2>
-
-                    <form
-                        class="mt-4 space-y-4"
-                        @submit.prevent="submitSprintEdit(project.id)"
-                    >
-                        <div>
-                            <InputLabel for="edit-sprint-name" value="Nombre" />
-                            <TextInput
-                                id="edit-sprint-name"
-                                type="text"
-                                class="mt-1 block w-full"
-                                v-model="sprintEditForm.name"
-                                required
-                            />
-                            <InputError
-                                class="mt-2"
-                                :message="sprintEditForm.errors.name"
-                            />
-                        </div>
-                        <div>
-                            <InputLabel
-                                for="edit-sprint-start"
-                                value="Inicio"
-                            />
-                            <TextInput
-                                id="edit-sprint-start"
-                                type="date"
-                                class="mt-1 block w-full"
-                                v-model="sprintEditForm.start_date"
-                                required
-                            />
-                            <InputError
-                                class="mt-2"
-                                :message="sprintEditForm.errors.start_date"
-                            />
-                        </div>
-                        <div>
-                            <InputLabel for="edit-sprint-end" value="Fin" />
-                            <TextInput
-                                id="edit-sprint-end"
-                                type="date"
-                                class="mt-1 block w-full"
-                                v-model="sprintEditForm.end_date"
-                                required
-                            />
-                            <InputError
-                                class="mt-2"
-                                :message="sprintEditForm.errors.end_date"
-                            />
-                        </div>
-
-                        <div class="flex justify-end gap-2">
-                            <button
-                                type="button"
-                                class="text-label-sm font-label-sm text-on-surface-variant hover:bg-surface-container hover:text-on-surface rounded-lg px-4 py-1.5 transition-colors"
-                                @click="closeSprintEdit"
-                            >
-                                Cancelar
-                            </button>
-                            <PrimaryButton
-                                :class="{
-                                    'opacity-25': sprintEditForm.processing,
-                                }"
-                                :disabled="sprintEditForm.processing"
-                            >
-                                Guardar
-                            </PrimaryButton>
-                        </div>
-                    </form>
-                </div>
-            </Modal>
+            <SprintFormModal
+                :open="sprintModalOpen"
+                :project="{ id: project.id, title: project.title }"
+                :sprint="sprintModalSprint ?? undefined"
+                @close="sprintModalOpen = false"
+            />
 
             <TaskModal
                 :show="editingTask !== null"

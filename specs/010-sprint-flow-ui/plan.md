@@ -42,13 +42,13 @@ existe en los datos.
 
 _GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 
-| Principle | Verdict | Notes |
-| --- | --- | --- |
-| I. Monolith-First con Inertia | ✅ PASS | Página nueva vía `Inertia::render`; transiciones como rutas web con redirect+flash; cero API desacoplada. |
-| II. Alineación Ecosistema | ✅ PASS | `artisan make:*`, form requests, policy, enum; **sin dependencias nuevas** (Composer/npm). |
-| III. Test-First con Pest | ✅ PASS | Tests de feature planeados para ciclo de vida, objetivo, detalle (métricas reales) y permisos; suite completo en verde antes de cerrar. |
-| IV. Tipado Estricto y Enums | ✅ PASS | `SprintStatus` enum PHP (valores `planned/active/completed`, coherentes con `ProjectStatus`/`TaskStatus`); tipos TS para props (reuso de `BoardTask`). |
-| V. Simplicidad y YAGNI | ✅ PASS | Alcance = spec: sin puntos/burndown/velocity (quedan "Próximamente"), sin vista transversal de sprints, sin diálogo nuevo de tarea. Campos `goal`/`status` son FR-006/FR-007, no oro de ingeniería. |
+| Principle                     | Verdict | Notes                                                                                                                                                                                               |
+| ----------------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| I. Monolith-First con Inertia | ✅ PASS | Página nueva vía `Inertia::render`; transiciones como rutas web con redirect+flash; cero API desacoplada.                                                                                           |
+| II. Alineación Ecosistema     | ✅ PASS | `artisan make:*`, form requests, policy, enum; **sin dependencias nuevas** (Composer/npm).                                                                                                          |
+| III. Test-First con Pest      | ✅ PASS | Tests de feature planeados para ciclo de vida, objetivo, detalle (métricas reales) y permisos; suite completo en verde antes de cerrar.                                                             |
+| IV. Tipado Estricto y Enums   | ✅ PASS | `SprintStatus` enum PHP (valores `planned/active/completed`, coherentes con `ProjectStatus`/`TaskStatus`); tipos TS para props (reuso de `BoardTask`).                                              |
+| V. Simplicidad y YAGNI        | ✅ PASS | Alcance = spec: sin puntos/burndown/velocity (quedan "Próximamente"), sin vista transversal de sprints, sin diálogo nuevo de tarea. Campos `goal`/`status` son FR-006/FR-007, no oro de ingeniería. |
 
 _Post-design re-check (Phase 1): sin desviaciones introducidas._
 

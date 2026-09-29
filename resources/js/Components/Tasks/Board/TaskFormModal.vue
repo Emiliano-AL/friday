@@ -20,6 +20,8 @@ const props = defineProps<{
     projects: TaskProjectOption[];
     currentUser: { id: number; name: string; avatar: string | null };
     initialStatus?: Exclude<TaskStatusValue, 'backlog' | 'done'>;
+    initialProject?: { id: number; title: string } | null;
+    initialSprint?: { id: number; name: string } | null;
 }>();
 
 const emit = defineEmits<{
@@ -80,8 +82,9 @@ function resetForm(): void {
         props.mode === 'edit'
             ? (props.task?.status ?? 'todo')
             : (props.initialStatus ?? 'todo');
-    form.project_id = props.task?.project?.id ?? null;
-    form.sprint_id = props.task?.sprint?.id ?? null;
+    form.project_id =
+        props.task?.project?.id ?? props.initialProject?.id ?? null;
+    form.sprint_id = props.task?.sprint?.id ?? props.initialSprint?.id ?? null;
     form.assignee_id =
         props.mode === 'edit'
             ? (props.task?.assignee?.id ?? null)
@@ -404,7 +407,8 @@ const priorityOptions: {
                         <select
                             id="task-project"
                             v-model="form.project_id"
-                            class="text-body-sm font-body-sm border-outline-variant/40 bg-surface-container-lowest text-on-surface focus:ring-primary h-9 w-full cursor-pointer appearance-none rounded-lg border px-3 pr-8 shadow-xs focus:ring-2 focus:outline-none"
+                            :disabled="initialProject !== null"
+                            class="text-body-sm font-body-sm border-outline-variant/40 bg-surface-container-lowest text-on-surface focus:ring-primary h-9 w-full cursor-pointer appearance-none rounded-lg border px-3 pr-8 shadow-xs focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
                             @change="onProjectChange"
                         >
                             <option :value="null">

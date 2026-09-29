@@ -1,10 +1,14 @@
 import type { TaskItem } from '@/Components/Tasks/types';
+import type { SprintStatusValue } from '@/types/sprint';
 
 export interface ActiveSprint {
     id: number;
     name: string;
     startDate: string;
     endDate: string;
+    status: SprintStatusValue;
+    statusLabel: string;
+    goal: string | null;
 }
 
 export interface SprintSummary {
@@ -12,6 +16,9 @@ export interface SprintSummary {
     name: string;
     startDate: string;
     endDate: string;
+    status: SprintStatusValue;
+    statusLabel: string;
+    goal: string | null;
 }
 
 export interface ProjectMember {

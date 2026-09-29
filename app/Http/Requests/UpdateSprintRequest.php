@@ -24,6 +24,7 @@ class UpdateSprintRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
+            'goal' => ['nullable', 'string', 'max:1000'],
             'start_date' => ['required', 'date'],
             'end_date' => ['required', 'date', 'after_or_equal:start_date'],
         ];
@@ -36,6 +37,7 @@ class UpdateSprintRequest extends FormRequest
     {
         return [
             'name.required' => 'El nombre del sprint es obligatorio.',
+            'goal.max' => 'El objetivo no puede superar los 1000 caracteres.',
             'start_date.required' => 'La fecha de inicio es obligatoria.',
             'start_date.date' => 'La fecha de inicio no es válida.',
             'end_date.required' => 'La fecha de fin es obligatoria.',

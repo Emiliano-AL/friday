@@ -5,9 +5,11 @@ namespace App\Models;
 use App\Enums\SprintStatus;
 use Database\Factories\SprintFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\ValidationException;
 
@@ -21,6 +23,7 @@ use Illuminate\Validation\ValidationException;
  * @property Carbon $end_date
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
+ * @property-read Collection<int, Task> $tasks
  * @property-read Project $project
  */
 #[Fillable(['project_id', 'name', 'goal', 'status', 'start_date', 'end_date'])]
@@ -74,6 +77,16 @@ class Sprint extends Model
         }
 
         $this->update(['status' => SprintStatus::Completed]);
+    }
+
+    /**
+     * Get the tasks bound to this sprint.
+     *
+     * @return HasMany<Task, $this>
+     */
+    public function tasks(): HasMany
+    {
+        return $this->hasMany(Task::class);
     }
 
     /**

@@ -6,26 +6,26 @@
 
 Periodo de trabajo de un proyecto. **Cambios de esta feature** marcados con ➕.
 
-| Campo | Tipo | Reglas |
-| --- | --- | --- |
-| `id` | int | PK autoincremental (existente) |
-| `project_id` | int | FK obligatoria a `projects` (existente) |
-| `name` | string(255) | obligatorio, máx. 255 (existente) |
-| `start_date` | date | obligatoria (existente) |
-| `end_date` | date | obligatoria; **no puede ser anterior a `start_date`** (existente) |
-| `goal` ➕ | text, nullable | opcional; máx. 1000 caracteres; texto libre corto |
-| `status` ➕ | enum `SprintStatus` | `planned` por defecto; ver máquina de estados |
-| timestamps | datetime | existentes |
+| Campo        | Tipo                | Reglas                                                            |
+| ------------ | ------------------- | ----------------------------------------------------------------- |
+| `id`         | int                 | PK autoincremental (existente)                                    |
+| `project_id` | int                 | FK obligatoria a `projects` (existente)                           |
+| `name`       | string(255)         | obligatorio, máx. 255 (existente)                                 |
+| `start_date` | date                | obligatoria (existente)                                           |
+| `end_date`   | date                | obligatoria; **no puede ser anterior a `start_date`** (existente) |
+| `goal` ➕    | text, nullable      | opcional; máx. 1000 caracteres; texto libre corto                 |
+| `status` ➕  | enum `SprintStatus` | `planned` por defecto; ver máquina de estados                     |
+| timestamps   | datetime            | existentes                                                        |
 
 **Relaciones**: `belongsTo(Project)`; `hasMany(Task)` (existente, `tasks.sprint_id`).
 
 ### SprintStatus (enum nuevo)
 
-| Caso | Valor | Label UI | Color chip (referencia) |
-| --- | --- | --- | --- |
-| `Planned` | `planned` | Planificado | neutral/outline |
-| `Active` | `active` | Activo | primary |
-| `Completed` | `completed` | Completado | outline/success (verde sobrio del sistema) |
+| Caso        | Valor       | Label UI    | Color chip (referencia)                    |
+| ----------- | ----------- | ----------- | ------------------------------------------ |
+| `Planned`   | `planned`   | Planificado | neutral/outline                            |
+| `Active`    | `active`    | Activo      | primary                                    |
+| `Completed` | `completed` | Completado  | outline/success (verde sobrio del sistema) |
 
 **Máquina de estados (solo hacia adelante)**:
 

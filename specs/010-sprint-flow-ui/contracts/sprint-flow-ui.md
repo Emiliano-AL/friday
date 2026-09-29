@@ -6,14 +6,14 @@ Formato: rutas + shapes de props. Convenciones del proyecto: Wayfinder
 
 ## 1. Rutas
 
-| Método | Ruta | Nombre | Acceso | Respuesta |
-| --- | --- | --- | --- | --- |
-| GET | `projects/{project}/sprints/{sprint}` | `projects.sprints.show` | miembro del proyecto (no miembro → 404) | página `Sprints/Show` |
-| POST | `projects/{project}/sprints` | `projects.sprints.store` | propietario + proyecto activo | redirect `projects.show` + flash |
-| PUT | `projects/{project}/sprints/{sprint}` | `projects.sprints.update` | propietario + proyecto activo + sprint no completado | redirect back + flash |
-| DELETE | `projects/{project}/sprints/{sprint}` | `projects.sprints.destroy` | propietario + proyecto activo + sprint no completado | redirect `projects.show` + flash |
-| POST | `projects/{project}/sprints/{sprint}/start` | `projects.sprints.start` | propietario + proyecto activo + sprint `planned` | redirect back + flash |
-| POST | `projects/{project}/sprints/{sprint}/complete` | `projects.sprints.complete` | propietario + proyecto activo + sprint `active` | redirect back + flash |
+| Método | Ruta                                           | Nombre                      | Acceso                                               | Respuesta                        |
+| ------ | ---------------------------------------------- | --------------------------- | ---------------------------------------------------- | -------------------------------- |
+| GET    | `projects/{project}/sprints/{sprint}`          | `projects.sprints.show`     | miembro del proyecto (no miembro → 404)              | página `Sprints/Show`            |
+| POST   | `projects/{project}/sprints`                   | `projects.sprints.store`    | propietario + proyecto activo                        | redirect `projects.show` + flash |
+| PUT    | `projects/{project}/sprints/{sprint}`          | `projects.sprints.update`   | propietario + proyecto activo + sprint no completado | redirect back + flash            |
+| DELETE | `projects/{project}/sprints/{sprint}`          | `projects.sprints.destroy`  | propietario + proyecto activo + sprint no completado | redirect `projects.show` + flash |
+| POST   | `projects/{project}/sprints/{sprint}/start`    | `projects.sprints.start`    | propietario + proyecto activo + sprint `planned`     | redirect back + flash            |
+| POST   | `projects/{project}/sprints/{sprint}/complete` | `projects.sprints.complete` | propietario + proyecto activo + sprint `active`      | redirect back + flash            |
 
 Errores de transición/validación: mensaje en español claro (p. ej. "El sprint ya
 está completado y es de solo lectura.", "Solo el propietario puede gestionar los
@@ -53,6 +53,7 @@ interface SprintMetrics {
 
 interface SprintTaskContext {
     project: { id: number; title: string };
+    members: Array<{ id: number; name: string; avatar: string | null }>; // miembros (select de responsable)
     sprints: Array<{ id: number; name: string }>; // sprints del proyecto (para el select del modal)
 }
 
@@ -84,9 +85,9 @@ interface SprintSummary {
     name: string;
     startDate: string;
     endDate: string;
-    status: SprintStatusValue;    // NUEVO
-    statusLabel: string;          // NUEVO
-    goal: string | null;          // NUEVO
+    status: SprintStatusValue; // NUEVO
+    statusLabel: string; // NUEVO
+    goal: string | null; // NUEVO
 }
 ```
 
