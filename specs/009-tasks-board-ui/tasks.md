@@ -27,7 +27,7 @@ description: 'Task list for feature implementation'
 
 **Purpose**: Tipos compartidos por todas las historias
 
-- [X] T001 [P] Crear `resources/js/types/task.ts` con `BoardTask` (id, title, description: string|null, type/typeLabel, priority/priorityLabel, status/statusLabel, project: {id,title}|null, sprint: {id,name}|null, assignee: {id,name,avatar}|null, commentsCount: number), `TasksTab` ('all'|'mine'|'standalone'|'urgent'|'done'), `TasksView` ('list'|'kanban') y el tipo de props de `Tasks/Index` (tasks: BoardTask[], projects: {id,title}[])
+- [x] T001 [P] Crear `resources/js/types/task.ts` con `BoardTask` (id, title, description: string|null, type/typeLabel, priority/priorityLabel, status/statusLabel, project: {id,title}|null, sprint: {id,name}|null, assignee: {id,name,avatar}|null, commentsCount: number), `TasksTab` ('all'|'mine'|'standalone'|'urgent'|'done'), `TasksView` ('list'|'kanban') y el tipo de props de `Tasks/Index` (tasks: BoardTask[], projects: {id,title}[])
 
 ---
 
@@ -37,12 +37,12 @@ description: 'Task list for feature implementation'
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [X] T002 [P] Crear `tests/Feature/Tasks/TaskStandaloneTest.php` (RED): crear tarea sin proyecto (`project_id` ausente/null) queda en DB con `project_id null`; sin proyecto el `assignee_id` debe ser el propio usuario (otro usuario → error) y `sprint_id` está prohibido; con proyecto se siguen exigiendo miembro/mismo-sprint (regresión); el responsable puede actualizar y eliminar su tarea huérfana; un tercero recibe 403/404
-- [X] T003 [P] Crear `tests/Feature/Tasks/TaskGlobalRoutesTest.php` (RED): rutas globales `GET/POST /tasks`, `PUT/DELETE /tasks/{task}`, `GET /tasks/{task}` (JSON con comments ordenados) y `POST /tasks/{task}/comments` responden; actualización parcial con solo `{status}` funciona; autorización según policy (miembro/owner con proyecto, responsable sin proyecto)
-- [X] T004 Crear migración `database/migrations/2026_09_26_000000_make_tasks_project_id_nullable.php` con `php artisan make:migration --no-interaction` (`$table->foreignId('project_id')->nullable()->change()`), actualizar PHPDoc/fillable de `app/Models/Task.php` (`int|null $project_id`) y añadir estado `standalone()` a `database/factories/TaskFactory.php` (GREEN de la parte de persistencia de T002)
-- [X] T005 Re-anclar `app/Policies/TaskPolicy.php` a firmas `(User, Task)`: con proyecto conserva reglas actuales (miembro + activo; delete = owner + activo); sin proyecto update/delete = `task.assignee_id === user.id`; actualizar los call sites en `app/Http/Controllers/ProjectTaskController.php` para pasar la tarea (mismo comportamiento); crear `app/Http/Requests/SaveTaskRequest.php` según data-model.md: store con `title` required max:255, `project_id` nullable exists + validación condicional (con proyecto: assignee miembro / sprint mismo proyecto; sin proyecto: assignee = usuario actual, sprint `prohibited`); update con todas las reglas `sometimes` (GREEN de T002)
-- [X] T006 Añadir rutas globales en `routes/web.php` (`Route::prefix('tasks')` + `tasks.index/store/show/update/destroy/comments.store`) y crear `app/Http/Controllers/TaskController.php` con: `index` (query de visibilidad: assignee = yo, o proyecto mío/miembro; `with` project/sprint/assignee + `withCount comments`; render `Tasks/Index`), `store`/`update` (SaveTaskRequest, `back()` con flash; update acepta parcial), `destroy` (redirect `tasks.index` + flash), `show` (JSON task + comments), `storeComment` (JSON actualizado); autorización vía policy re-anclada (GREEN de T003, depende T004/T005)
-- [X] T007 [P] Extender `resources/js/Components/Tasks/TaskCommentsModal.vue` con props opcionales `useGlobal?: boolean` (cuando es true: al abrir hace fetch/visita JSON `tasks.show` para cargar comentarios y postea a `tasks.comments.store`; cuando es false/oMITido conserva el comportamiento anidado actual para Show)
+- [x] T002 [P] Crear `tests/Feature/Tasks/TaskStandaloneTest.php` (RED): crear tarea sin proyecto (`project_id` ausente/null) queda en DB con `project_id null`; sin proyecto el `assignee_id` debe ser el propio usuario (otro usuario → error) y `sprint_id` está prohibido; con proyecto se siguen exigiendo miembro/mismo-sprint (regresión); el responsable puede actualizar y eliminar su tarea huérfana; un tercero recibe 403/404
+- [x] T003 [P] Crear `tests/Feature/Tasks/TaskGlobalRoutesTest.php` (RED): rutas globales `GET/POST /tasks`, `PUT/DELETE /tasks/{task}`, `GET /tasks/{task}` (JSON con comments ordenados) y `POST /tasks/{task}/comments` responden; actualización parcial con solo `{status}` funciona; autorización según policy (miembro/owner con proyecto, responsable sin proyecto)
+- [x] T004 Crear migración `database/migrations/2026_09_26_000000_make_tasks_project_id_nullable.php` con `php artisan make:migration --no-interaction` (`$table->foreignId('project_id')->nullable()->change()`), actualizar PHPDoc/fillable de `app/Models/Task.php` (`int|null $project_id`) y añadir estado `standalone()` a `database/factories/TaskFactory.php` (GREEN de la parte de persistencia de T002)
+- [x] T005 Re-anclar `app/Policies/TaskPolicy.php` a firmas `(User, Task)`: con proyecto conserva reglas actuales (miembro + activo; delete = owner + activo); sin proyecto update/delete = `task.assignee_id === user.id`; actualizar los call sites en `app/Http/Controllers/ProjectTaskController.php` para pasar la tarea (mismo comportamiento); crear `app/Http/Requests/SaveTaskRequest.php` según data-model.md: store con `title` required max:255, `project_id` nullable exists + validación condicional (con proyecto: assignee miembro / sprint mismo proyecto; sin proyecto: assignee = usuario actual, sprint `prohibited`); update con todas las reglas `sometimes` (GREEN de T002)
+- [x] T006 Añadir rutas globales en `routes/web.php` (`Route::prefix('tasks')` + `tasks.index/store/show/update/destroy/comments.store`) y crear `app/Http/Controllers/TaskController.php` con: `index` (query de visibilidad: assignee = yo, o proyecto mío/miembro; `with` project/sprint/assignee + `withCount comments`; render `Tasks/Index`), `store`/`update` (SaveTaskRequest, `back()` con flash; update acepta parcial), `destroy` (redirect `tasks.index` + flash), `show` (JSON task + comments), `storeComment` (JSON actualizado); autorización vía policy re-anclada (GREEN de T003, depende T004/T005)
+- [x] T007 [P] Extender `resources/js/Components/Tasks/TaskCommentsModal.vue` con props opcionales `useGlobal?: boolean` (cuando es true: al abrir hace fetch/visita JSON `tasks.show` para cargar comentarios y postea a `tasks.comments.store`; cuando es false/oMITido conserva el comportamiento anidado actual para Show)
 
 **Checkpoint**: dominio + rutas globales verdes; Mis Tareas ya puede construirse
 
@@ -56,17 +56,17 @@ description: 'Task list for feature implementation'
 
 ### Tests for User Story 1 ⚠️
 
-- [X] T008 [US1] Crear `tests/Feature/Tasks/TasksPageTest.php` (RED): `GET /tasks` renderiza `Tasks/Index` con `tasks` en shape `BoardTask` (project `null` para huérfanas, `commentsCount` numérico, assignee con `avatar`) y `projects` del usuario; el alcance incluye tareas asignadas, de proyectos propios y de proyectos miembro, y excluye tareas de proyectos ajenos y huérfanas ajenas; orden `updated_at` desc
+- [x] T008 [US1] Crear `tests/Feature/Tasks/TasksPageTest.php` (RED): `GET /tasks` renderiza `Tasks/Index` con `tasks` en shape `BoardTask` (project `null` para huérfanas, `commentsCount` numérico, assignee con `avatar`) y `projects` del usuario; el alcance incluye tareas asignadas, de proyectos propios y de proyectos miembro, y excluye tareas de proyectos ajenos y huérfanas ajenas; orden `updated_at` desc
 
 ### Implementation for User Story 1
 
-- [X] T009 [US1] Implementar el payload de `TaskController::index` en `app/Http/Controllers/TaskController.php` (GREEN, depende T006/T008): mapeo `BoardTask` con labels de enums, `project`/`sprint`/`assignee` (con avatar) y `commentsCount` de `withCount`
-- [X] T010 [P] [US1] Crear `resources/js/Components/Tasks/Board/TaskFilters.vue` según contrato §3: buscador con `<kbd>⌘F</kbd>` y `defineExpose({focus})`, pills Proyecto (mis proyectos + "Todos" + "Sin Proyecto") y Responsable (dedup del payload + yo), pestañas rápidas con contadores reales (Todas/Mis Tareas/Sin Proyecto/Urgentes/Completadas), conmutador vista lista/kanban
-- [X] T011 [P] [US1] Crear `resources/js/Components/Tasks/Board/TaskRow.vue` según contrato §3: botón circular de estado (menú con los 5 estados, tonos por estado), icono de tipo (`AppIcon`: bug_report/new_releases/check_box/task_alt por tipo), título truncado, pill Proyecto (`bg-surface-container-low` con dot) o "Sin Proyecto", chip Sprint/"Sin Sprint", chip prioridad (tono por nivel), `Avatar` del responsable o "Sin asignar", menú ⋯ (editar, cambiar estado, comentarios, eliminar según permiso); emits edit/status/comment/remove/open
-- [X] T012 [P] [US1] Crear `resources/js/Components/Tasks/Board/TaskGroupSection.vue`: header con icono, título, contador y hint opcional; slot de contenido; estilos de contrato §4
-- [X] T013 [P] [US1] Crear `resources/js/Components/Tasks/Board/TaskFormModal.vue` (diálogo completo sobre `Components/Modal.vue`): título con autofocus e hint de redacción imperativa; selectores de Tipo (4 reales), Estado (inicial al crear / actual al editar, 4 no-backlog), Prioridad segmentada (4), Responsable (yo + miembros del proyecto elegido; solo "yo" sin proyecto), Proyecto (mis proyectos + "Sin Proyecto"), Sprint (opciones del proyecto, deshabilitado sin proyecto), Descripción textarea; validación inline; modo edit con zona de peligro (confirm + DELETE); useForm → `tasks.store`/`tasks.update`; ESC/click-fuera; doble envío bloqueado
-- [X] T014 [US1] Crear `resources/js/pages/Tasks/Index.vue` (depende T009-T013): ensamblar filtros + grupos (reglas FR-002 exactas; terminadas solo en pestaña Completadas) + filas + `TaskFormModal` + `TaskCommentsModal` en modo `useGlobal`; atajo `C` en fase capture con `stopPropagation` (D6) y `⌘F` con focus al buscador; auto-apertura con `?new=1` + `history.replaceState`; estados vacíos (sin tareas / sin coincidencias con limpiar); pie con contadores y kbd hints; persistir vista en `localStorage('tasks.view')`
-- [X] T015 [US1] Habilitar "Mis Tareas" en `resources/js/Layouts/AuthenticatedLayout.vue` (navItems: `to: tasks.index.url()`, match '/tasks') y cambiar la acción de paleta "Crear nueva tarea" para navegar a `tasks.index.url() + '?new=1'` (depende T014)
+- [x] T009 [US1] Implementar el payload de `TaskController::index` en `app/Http/Controllers/TaskController.php` (GREEN, depende T006/T008): mapeo `BoardTask` con labels de enums, `project`/`sprint`/`assignee` (con avatar) y `commentsCount` de `withCount`
+- [x] T010 [P] [US1] Crear `resources/js/Components/Tasks/Board/TaskFilters.vue` según contrato §3: buscador con `<kbd>⌘F</kbd>` y `defineExpose({focus})`, pills Proyecto (mis proyectos + "Todos" + "Sin Proyecto") y Responsable (dedup del payload + yo), pestañas rápidas con contadores reales (Todas/Mis Tareas/Sin Proyecto/Urgentes/Completadas), conmutador vista lista/kanban
+- [x] T011 [P] [US1] Crear `resources/js/Components/Tasks/Board/TaskRow.vue` según contrato §3: botón circular de estado (menú con los 5 estados, tonos por estado), icono de tipo (`AppIcon`: bug_report/new_releases/check_box/task_alt por tipo), título truncado, pill Proyecto (`bg-surface-container-low` con dot) o "Sin Proyecto", chip Sprint/"Sin Sprint", chip prioridad (tono por nivel), `Avatar` del responsable o "Sin asignar", menú ⋯ (editar, cambiar estado, comentarios, eliminar según permiso); emits edit/status/comment/remove/open
+- [x] T012 [P] [US1] Crear `resources/js/Components/Tasks/Board/TaskGroupSection.vue`: header con icono, título, contador y hint opcional; slot de contenido; estilos de contrato §4
+- [x] T013 [P] [US1] Crear `resources/js/Components/Tasks/Board/TaskFormModal.vue` (diálogo completo sobre `Components/Modal.vue`): título con autofocus e hint de redacción imperativa; selectores de Tipo (4 reales), Estado (inicial al crear / actual al editar, 4 no-backlog), Prioridad segmentada (4), Responsable (yo + miembros del proyecto elegido; solo "yo" sin proyecto), Proyecto (mis proyectos + "Sin Proyecto"), Sprint (opciones del proyecto, deshabilitado sin proyecto), Descripción textarea; validación inline; modo edit con zona de peligro (confirm + DELETE); useForm → `tasks.store`/`tasks.update`; ESC/click-fuera; doble envío bloqueado
+- [x] T014 [US1] Crear `resources/js/pages/Tasks/Index.vue` (depende T009-T013): ensamblar filtros + grupos (reglas FR-002 exactas; terminadas solo en pestaña Completadas) + filas + `TaskFormModal` + `TaskCommentsModal` en modo `useGlobal`; atajo `C` en fase capture con `stopPropagation` (D6) y `⌘F` con focus al buscador; auto-apertura con `?new=1` + `history.replaceState`; estados vacíos (sin tareas / sin coincidencias con limpiar); pie con contadores y kbd hints; persistir vista en `localStorage('tasks.view')`
+- [x] T015 [US1] Habilitar "Mis Tareas" en `resources/js/Layouts/AuthenticatedLayout.vue` (navItems: `to: tasks.index.url()`, match '/tasks') y cambiar la acción de paleta "Crear nueva tarea" para navegar a `tasks.index.url() + '?new=1'` (depende T014)
 
 **Checkpoint**: US1 funcional de forma independiente — Mis Tareas navegable, lista completa y CRUD vía diálogo
 
@@ -80,10 +80,10 @@ description: 'Task list for feature implementation'
 
 ### Implementation for User Story 2
 
-- [X] T016 [P] [US2] Crear `resources/js/Components/Tasks/Board/TaskBoardColumn.vue`: header con dot de estado, nombre, contador y (opcional) WIP deshabilitado "Próximamente"; zona de drop (`@dragover/@drop`) con resaltado; slot de tarjetas; botón "Añadir tarea rápida" (emit add) excepto en Terminado; soporte de columna deshabilitada (Bloqueado: chip "Próximamente", sin drop ni add)
-- [X] T017 [P] [US2] Crear `resources/js/Components/Tasks/Board/TaskBoardCard.vue`: icono de tipo, título, pill Proyecto/"Sin Proyecto", sprint/"Sin Sprint", prioridad, conteo de comentarios (`chat_bubble_outline` + n), `Avatar` del responsable; atenuada cuando está terminada; `draggable` + emit dragstart; click → emit open
-- [X] T018 [US2] Crear `resources/js/Components/Tasks/Board/TaskBoard.vue` (depende T016/T017): columnas Por Hacer/En Curso/En Revisión/Terminado + Bloqueado deshabilitado; DnD nativo (dragstart con dataTransfer 'text/task-id', dragover preventDefault, drop → emit moved(task,status)); emite open/edit/comment por tarjeta
-- [X] T019 [US2] Integrar el kanban en `resources/js/pages/Tasks/Index.vue` (depende T014/T018): rama de vista kanban al alternar; `moved` → `router.put(tasks.update.url(id), {status})`; `add(status)` → abre `TaskFormModal` en create con `initialStatus`; tarjetas terminadas atenuadas; verificación en vivo (serve + vite)
+- [x] T016 [P] [US2] Crear `resources/js/Components/Tasks/Board/TaskBoardColumn.vue`: header con dot de estado, nombre, contador y (opcional) WIP deshabilitado "Próximamente"; zona de drop (`@dragover/@drop`) con resaltado; slot de tarjetas; botón "Añadir tarea rápida" (emit add) excepto en Terminado; soporte de columna deshabilitada (Bloqueado: chip "Próximamente", sin drop ni add)
+- [x] T017 [P] [US2] Crear `resources/js/Components/Tasks/Board/TaskBoardCard.vue`: icono de tipo, título, pill Proyecto/"Sin Proyecto", sprint/"Sin Sprint", prioridad, conteo de comentarios (`chat_bubble_outline` + n), `Avatar` del responsable; atenuada cuando está terminada; `draggable` + emit dragstart; click → emit open
+- [x] T018 [US2] Crear `resources/js/Components/Tasks/Board/TaskBoard.vue` (depende T016/T017): columnas Por Hacer/En Curso/En Revisión/Terminado + Bloqueado deshabilitado; DnD nativo (dragstart con dataTransfer 'text/task-id', dragover preventDefault, drop → emit moved(task,status)); emite open/edit/comment por tarjeta
+- [x] T019 [US2] Integrar el kanban en `resources/js/pages/Tasks/Index.vue` (depende T014/T018): rama de vista kanban al alternar; `moved` → `router.put(tasks.update.url(id), {status})`; `add(status)` → abre `TaskFormModal` en create con `initialStatus`; tarjetas terminadas atenuadas; verificación en vivo (serve + vite)
 
 **Checkpoint**: US1 + US2 — lista y kanban operativos sobre los mismos datos
 
@@ -97,8 +97,8 @@ description: 'Task list for feature implementation'
 
 ### Implementation for User Story 3
 
-- [X] T020 [P] [US3] Extender `resources/js/Components/Tasks/Board/TaskFormModal.vue` con la sección "Próximamente" deshabilitada: Puntos de Estimación (chips 1/2/3/5/8/13 inertes), Fecha de Vencimiento (campo date deshabilitado) y nota de barra de herramientas de marcado/vista previa; nota de tipos de tarea adicionales próximos (FR-008)
-- [X] T021 [US3] Añadir a `resources/js/Components/Tasks/Board/TaskFormModal.vue`: checkbox "Crear otra al guardar" (al guardar limpia el formulario y mantiene el diálogo abierto; al desactivarlo cierra), atajo `⌘↵`/`Ctrl+↵` para enviar, kbd hints en el pie y micro-copy del hint de título
+- [x] T020 [P] [US3] Extender `resources/js/Components/Tasks/Board/TaskFormModal.vue` con la sección "Próximamente" deshabilitada: Puntos de Estimación (chips 1/2/3/5/8/13 inertes), Fecha de Vencimiento (campo date deshabilitado) y nota de barra de herramientas de marcado/vista previa; nota de tipos de tarea adicionales próximos (FR-008)
+- [x] T021 [US3] Añadir a `resources/js/Components/Tasks/Board/TaskFormModal.vue`: checkbox "Crear otra al guardar" (al guardar limpia el formulario y mantiene el diálogo abierto; al desactivarlo cierra), atajo `⌘↵`/`Ctrl+↵` para enviar, kbd hints en el pie y micro-copy del hint de título
 
 **Checkpoint**: Las 3 historias completas; diálogo fiel a la referencia
 
@@ -108,10 +108,10 @@ description: 'Task list for feature implementation'
 
 **Purpose**: Gates de calidad, responsive/accesibilidad y validación del quickstart
 
-- [X] T022 [P] Quality gates: `vendor/bin/pint --dirty --format agent`, `npm run check:fix`, `npm run types:check` y `npm run build` sin errores
-- [X] T023 [P] Pase responsive/accesibilidad: a 375px sin scroll horizontal de página (lista una columna, kanban con scroll de columnas, diálogo a ancho completo); recorrido con teclado (C, ⌘F, ESC, menús, diálogo); anillos de foco visibles; `browser-logs` y consola sin errores
-- [X] T024 [P] Validar `quickstart.md` (§0-§7) contra la implementación real y actualizarlo si algún paso difiere
-- [X] T025 `php artisan test --compact` completo en verde y commit final de la feature
+- [x] T022 [P] Quality gates: `vendor/bin/pint --dirty --format agent`, `npm run check:fix`, `npm run types:check` y `npm run build` sin errores
+- [x] T023 [P] Pase responsive/accesibilidad: a 375px sin scroll horizontal de página (lista una columna, kanban con scroll de columnas, diálogo a ancho completo); recorrido con teclado (C, ⌘F, ESC, menús, diálogo); anillos de foco visibles; `browser-logs` y consola sin errores
+- [x] T024 [P] Validar `quickstart.md` (§0-§7) contra la implementación real y actualizarlo si algún paso difiere
+- [x] T025 `php artisan test --compact` completo en verde y commit final de la feature
 
 ---
 
@@ -198,3 +198,7 @@ Task: "Crear resources/js/Components/Tasks/Board/TaskFormModal.vue"
 - "Próximamente" es siempre un estado deshabilitado real (sin navegación, sin foco, sin datos simulados)
 - Verificar tests en rojo antes de cada implementación y en verde después
 - El detalle de proyecto (Show) y las rutas anidadas `projects.tasks.*` deben seguir verdes en todo momento (regresión)
+
+## Phase 7: Convergence
+
+- [x] T026 Añade el indicador de límite WIP deshabilitado con chip "Próximamente" en el header de la columna kanban "En Curso" según la referencia visual per FR-008 (partial)

@@ -24,6 +24,7 @@ interface BoardColumn {
     dotClass: string;
     disabled?: boolean;
     quickAdd?: boolean;
+    wipLimit?: boolean;
 }
 
 const columns: BoardColumn[] = [
@@ -38,6 +39,7 @@ const columns: BoardColumn[] = [
         title: 'En Curso',
         status: 'in_progress',
         dotClass: 'bg-primary',
+        wipLimit: true,
     },
     {
         key: 'in_review',
@@ -136,6 +138,7 @@ const quickAddStatuses = computed<Set<TaskStatusValue>>(() => {
             "
             :dot-class="column.dotClass"
             :disabled="column.disabled"
+            :wip-limit="column.wipLimit"
             :drag-over="overColumn === column.status && !column.disabled"
             :quick-add="
                 column.disabled

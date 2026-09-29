@@ -12,11 +12,13 @@ withDefaults(
         disabled?: boolean;
         dragOver?: boolean;
         quickAdd?: boolean;
+        wipLimit?: boolean;
     }>(),
     {
         disabled: false,
         dragOver: false,
         quickAdd: true,
+        wipLimit: false,
     },
 );
 
@@ -59,16 +61,27 @@ const emit = defineEmits<{
                 <UiBadge :label="String(count)" tone="neutral" />
             </div>
 
-            <UiBadge v-if="disabled" label="Próximamente" tone="outline" />
-            <button
-                v-else
-                type="button"
-                title="Añadir tarea"
-                class="text-on-surface-variant hover:bg-surface-container hover:text-on-surface flex h-6 w-6 items-center justify-center rounded-lg transition-colors"
-                @click="emit('add', status as TaskStatusValue)"
-            >
-                <AppIcon name="add" :size="16" />
-            </button>
+            <div class="gap-space-2xs flex items-center">
+                <span
+                    v-if="wipLimit"
+                    class="font-label-xs text-label-xs text-on-surface-variant bg-surface-container-high px-space-xs py-space-2xs rounded font-mono"
+                    >WIP</span
+                >
+                <UiBadge
+                    v-if="wipLimit || disabled"
+                    label="Próximamente"
+                    tone="outline"
+                />
+                <button
+                    v-if="!disabled"
+                    type="button"
+                    title="Añadir tarea"
+                    class="text-on-surface-variant hover:bg-surface-container hover:text-on-surface flex h-6 w-6 items-center justify-center rounded-lg transition-colors"
+                    @click="emit('add', status as TaskStatusValue)"
+                >
+                    <AppIcon name="add" :size="16" />
+                </button>
+            </div>
         </header>
 
         <div
