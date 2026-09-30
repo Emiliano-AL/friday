@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import AppIcon from '@/Components/AppShell/AppIcon.vue';
+import RichTextContent from '@/Components/RichText/RichTextContent.vue';
 import UiBadge from '@/Components/Projects/UiBadge.vue';
 import type { SprintDetail, SprintStatusValue } from '@/types/sprint';
 import { index as projectsIndex, show as projectShow } from '@/routes/projects';
@@ -104,12 +105,11 @@ const formattedRange = (start: string, end: string): string => {
                     >
                 </div>
 
-                <p
+                <RichTextContent
                     v-if="sprint.goal"
-                    class="text-body-sm font-body-sm text-on-surface-variant border-surface-container-low mt-1 max-w-2xl border-l-2 pl-3 italic"
-                >
-                    {{ sprint.goal }}
-                </p>
+                    :content="sprint.goal"
+                    class="border-surface-container-low text-on-surface-variant mt-1 max-w-2xl border-l-2 pl-3 italic"
+                />
             </div>
 
             <div class="flex flex-wrap items-center gap-2">

@@ -2,11 +2,11 @@
 
 ## Entidades (existentes — cambio de formato, no de esquema)
 
-| Campo | Columna | Tipo (inalterado) | Reglas de validación (nuevas) |
-| --- | --- | --- | --- |
-| Tarea.descripción | `tasks.description` | `text` nullable | `nullable`, `string`, `max:50000` (antes sin tope) |
-| Proyecto.descripción | `projects.description` | `text` nullable | `nullable`, `string`, `max:50000` (antes sin tope) |
-| Sprint.objetivo | `sprints.goal` | `text` nullable | `nullable`, `string`, `max:50000` (antes `max:1000`) |
+| Campo                | Columna                | Tipo (inalterado) | Reglas de validación (nuevas)                        |
+| -------------------- | ---------------------- | ----------------- | ---------------------------------------------------- |
+| Tarea.descripción    | `tasks.description`    | `text` nullable   | `nullable`, `string`, `max:50000` (antes sin tope)   |
+| Proyecto.descripción | `projects.description` | `text` nullable   | `nullable`, `string`, `max:50000` (antes sin tope)   |
+| Sprint.objetivo      | `sprints.goal`         | `text` nullable   | `nullable`, `string`, `max:50000` (antes `max:1000`) |
 
 - **Sin columnas ni tablas nuevas.** La semántica del campo (opcional, permisos, dónde se muestra) no cambia.
 - **Contenido guardado**: estructura de bloques en JSON (ver formato abajo). El editor siempre emite JSON; la API permanece permisiva con texto plano (FR-005: se normaliza/muestra como párrafo).
@@ -15,15 +15,23 @@
 
 ```json
 {
-  "time": 1727654400000,
-  "blocks": [
-    { "type": "paragraph", "data": { "text": "Texto con <b>negrita</b> y un <a href=\"https://ejemplo.com\">enlace</a>." } },
-    { "type": "header", "data": { "text": "Encabezado", "level": 2 } },
-    { "type": "list", "data": { "style": "unordered", "items": ["Primero", "Segundo"] } },
-    { "type": "quote", "data": { "text": "Cita", "caption": "" } },
-    { "type": "code", "data": { "code": "const x = 1;" } }
-  ],
-  "version": "2.31"
+    "time": 1727654400000,
+    "blocks": [
+        {
+            "type": "paragraph",
+            "data": {
+                "text": "Texto con <b>negrita</b> y un <a href=\"https://ejemplo.com\">enlace</a>."
+            }
+        },
+        { "type": "header", "data": { "text": "Encabezado", "level": 2 } },
+        {
+            "type": "list",
+            "data": { "style": "unordered", "items": ["Primero", "Segundo"] }
+        },
+        { "type": "quote", "data": { "text": "Cita", "caption": "" } },
+        { "type": "code", "data": { "code": "const x = 1;" } }
+    ],
+    "version": "2.31"
 }
 ```
 
@@ -44,6 +52,7 @@ cualquier otro string       → {"blocks":[{"type":"paragraph","data":{"text": <
 ## Migración de datos (una sola corrida)
 
 Para `tasks.description`, `projects.description`, `sprints.goal`:
+
 1. Valores `NULL` → sin cambios.
 2. Valor que `json_decode` a objeto con `blocks` array → sin cambios.
 3. Resto (texto plano, JSON sin `blocks`, etc.) → envolver en párrafo con el texto exacto (escapado para inline).

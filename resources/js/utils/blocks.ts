@@ -31,6 +31,10 @@ function unescapeAttr(value: string): string {
         .replace(/&#039;/g, "'");
 }
 
+function asText(value: unknown): string {
+    return typeof value === 'string' ? value : '';
+}
+
 export function sanitizeInline(html: string): string {
     const escaped = escapeHtml(html);
 
@@ -94,42 +98,39 @@ export function blocksToHtml(blocks: EditorBlocks): string {
         .map((block) => {
             switch (block.type) {
                 case 'paragraph':
-                    return `<p>${sanitizeInline(String(block.data.text ?? ''))}</p>`;
+                    return `<p>${sanitizeInline(asText(block.data.text))}</p>`;
                 case 'header': {
                     const level = Number(block.data.level ?? 2);
                     const clamped = Number.isFinite(level)
                         ? Math.min(4, Math.max(2, level))
                         : 2;
 
-                    return `<h${clamped}>${sanitizeInline(String(block.data.text ?? ''))}</h${clamped}>`;
+                    return `<h${clamped}>${sanitizeInline(asText(block.data.text))}</h${clamped}>`;
                 }
                 case 'list': {
                     const items = Array.isArray(block.data.items)
                         ? block.data.items
                         : [];
-                    const tag =
-                        block.data.style === 'ordered' ? 'ol' : 'ul';
+                    const tag = block.data.style === 'ordered' ? 'ol' : 'ul';
                     const lis = items
                         .map(
                             (item) =>
-                                `<li>${sanitizeInline(String(item ?? ''))}</li>`,
+                                `<li>${sanitizeInline(asText(item))}</li>`,
                         )
                         .join('');
 
                     return `<${tag}>${lis}</${tag}>`;
                 }
                 case 'quote': {
-                    const text = sanitizeInline(
-                        String(block.data.text ?? ''),
-                    );
+                    const text = sanitizeInline(asText(block.data.text));
                     const caption = block.data.caption
-                        ? `<cite>${sanitizeInline(String(block.data.caption))}</cite>`
+                        ? `<cite>${sanitizeInline(asText(block.data.caption))}</cite>`
                         : '';
 
                     return `<blockquote><p>${text}</p>${caption}</blockquote>`;
                 }
                 case 'code':
-                    return `<pre><code>${escapeHtml(String(block.data.code ?? ''))}</code></pre>`;
+                    return `<pre><code>${escapeHtml(asText(block.data.code))}</code></pre>`;
                 default:
                     return '';
             }
@@ -143,17 +144,15 @@ export function blocksToPlainText(blocks: EditorBlocks): string {
             switch (block.type) {
                 case 'paragraph':
                 case 'header':
-                    return String(block.data.text ?? '');
+                    return asText(block.data.text);
                 case 'list':
                     return Array.isArray(block.data.items)
-                        ? block.data.items
-                              .map((item) => String(item ?? ''))
-                              .join(' ')
+                        ? block.data.items.map((item) => asText(item)).join(' ')
                         : '';
                 case 'quote':
-                    return String(block.data.text ?? '');
+                    return asText(block.data.text);
                 case 'code':
-                    return String(block.data.code ?? '');
+                    return asText(block.data.code);
                 default:
                     return '';
             }

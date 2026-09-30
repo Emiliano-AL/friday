@@ -41,13 +41,13 @@ de tener tope de 1000 caracteres para admitir el JSON de bloques.
 
 _GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 
-| Principle | Verdict | Notes |
-| --- | --- | --- |
-| I. Monolith-First con Inertia | ✅ PASS | Editor 100% cliente dentro de páginas Inertia; sin API desacoplada. |
-| II. Alineación Ecosistema | ✅ PASS (justificado) | Se añade **una** dependencia npm (EditorJS + herramientas oficiales) con **aprobación explícita del usuario** registrada en spec FR-007. Cero cambios de Composer. Cumple la regla "sin aprobación no se agregan". |
-| III. Test-First con Pest | ✅ PASS | Tests de migración, validación y passthrough planeados antes de la implementación. |
-| IV. Tipado Estricto y Enums | ✅ PASS | Tipos TS para bloques/props del editor; PHP sin cambios de dominio (mismos campos). |
-| V. Simplicidad y YAGNI | ✅ PASS | Herramientas de texto solamente (sin imágenes/adjuntos, que quedan "Próximamente"); sin columnas nuevas; renderizado cliente sin dependencias PHP extra. |
+| Principle                     | Verdict               | Notes                                                                                                                                                                                                              |
+| ----------------------------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| I. Monolith-First con Inertia | ✅ PASS               | Editor 100% cliente dentro de páginas Inertia; sin API desacoplada.                                                                                                                                                |
+| II. Alineación Ecosistema     | ✅ PASS (justificado) | Se añade **una** dependencia npm (EditorJS + herramientas oficiales) con **aprobación explícita del usuario** registrada en spec FR-007. Cero cambios de Composer. Cumple la regla "sin aprobación no se agregan". |
+| III. Test-First con Pest      | ✅ PASS               | Tests de migración, validación y passthrough planeados antes de la implementación.                                                                                                                                 |
+| IV. Tipado Estricto y Enums   | ✅ PASS               | Tipos TS para bloques/props del editor; PHP sin cambios de dominio (mismos campos).                                                                                                                                |
+| V. Simplicidad y YAGNI        | ✅ PASS               | Herramientas de texto solamente (sin imágenes/adjuntos, que quedan "Próximamente"); sin columnas nuevas; renderizado cliente sin dependencias PHP extra.                                                           |
 
 _Post-design re-check (Phase 1): sin desviaciones introducidas._
 

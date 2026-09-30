@@ -2,6 +2,7 @@
 import AppIcon from '@/Components/AppShell/AppIcon.vue';
 import Avatar from '@/Components/AppShell/Avatar.vue';
 import Modal from '@/Components/Modal.vue';
+import RichTextEditor from '@/Components/RichText/RichTextEditor.vue';
 import UiBadge from '@/Components/Projects/UiBadge.vue';
 import type {
     TaskPriorityValue,
@@ -41,6 +42,7 @@ interface BoardTaskShape {
 }
 
 const titleInput = ref<HTMLInputElement | null>(null);
+const descriptionEditor = ref<InstanceType<typeof RichTextEditor> | null>(null);
 const createAnother = ref(false);
 
 const form = useForm({
@@ -122,7 +124,10 @@ function onProjectChange(): void {
     }
 }
 
-function submit(): void {
+async function submit(): Promise<void> {
+    form.description = (await descriptionEditor.value?.save()) ?? '';
+    form.clearErrors('description');
+
     const options = {
         preserveScroll: true,
         onSuccess: () => {
@@ -512,8 +517,7 @@ const priorityOptions: {
                     </div>
                 </div>
                 <p class="text-label-xs font-label-xs text-on-surface-variant">
-                    La barra de herramientas de marcado con vista previa y más
-                    tipos de tarea (seguridad, mejora, documentación) también
+                    Más tipos de tarea (seguridad, mejora, documentación)
                     llegarán próximamente.
                 </p>
             </div>
@@ -526,13 +530,13 @@ const priorityOptions: {
                     <AppIcon name="notes" :size="15" />
                     Descripción
                 </label>
-                <textarea
+                <RichTextEditor
                     id="task-description"
-                    v-model="form.description"
-                    rows="3"
-                    placeholder="Describe criterios de aceptación, contexto o pruebas... (compatible con marcado)"
-                    class="text-body-sm font-body-sm placeholder:text-outline/50 border-outline-variant/40 bg-surface-container-lowest focus:ring-primary/20 w-full resize-none rounded-lg border px-3 py-2 focus:ring-2 focus:outline-none"
-                ></textarea>
+                    ref="descriptionEditor"
+                    :model-value="form.description"
+                    placeholder="Describe criterios de aceptación, contexto o pruebas..."
+                    :error="form.errors.description"
+                />
             </div>
 
             <div

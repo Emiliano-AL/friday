@@ -2,6 +2,7 @@
 import AppIcon from '@/Components/AppShell/AppIcon.vue';
 import UiBadge from '@/Components/Projects/UiBadge.vue';
 import Modal from '@/Components/Modal.vue';
+import RichTextEditor from '@/Components/RichText/RichTextEditor.vue';
 import { destroy, store, update } from '@/routes/projects';
 import { useForm } from '@inertiajs/vue3';
 import { nextTick, ref, watch } from 'vue';
@@ -17,6 +18,7 @@ const emit = defineEmits<{
 }>();
 
 const titleInput = ref<HTMLInputElement | null>(null);
+const descriptionEditor = ref<InstanceType<typeof RichTextEditor> | null>(null);
 
 const form = useForm({
     title: '',
@@ -36,7 +38,10 @@ watch(
     },
 );
 
-function submit(): void {
+async function submit(): Promise<void> {
+    form.description = (await descriptionEditor.value?.save()) ?? '';
+    form.clearErrors('description');
+
     if (props.mode === 'create') {
         form.post(store.url(), {
             preserveScroll: true,
@@ -199,20 +204,13 @@ function removeProject(): void {
                 >
                     Descripción breve
                 </label>
-                <textarea
+                <RichTextEditor
                     id="project-description"
-                    v-model="form.description"
-                    rows="2"
+                    ref="descriptionEditor"
+                    :model-value="form.description"
                     placeholder="Objetivo principal y alcance de este proyecto..."
-                    class="focus:ring-primary/20 bg-surface-container-lowest text-body-sm font-body-sm text-on-surface shadow-card w-full resize-none rounded-lg border-none px-3 py-2 focus:ring-2 focus:outline-none"
-                    :class="form.errors.description ? 'ring-error ring-2' : ''"
+                    :error="form.errors.description"
                 />
-                <p
-                    v-if="form.errors.description"
-                    class="text-label-xs font-label-xs text-error"
-                >
-                    {{ form.errors.description }}
-                </p>
             </div>
 
             <div

@@ -3,11 +3,12 @@ import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import Modal from '@/Components/Modal.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
+import RichTextEditor from '@/Components/RichText/RichTextEditor.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import { update as updateTask } from '@/routes/projects/tasks';
 import { useForm } from '@inertiajs/vue3';
-import { watch } from 'vue';
+import { ref, watch } from 'vue';
 import type { TaskItem } from './types';
 
 const props = defineProps<{
@@ -19,6 +20,8 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(['close']);
+
+const descriptionEditor = ref<InstanceType<typeof RichTextEditor> | null>(null);
 
 const form = useForm({
     title: '',
@@ -45,6 +48,8 @@ watch(
         form.assignee_id = task.assignee ? String(task.assignee.id) : '';
         form.sprint_id = task.sprint ? String(task.sprint.id) : '';
         form.clearErrors();
+
+        void descriptionEditor.value?.render(task.description);
     },
 );
 
@@ -52,10 +57,13 @@ const close = () => {
     emit('close');
 };
 
-const submit = () => {
+const submit = async () => {
     if (!props.task) {
         return;
     }
+
+    form.description = (await descriptionEditor.value?.save()) ?? '';
+    form.clearErrors('description');
 
     form.transform((data) => ({
         ...data,
@@ -89,17 +97,14 @@ const submit = () => {
                 <div>
                     <InputLabel
                         for="edit-task-description"
-                        value="Descripción (opcional, markdown)"
+                        value="Descripción (opcional)"
                     />
-                    <TextInput
+                    <RichTextEditor
                         id="edit-task-description"
-                        type="text"
+                        ref="descriptionEditor"
                         class="mt-1 block w-full"
-                        v-model="form.description"
-                    />
-                    <InputError
-                        class="mt-2"
-                        :message="form.errors.description"
+                        :model-value="form.description"
+                        :error="form.errors.description"
                     />
                 </div>
 

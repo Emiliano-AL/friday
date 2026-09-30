@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import AppIcon from '@/Components/AppShell/AppIcon.vue';
 import Modal from '@/Components/Modal.vue';
+import RichTextEditor from '@/Components/RichText/RichTextEditor.vue';
 import UiBadge from '@/Components/Projects/UiBadge.vue';
 import type { SprintSummary } from '@/types/project';
 import { store, update } from '@/routes/projects/sprints';
@@ -18,6 +19,7 @@ const emit = defineEmits<{
 }>();
 
 const nameInput = ref<HTMLInputElement | null>(null);
+const goalEditor = ref<InstanceType<typeof RichTextEditor> | null>(null);
 
 const form = useForm({
     name: '',
@@ -47,7 +49,10 @@ watch(
     },
 );
 
-function submit(): void {
+async function submit(): Promise<void> {
+    form.goal = (await goalEditor.value?.save()) ?? '';
+    form.clearErrors('goal');
+
     const options = {
         preserveScroll: true,
         onSuccess: () => {
@@ -131,21 +136,13 @@ const dateError = (key: 'start_date' | 'end_date'): string | undefined =>
                         >(opcional)</span
                     >
                 </label>
-                <textarea
+                <RichTextEditor
                     id="sprint-goal"
-                    v-model="form.goal"
-                    rows="2"
-                    maxlength="1000"
+                    ref="goalEditor"
+                    :model-value="form.goal"
                     placeholder="Describe brevemente el valor clave entregable de esta iteración..."
-                    :class="form.errors.goal ? 'border-error' : ''"
-                    class="text-body-sm font-body-sm border-outline-variant/40 bg-surface-container-lowest text-on-surface focus:ring-primary w-full resize-none rounded-lg border px-3 py-2 leading-relaxed shadow-xs focus:ring-2 focus:outline-none"
+                    :error="form.errors.goal"
                 />
-                <p
-                    v-if="form.errors.goal"
-                    class="text-label-xs font-label-xs text-error"
-                >
-                    {{ form.errors.goal }}
-                </p>
             </div>
 
             <div class="gap-space-md grid grid-cols-1 sm:grid-cols-2">

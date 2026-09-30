@@ -50,9 +50,9 @@ description: 'Task list for feature 011: Editor de contenido enriquecido en desc
 
 ### Implementation for User Story 1
 
-- [ ] T007 [P] [US1] Crear `resources/js/Components/RichText/RichTextEditor.vue` según contrato §3: props `modelValue: string|null`, `placeholder?`, `error?`, `id?`; monta EditorJS en `onMounted` con `normalizeToBlocks(modelValue)`; herramientas paragraph/header(H2–H4)/list/quote/code + inlineCode/marker y bold/italic/link del núcleo; `sanitize: true` al pegar; `defineExpose({ save(): Promise<string>, isEmpty(): boolean, focus(): void })` donde `save()` devuelve `''` cuando está vacío; borde de error + mensaje inline cuando `error`; tema claro con tokens de `DESIGN.md`
-- [ ] T008 [P] [US1] Crear `resources/js/Components/RichText/RichTextContent.vue` según contrato §4: props `content: string|null`; renderiza `blocksToHtml(normalizeToBlocks(content))` con `v-html` solo sobre el HTML saneado, contenedor tipografiado (prosa `text-body-md`); `null`/sin bloques → no renderiza nada
-- [ ] T009 [US1] Integrar el editor en `resources/js/Components/Tasks/Board/TaskFormModal.vue`: sustituir el `<textarea>` de descripción por `<RichTextEditor ref="descriptionEditor" v-model="form.description" :error="form.errors.description" />` conservando label y estructura de campo; en `submit()` hacer `form.description = await descriptionEditor.save()` antes de post/put (y resetear `createAnother` correctamente por remontaje); **eliminar** la nota "La barra de herramientas de marcado con vista previa y más tipos de tarea… llegará próximamente" (FR-006); doble envío bloqueado como hoy (`form.processing`)
+- [x] T007 [P] [US1] Crear `resources/js/Components/RichText/RichTextEditor.vue` según contrato §3: props `modelValue: string|null`, `placeholder?`, `error?`, `id?`; monta EditorJS en `onMounted` con `normalizeToBlocks(modelValue)`; herramientas paragraph/header(H2–H4)/list/quote/code + inlineCode/marker y bold/italic/link del núcleo; `sanitize: true` al pegar; `defineExpose({ save(): Promise<string>, isEmpty(): boolean, focus(): void })` donde `save()` devuelve `''` cuando está vacío; borde de error + mensaje inline cuando `error`; tema claro con tokens de `DESIGN.md`
+- [x] T008 [P] [US1] Crear `resources/js/Components/RichText/RichTextContent.vue` según contrato §4: props `content: string|null`; renderiza `blocksToHtml(normalizeToBlocks(content))` con `v-html` solo sobre el HTML saneado, contenedor tipografiado (prosa `text-body-md`); `null`/sin bloques → no renderiza nada
+- [x] T009 [US1] Integrar el editor en `resources/js/Components/Tasks/Board/TaskFormModal.vue`: sustituir el `<textarea>` de descripción por `<RichTextEditor ref="descriptionEditor" v-model="form.description" :error="form.errors.description" />` conservando label y estructura de campo; en `submit()` hacer `form.description = await descriptionEditor.save()` antes de post/put (y resetear `createAnother` correctamente por remontaje); **eliminar** la nota "La barra de herramientas de marcado con vista previa y más tipos de tarea… llegará próximamente" (FR-006); doble envío bloqueado como hoy (`form.processing`)
 
 **Checkpoint**: US1 funcional de forma independiente — quickstart §2 validado a mano
 
@@ -66,8 +66,8 @@ description: 'Task list for feature 011: Editor de contenido enriquecido en desc
 
 ### Implementation for User Story 2
 
-- [ ] T010 [US2] Integrar el editor en `resources/js/Components/Projects/ProjectFormModal.vue`: sustituir el textarea de descripción por `<RichTextEditor>` (mismo patrón que T009: ref, `save()` asíncrono en submit, label y errores inline conservados)
-- [ ] T011 [US2] Renderizar la descripción en `resources/js/pages/Projects/Show.vue`: en la sección de descripción del proyecto, mostrar `<RichTextContent :content="project.description" />` en lugar del texto plano (ocultar la sección cuando sea `null`)
+- [x] T010 [US2] Integrar el editor en `resources/js/Components/Projects/ProjectFormModal.vue`: sustituir el textarea de descripción por `<RichTextEditor>` (mismo patrón que T009: ref, `save()` asíncrono en submit, label y errores inline conservados)
+- [x] T011 [US2] Renderizar la descripción en `resources/js/pages/Projects/Show.vue`: en la sección de descripción del proyecto, mostrar `<RichTextContent :content="project.description" />` en lugar del texto plano (ocultar la sección cuando sea `null`)
 
 **Checkpoint**: US1 + US2 — tareas y proyectos con contenido enriquecido
 
@@ -81,8 +81,8 @@ description: 'Task list for feature 011: Editor de contenido enriquecido en desc
 
 ### Implementation for User Story 3
 
-- [ ] T012 [US3] Integrar el editor en `resources/js/Components/Sprints/SprintFormModal.vue`: sustituir el textarea del objetivo por `<RichTextEditor>` (mismo patrón: ref, `save()` asíncrono, label "Objetivo del sprint (opcional)" y errores inline conservados)
-- [ ] T013 [US3] Renderizar el objetivo en `resources/js/pages/Sprints/Show.vue`: el bloque de objetivo bajo el encabezado usa `<RichTextContent :content="sprint.goal" />` (ya oculto cuando `null`)
+- [x] T012 [US3] Integrar el editor en `resources/js/Components/Sprints/SprintFormModal.vue`: sustituir el textarea del objetivo por `<RichTextEditor>` (mismo patrón: ref, `save()` asíncrono, label "Objetivo del sprint (opcional)" y errores inline conservados)
+- [x] T013 [US3] Renderizar el objetivo en `resources/js/pages/Sprints/Show.vue`: el bloque de objetivo bajo el encabezado usa `<RichTextContent :content="sprint.goal" />` (ya oculto cuando `null`)
 
 **Checkpoint**: Las tres historias operan de forma independiente
 

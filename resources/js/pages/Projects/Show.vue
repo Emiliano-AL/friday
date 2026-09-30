@@ -9,6 +9,7 @@ import Avatar from '@/Components/AppShell/Avatar.vue';
 import AvatarStack from '@/Components/Projects/AvatarStack.vue';
 import ProjectFormModal from '@/Components/Projects/ProjectFormModal.vue';
 import ProjectTabs from '@/Components/Projects/ProjectTabs.vue';
+import RichTextContent from '@/Components/RichText/RichTextContent.vue';
 import UiBadge from '@/Components/Projects/UiBadge.vue';
 import { index as projectsIndex, status } from '@/routes/projects';
 import {
@@ -397,12 +398,11 @@ onMounted(() => {
                     >
                         {{ project.title }}
                     </h1>
-                    <p
+                    <RichTextContent
                         v-if="project.description"
-                        class="text-body-sm font-body-sm text-on-surface-variant mt-1"
-                    >
-                        {{ project.description }}
-                    </p>
+                        :content="project.description"
+                        class="text-on-surface-variant mt-1"
+                    />
                 </div>
                 <div class="gap-space-xs flex flex-wrap items-center">
                     <UiBadge

@@ -26,10 +26,12 @@ export interface EditorBlocks {
 }
 
 export function isBlocksJson(value: unknown): value is EditorBlocks;
-export function plainTextToBlocks(text: string): EditorBlocks;      // párrafo único
-export function normalizeToBlocks(value: string | null | undefined): EditorBlocks; // FR-005
-export function blocksToHtml(blocks: EditorBlocks): string;          // escape total + whitelist inline
-export function blocksToPlainText(blocks: EditorBlocks): string;     // excerpt/debug
+export function plainTextToBlocks(text: string): EditorBlocks; // párrafo único
+export function normalizeToBlocks(
+    value: string | null | undefined,
+): EditorBlocks; // FR-005
+export function blocksToHtml(blocks: EditorBlocks): string; // escape total + whitelist inline
+export function blocksToPlainText(blocks: EditorBlocks): string; // excerpt/debug
 ```
 
 `blocksToHtml` garantiza (SC-004): todo texto escapado; solo se re-habilitan
