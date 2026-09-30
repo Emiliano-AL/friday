@@ -113,9 +113,9 @@ description: 'Task list for feature 010: Flujo de Sprint en la UI'
 
 **Purpose**: Calidad transversal y cierre
 
-- [ ] T026 [P] Pase responsive/accesibilidad: a 375px sin scroll horizontal de página (detalle en una columna, tablero/lista con scroll interno, diálogo a ancho completo); recorrido con teclado (⌘F, ESC, modal de sprint, confirmación de completar, menús); anillos de foco visibles; `SprintComingSoon` sin foco ni interacción
-- [ ] T027 [P] Validar `quickstart.md` (§0–§7) contra la implementación real y actualizarlo si algún paso difiere; revisar `browser-logs` y consola del navegador sin errores
-- [ ] T028 Quality gates y cierre: `vendor/bin/pint --dirty --format agent`, `npm run check:fix`, `npm run types:check`, `npm run build` sin errores; `php artisan test --compact` completo en verde (incluida la regresión de specs 002/003/009); commit final de la feature
+- [x] T026 [P] Pase responsive/accesibilidad: a 375px sin scroll horizontal de página (detalle en una columna, tablero/lista con scroll interno, diálogo a ancho completo); recorrido con teclado (⌘F, ESC, modal de sprint, confirmación de completar, menús); anillos de foco visibles; `SprintComingSoon` sin foco ni interacción
+- [x] T027 [P] Validar `quickstart.md` (§0–§7) contra la implementación real y actualizarlo si algún paso difiere; revisar `browser-logs` y consola del navegador sin errores
+- [x] T028 Quality gates y cierre: `vendor/bin/pint --dirty --format agent`, `npm run check:fix`, `npm run types:check`, `npm run build` sin errores; `php artisan test --compact` completo en verde (incluida la regresión de specs 002/003/009); commit final de la feature
 
 ---
 
