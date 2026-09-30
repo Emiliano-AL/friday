@@ -35,7 +35,7 @@ class SaveTaskRequest extends FormRequest
 
         return [
             'title' => [$storing ? 'required' : 'sometimes', 'string', 'max:255'],
-            'description' => ['nullable', 'string'],
+            'description' => ['nullable', 'string', 'max:50000'],
             'type' => ['sometimes', Rule::enum(TaskType::class)],
             'priority' => ['sometimes', Rule::enum(TaskPriority::class)],
             'status' => ['sometimes', Rule::enum(TaskStatus::class)],
@@ -119,6 +119,7 @@ class SaveTaskRequest extends FormRequest
     {
         return [
             'title.required' => 'El título de la tarea es obligatorio.',
+            'description.max' => 'El contenido no puede superar los 50000 caracteres.',
             'type.enum' => 'El tipo de tarea no es válido.',
             'priority.enum' => 'La prioridad de la tarea no es válida.',
             'status.enum' => 'El estado de la tarea no es válido.',

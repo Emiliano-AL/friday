@@ -30,7 +30,7 @@ test('sprint goal is optional and persisted on create and update', function () {
     expect($sprint->refresh()->goal)->toBe('Objetivo refinado');
 });
 
-test('sprint goal accepts null and rejects more than 1000 characters', function () {
+test('sprint goal accepts null and enforces the content size limit', function () {
     $user = User::factory()->create();
     $project = Project::factory()->for($user, 'owner')->create();
 
@@ -44,10 +44,17 @@ test('sprint goal accepts null and rejects more than 1000 characters', function 
 
     $this->actingAs($user)->post("/projects/{$project->id}/sprints", [
         'name' => 'Objetivo gigante',
-        'goal' => str_repeat('a', 1001),
+        'goal' => str_repeat('a', 50001),
         'start_date' => '2026-10-08',
         'end_date' => '2026-10-14',
     ])->assertSessionHasErrors('goal');
+
+    $this->actingAs($user)->post("/projects/{$project->id}/sprints", [
+        'name' => 'Objetivo mayor al antiguo limite',
+        'goal' => str_repeat('a', 1001),
+        'start_date' => '2026-10-15',
+        'end_date' => '2026-10-21',
+    ])->assertSessionDoesntHaveErrors();
 });
 
 test('sprint end date cannot be before the start date on create and update', function () {

@@ -27,7 +27,17 @@ class UpdateProjectRequest extends FormRequest
     {
         return [
             'title' => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string'],
+            'description' => ['nullable', 'string', 'max:50000'],
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'description.max' => 'El contenido no puede superar los 50000 caracteres.',
         ];
     }
 }

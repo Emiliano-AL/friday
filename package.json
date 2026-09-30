@@ -11,6 +11,13 @@
         "types:check": "vue-tsc --noEmit"
     },
     "dependencies": {
+        "@editorjs/code": "^2.9.4",
+        "@editorjs/editorjs": "^2.31.7",
+        "@editorjs/header": "^2.8.9",
+        "@editorjs/inline-code": "^1.5.2",
+        "@editorjs/list": "^2.0.9",
+        "@editorjs/marker": "^1.4.0",
+        "@editorjs/quote": "^2.7.6",
         "@inertiajs/vite": "^3.0.0",
         "@inertiajs/vue3": "^3.0.0",
         "@tailwindcss/vite": "^4.1.11",
