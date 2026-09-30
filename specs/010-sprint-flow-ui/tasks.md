@@ -199,3 +199,8 @@ Task: "Crear resources/js/Components/Sprints/SprintComingSoon.vue"
 - Verificar tests en rojo antes de cada implementación y en verde después
 - `Projects/Show.vue`, `Mis Tareas` y el detalle de proyecto deben seguir verdes en todo momento (regresión)
 - El item global "Sprints" del sidebar NO se habilita en esta feature (FR-010)
+
+## Phase 7: Convergence
+
+- [x] T029 Añade la sección deshabilitada con chip "Próximamente" para la selección/planificación de tareas del backlog en `resources/js/Components/Sprints/SprintFormModal.vue` (solo modo crear, sin foco ni datos simulados, igual que las tarjetas de `SprintComingSoon.vue`) per FR-009 (partial)
+- [ ] T030 Alinea `app/Http/Requests/UpdateSprintRequest.php` a reglas `sometimes` para `name`, `goal`, `start_date` y `end_date` según data-model.md (validación "Update: mismas reglas con `sometimes`"), manteniendo los mensajes y la regla `end_date` after_or_equal, y verifica que la edición completa desde `SprintFormModal` sigue en verde per T019 (partial)

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import AppIcon from '@/Components/AppShell/AppIcon.vue';
 import Modal from '@/Components/Modal.vue';
+import UiBadge from '@/Components/Projects/UiBadge.vue';
 import type { SprintSummary } from '@/types/project';
 import { store, update } from '@/routes/projects/sprints';
 import { useForm } from '@inertiajs/vue3';
@@ -188,6 +189,35 @@ const dateError = (key: 'start_date' | 'end_date'): string | undefined =>
                         class="text-label-xs font-label-xs text-error"
                     >
                         {{ dateError('end_date') }}
+                    </p>
+                </div>
+            </div>
+
+            <div
+                v-if="!sprint"
+                class="border-outline-variant/40 bg-surface-container-low/50 gap-space-sm p-space-sm flex flex-col rounded-lg border"
+                aria-disabled="true"
+            >
+                <div class="flex items-center justify-between gap-3">
+                    <span
+                        class="text-label-sm font-label-sm text-on-surface flex items-center gap-1.5 font-medium"
+                    >
+                        <AppIcon name="checklist" :size="15" />
+                        Planificación de tareas
+                    </span>
+                    <UiBadge label="Próximamente" tone="outline" />
+                </div>
+                <div class="flex items-center gap-2">
+                    <AppIcon
+                        name="lock"
+                        :size="14"
+                        class="text-on-surface-variant shrink-0"
+                    />
+                    <p
+                        class="text-label-xs font-label-xs text-on-surface-variant"
+                    >
+                        Seleccionar tareas del backlog para arrancar el sprint
+                        con alcance definido.
                     </p>
                 </div>
             </div>

@@ -74,3 +74,27 @@ test('sprint end date cannot be before the start date on create and update', fun
 
     expect($sprint->refresh()->start_date->toDateString())->toBe('2026-10-01');
 });
+
+test('sprint updates accept partial payloads with only the provided fields', function () {
+    $user = User::factory()->create();
+    $project = Project::factory()->for($user, 'owner')->create();
+    $sprint = Sprint::factory()->for($project)->create([
+        'name' => 'Nombre original',
+        'goal' => 'Objetivo original',
+        'start_date' => '2026-10-01',
+        'end_date' => '2026-10-07',
+        'status' => SprintStatus::Planned,
+    ]);
+
+    $this->actingAs($user)
+        ->put("/projects/{$project->id}/sprints/{$sprint->id}", [
+            'goal' => 'Solo el objetivo cambia',
+        ])
+        ->assertSessionDoesntHaveErrors();
+
+    $sprint->refresh();
+
+    expect($sprint->goal)->toBe('Solo el objetivo cambia');
+    expect($sprint->name)->toBe('Nombre original');
+    expect($sprint->start_date->toDateString())->toBe('2026-10-01');
+});
