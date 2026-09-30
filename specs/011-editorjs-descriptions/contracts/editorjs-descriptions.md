@@ -64,8 +64,9 @@ Expone vía `defineExpose`:
 
 Comportamiento: monta el editor en `onMounted` con `normalizeToBlocks(modelValue)`;
 herramientas: paragraph (default), header (H2–H4), list, quote, code, inlineCode,
-marker, inline bold/italic/link; tema claro con tokens de `DESIGN.md`;
-`sanitize: true` en la configuración de pegado. El padre **no** usa `v-model` en
+marker, inline bold/italic/link; tema claro con tokens de `DESIGN.md`. El saneo del
+contenido pegado es el comportamiento por defecto del núcleo de EditorJS (no existe una
+opción global `sanitize` en la versión usada). El padre **no** usa `v-model` en
 el submit: llama `await editorRef.save()` y asigna al `useForm`.
 
 Vacío: `save()` devuelve `''` (string vacío) cuando `isEmpty()` — los formularios

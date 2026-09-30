@@ -174,3 +174,7 @@ Task: "Integrar editor en resources/js/Components/Tasks/Board/TaskFormModal.vue"
 - La API permanece permisiva con texto plano (FR-005): los tests existentes que envían strings siguen verdes
 - Verificar tests en rojo antes de cada implementación y en verde después
 - Listas y tarjetas nunca renderizan la descripción (solo títulos/metadatos)
+
+## Phase 7: Convergence
+
+- [x] T017 Silencia el ruido de validación del párrafo vacío en `resources/js/Components/RichText/RichTextEditor.vue`: calcula `isEmpty` sin `editor.save()` (en montaje desde `normalizeToBlocks(modelValue)` y en `onChange` con chequeo DOM de un único bloque sin texto; solo llamar `save()` cuando hay contenido) y aplica el mismo atajo en `save()` para devolver `''` sin invocar al editor, de modo que la consola quede limpia al abrir/cerrar diálogos y al editar en vacío; documenta en `contracts/editorjs-descriptions.md` §3 que el saneo de pegado es comportamiento por defecto del núcleo (no existe opción global `sanitize` en EditorJS 2.31) per SC-003/quickstart §7 y contrato §3 (partial)

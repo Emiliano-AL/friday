@@ -34,6 +34,22 @@ function refreshEmpty(blocks: EditorBlock[]): boolean {
     return blocksToPlainText({ blocks }).trim() === '';
 }
 
+function domLooksEmpty(): boolean {
+    const root = holder.value;
+
+    if (!root) {
+        return true;
+    }
+
+    const blocks = root.querySelectorAll('.ce-block');
+
+    if (blocks.length !== 1) {
+        return false;
+    }
+
+    return (blocks[0].textContent ?? '').trim() === '';
+}
+
 async function persistEmpty(): Promise<void> {
     if (!editor) {
         return;
@@ -45,6 +61,8 @@ async function persistEmpty(): Promise<void> {
 }
 
 onMounted(async () => {
+    empty.value = refreshEmpty(normalizeToBlocks(props.modelValue).blocks);
+
     if (!holder.value) {
         return;
     }
@@ -67,15 +85,17 @@ onMounted(async () => {
         },
         inlineToolbar: ['bold', 'italic', 'link', 'marker', 'inlineCode'],
         onChange: () => {
+            if (domLooksEmpty()) {
+                empty.value = true;
+
+                return;
+            }
+
             void persistEmpty();
         },
     });
 
     await editor.isReady;
-
-    const data = await editor.save();
-
-    empty.value = refreshEmpty(data.blocks as EditorBlock[]);
 });
 
 onBeforeUnmount(() => {
@@ -86,7 +106,7 @@ onBeforeUnmount(() => {
 });
 
 async function save(): Promise<string> {
-    if (!editor) {
+    if (!editor || domLooksEmpty()) {
         return '';
     }
 
@@ -111,9 +131,7 @@ async function render(value: string | null): Promise<void> {
         normalizeToBlocks(value) as unknown as OutputData,
     );
 
-    const data = await editor.save();
-
-    empty.value = refreshEmpty(data.blocks as EditorBlock[]);
+    empty.value = refreshEmpty(normalizeToBlocks(value).blocks);
 }
 
 function isEmpty(): boolean {
