@@ -92,9 +92,9 @@ description: 'Task list for feature 011: Editor de contenido enriquecido en desc
 
 **Purpose**: Calidad transversal y cierre
 
-- [ ] T014 [P] Pase de estilos del editor a tokens de `DESIGN.md` (fondo surface, bordes hairline, tipografía Inter, anillos de foco), responsive 375px sin overflow de página, y recorrido de teclado del diálogo intacto (Tab dentro del editor, ESC y click-fuera cierran, foco inicial en el título)
-- [ ] T015 [P] Validar `quickstart.md` (§0–§8) contra la implementación real incluidas las pruebas anti-XSS de §4 (pegado de `"><img src=x onerror=alert(1)>` y enlace `javascript:` sin ejecución); revisar `browser-logs` y consola sin errores
-- [ ] T016 Quality gates y cierre: `vendor/bin/pint --dirty --format agent`, `npm run check:fix`, `npm run types:check`, `npm run build` sin errores; `php artisan test --compact` completo en verde (regresión de Tasks/Projects/Sprints/Auth/Shell); commit final de la feature
+- [x] T014 [P] Pase de estilos del editor a tokens de `DESIGN.md` (fondo surface, bordes hairline, tipografía Inter, anillos de foco), responsive 375px sin overflow de página, y recorrido de teclado del diálogo intacto (Tab dentro del editor, ESC y click-fuera cierran, foco inicial en el título)
+- [x] T015 [P] Validar `quickstart.md` (§0–§8) contra la implementación real incluidas las pruebas anti-XSS de §4 (pegado de `"><img src=x onerror=alert(1)>` y enlace `javascript:` sin ejecución); revisar `browser-logs` y consola sin errores
+- [x] T016 Quality gates y cierre: `vendor/bin/pint --dirty --format agent`, `npm run check:fix`, `npm run types:check`, `npm run build` sin errores; `php artisan test --compact` completo en verde (regresión de Tasks/Projects/Sprints/Auth/Shell); commit final de la feature
 
 ---
 
