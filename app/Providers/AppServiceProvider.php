@@ -2,6 +2,12 @@
 
 namespace App\Providers;
 
+use App\Models\Comment;
+use App\Models\Sprint;
+use App\Models\Task;
+use App\Observers\CommentObserver;
+use App\Observers\SprintObserver;
+use App\Observers\TaskObserver;
 use Carbon\CarbonImmutable;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -30,6 +36,10 @@ class AppServiceProvider extends ServiceProvider
         $this->configureDefaults();
 
         $this->configureRateLimiting();
+
+        Task::observe(TaskObserver::class);
+        Comment::observe(CommentObserver::class);
+        Sprint::observe(SprintObserver::class);
 
         Vite::prefetch(concurrency: 3);
     }
