@@ -19,14 +19,21 @@ class ProjectMemberController extends Controller
 
         $this->authorize('manageMembers', $project);
 
-        $validated = $request->validate([
-            'email' => [
-                'required',
-                'string',
-                'email',
-                Rule::exists('users', 'email'),
+        $validated = $request->validate(
+            [
+                'email' => [
+                    'required',
+                    'string',
+                    'email',
+                    Rule::exists('users', 'email'),
+                ],
             ],
-        ]);
+            [
+                'email.required' => 'Escribe el correo del colaborador.',
+                'email.email' => 'Escribe un correo válido.',
+                'email.exists' => 'No encontramos ningún usuario registrado con ese correo.',
+            ]
+        );
 
         $user = User::query()->where('email', $validated['email'])->firstOrFail();
 
@@ -51,6 +58,10 @@ class ProjectMemberController extends Controller
         $this->authorize('manageMembers', $project);
 
         abort_unless($project->members()->whereKey($user->id)->exists(), 404);
+
+        $project->tasks()
+            ->where('assignee_id', $user->id)
+            ->update(['assignee_id' => null]);
 
         $project->members()->detach($user);
 
