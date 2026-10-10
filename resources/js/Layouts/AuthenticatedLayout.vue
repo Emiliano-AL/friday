@@ -18,6 +18,7 @@ import type { FlashMessage as FlashMessageProps } from '@/types/project';
 import { home } from '@/routes';
 import { index as projectsIndex } from '@/routes/projects';
 import { index as tasksIndex } from '@/routes/tasks';
+import { index as backlogIndex } from '@/routes/backlog';
 
 const page = usePage();
 
@@ -56,7 +57,12 @@ const navItems: NavItem[] = [
         match: '/tasks',
     },
     { label: 'Sprints', icon: 'sprint', to: null, match: '' },
-    { label: 'Backlog', icon: 'view_list', to: null, match: '' },
+    {
+        label: 'Backlog',
+        icon: 'view_list',
+        to: backlogIndex.url(),
+        match: '/backlog',
+    },
 ];
 
 const footerItems: NavItem[] = [
@@ -120,6 +126,10 @@ function openPalette(): void {
     paletteOpen.value = true;
 }
 
+function goToQuickCapture(): void {
+    router.visit(backlogIndex.url());
+}
+
 provide('friday:open-palette', openPalette);
 
 const commandActions: CommandAction[] = [
@@ -135,7 +145,7 @@ const commandActions: CommandAction[] = [
         icon: 'add_circle',
         shortcut: 'C',
         keywords: ['crear', 'nueva', 'tarea', 'task'],
-        run: () => router.visit(`${tasksIndex.url()}?new=1`),
+        run: () => router.visit(backlogIndex.url()),
     },
     {
         label: 'Ir al Panel',
@@ -231,7 +241,7 @@ onBeforeUnmount(() => {
                 :nav-items="navItems"
                 :footer-items="footerItems"
                 @collapse="toggleSidebar"
-                @new-task="openPalette"
+                @new-task="goToQuickCapture"
             />
         </aside>
 

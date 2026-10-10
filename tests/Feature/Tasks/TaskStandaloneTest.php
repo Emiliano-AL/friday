@@ -18,10 +18,30 @@ test('users can create standalone tasks without a project', function () {
         'title' => 'Comprar café para la oficina',
         'project_id' => null,
         'assignee_id' => $user->id,
+        'author_id' => $user->id,
     ]);
 });
 
-test('standalone tasks must be assigned to their creator', function () {
+test('standalone tasks can be created without an assignee', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->post('/tasks', [
+            'title' => 'Pendiente rápido',
+            'status' => 'backlog',
+        ])
+        ->assertSessionHasNoErrors();
+
+    $this->assertDatabaseHas('tasks', [
+        'title' => 'Pendiente rápido',
+        'project_id' => null,
+        'assignee_id' => null,
+        'author_id' => $user->id,
+        'status' => 'backlog',
+    ]);
+});
+
+test('standalone tasks can only be assigned to their creator', function () {
     $user = User::factory()->create();
     $other = User::factory()->create();
 
@@ -32,9 +52,40 @@ test('standalone tasks must be assigned to their creator', function () {
         ])
         ->assertSessionHasErrors(['assignee_id']);
 
-    $this->actingAs($user)
-        ->post('/tasks', ['title' => 'Sin responsable'])
-        ->assertSessionHasErrors(['assignee_id']);
+    $this->assertDatabaseMissing('tasks', ['title' => 'Tarea ajena']);
+});
+
+test('standalone tasks receive a sequential human code per author', function () {
+    $user = User::factory()->create();
+    $other = User::factory()->create();
+
+    $this->actingAs($user)->post('/tasks', ['title' => 'Primera']);
+    $this->actingAs($user)->post('/tasks', ['title' => 'Segunda']);
+    $this->actingAs($other)->post('/tasks', ['title' => 'Ajena']);
+
+    expect(Task::query()->where('author_id', $user->id)->orderBy('id')->pluck('code')->all())
+        ->toBe(['FRN-1', 'FRN-2'])
+        ->and(Task::query()->where('author_id', $other->id)->value('code'))->toBe('FRN-1');
+});
+
+test('standalone task authors who are not the assignee can update and delete them', function () {
+    $author = User::factory()->create();
+    $assignee = User::factory()->create();
+    $task = Task::factory()->standalone()->for($author, 'author')->for($assignee, 'assignee')->create();
+
+    $this->actingAs($author)
+        ->put("/tasks/{$task->id}", ['title' => 'Renombrada por la autora', 'status' => 'done'])
+        ->assertSessionHasNoErrors();
+
+    $this->assertDatabaseHas('tasks', [
+        'id' => $task->id,
+        'title' => 'Renombrada por la autora',
+        'status' => 'done',
+    ]);
+
+    $this->actingAs($author)->delete("/tasks/{$task->id}");
+
+    $this->assertDatabaseMissing('tasks', ['id' => $task->id]);
 });
 
 test('standalone tasks cannot have a sprint', function () {

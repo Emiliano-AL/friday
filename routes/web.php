@@ -1,16 +1,15 @@
 <?php
 
+use App\Http\Controllers\BacklogController;
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ProjectMemberController;
 use App\Http\Controllers\ProjectSprintController;
 use App\Http\Controllers\ProjectTaskController;
 use App\Http\Controllers\TaskController;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
-Route::get('/', function () {
-    return Inertia::render('AppHome');
-})->middleware(['auth'])->name('home');
+Route::get('/', HomeController::class)->middleware(['auth'])->name('home');
 
 Route::middleware('auth')->group(function () {
     Route::resource('projects', ProjectController::class);
@@ -40,6 +39,8 @@ Route::middleware('auth')->group(function () {
         ->name('projects.tasks.destroy');
     Route::post('projects/{project}/tasks/{task}/comments', [ProjectTaskController::class, 'storeComment'])
         ->name('projects.tasks.comments.store');
+
+    Route::get('backlog', [BacklogController::class, 'index'])->name('backlog.index');
 
     Route::get('tasks', [TaskController::class, 'index'])->name('tasks.index');
     Route::post('tasks', [TaskController::class, 'store'])->name('tasks.store');
