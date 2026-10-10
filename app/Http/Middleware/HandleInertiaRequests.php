@@ -50,7 +50,7 @@ class HandleInertiaRequests extends Middleware
     /**
      * Lightweight project list for the workspace context switcher.
      *
-     * @return array<int, array{id: int, title: string}>
+     * @return array<int, array{id: int, title: string, color: string|null, icon: string|null}>
      */
     private function projectSummaries(User $user): array
     {
@@ -59,7 +59,13 @@ class HandleInertiaRequests extends Middleware
             ->orWhereHas('members', fn ($query) => $query->whereKey($user->id))
             ->orderBy('title')
             ->limit(50)
-            ->get(['id', 'title'])
+            ->get(['id', 'title', 'color', 'icon'])
+            ->map(fn (Project $project) => [
+                'id' => $project->id,
+                'title' => $project->title,
+                'color' => $project->color?->value,
+                'icon' => $project->icon?->value,
+            ])
             ->all();
     }
 }

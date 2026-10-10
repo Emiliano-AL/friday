@@ -19,6 +19,23 @@ test('authenticated users receive their project summaries on authenticated pages
         );
 });
 
+test('project summaries expose color and icon', function () {
+    $user = User::factory()->create();
+    $project = Project::factory()->for($user, 'owner')->create([
+        'color' => '#8b5cf6',
+        'icon' => 'rocket',
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('home'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('projects.0.id', $project->id)
+            ->where('projects.0.color', '#8b5cf6')
+            ->where('projects.0.icon', 'rocket')
+        );
+});
+
 test('users without projects receive an empty projects list', function () {
     $user = User::factory()->create();
 

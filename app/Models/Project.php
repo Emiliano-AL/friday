@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\ProjectColor;
+use App\Enums\ProjectIcon;
 use App\Enums\ProjectStatus;
 use App\Enums\SprintStatus;
 use App\Enums\TaskStatus;
@@ -21,6 +23,10 @@ use Illuminate\Support\Carbon;
  * @property int $owner_id
  * @property string $title
  * @property string|null $description
+ * @property string|null $key
+ * @property ProjectColor|null $color
+ * @property ProjectIcon|null $icon
+ * @property Carbon|null $target_date
  * @property ProjectStatus $status
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
@@ -28,7 +34,7 @@ use Illuminate\Support\Carbon;
  * @property-read Collection<int, Sprint> $sprints
  * @property-read Collection<int, Task> $tasks
  */
-#[Fillable(['owner_id', 'title', 'description', 'status'])]
+#[Fillable(['owner_id', 'title', 'description', 'key', 'color', 'icon', 'target_date', 'status'])]
 class Project extends Model
 {
     /** @use HasFactory<ProjectFactory> */
@@ -42,6 +48,9 @@ class Project extends Model
     protected function casts(): array
     {
         return [
+            'color' => ProjectColor::class,
+            'icon' => ProjectIcon::class,
+            'target_date' => 'date:Y-m-d',
             'status' => ProjectStatus::class,
         ];
     }

@@ -1,16 +1,24 @@
 <script setup lang="ts">
 import AppIcon from '@/Components/AppShell/AppIcon.vue';
-import UiBadge from '@/Components/Projects/UiBadge.vue';
 import Modal from '@/Components/Modal.vue';
 import RichTextEditor from '@/Components/RichText/RichTextEditor.vue';
 import { destroy, store, update } from '@/routes/projects';
+import { PROJECT_ICONS, PROJECT_PALETTE } from '@/types/project';
 import { useForm } from '@inertiajs/vue3';
 import { nextTick, ref, watch } from 'vue';
 
 const props = defineProps<{
     open: boolean;
     mode: 'create' | 'edit';
-    project?: { id: number; title: string; description: string | null };
+    project?: {
+        id: number;
+        title: string;
+        description: string | null;
+        key: string | null;
+        color: string | null;
+        icon: string | null;
+        targetDate: string | null;
+    };
 }>();
 
 const emit = defineEmits<{
@@ -23,6 +31,10 @@ const descriptionEditor = ref<InstanceType<typeof RichTextEditor> | null>(null);
 const form = useForm({
     title: '',
     description: '',
+    key: '',
+    color: null as string | null,
+    icon: null as string | null,
+    target_date: '',
 });
 
 watch(
@@ -31,6 +43,10 @@ watch(
         if (open) {
             form.title = props.project?.title ?? '';
             form.description = props.project?.description ?? '';
+            form.key = props.project?.key ?? '';
+            form.color = props.project?.color ?? null;
+            form.icon = props.project?.icon ?? null;
+            form.target_date = props.project?.targetDate ?? '';
             form.clearErrors();
             await nextTick();
             titleInput.value?.focus();
@@ -41,6 +57,14 @@ watch(
 async function submit(): Promise<void> {
     form.description = (await descriptionEditor.value?.save()) ?? '';
     form.clearErrors('description');
+
+    form.transform((data) => ({
+        ...data,
+        key: data.key === '' ? null : data.key,
+        color: data.color === '' ? null : data.color,
+        icon: data.icon === '' ? null : data.icon,
+        target_date: data.target_date === '' ? null : data.target_date,
+    }));
 
     if (props.mode === 'create') {
         form.post(store.url(), {
@@ -57,6 +81,12 @@ async function submit(): Promise<void> {
             onSuccess: () => emit('close'),
         });
     }
+}
+
+function onKeyInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    input.value = input.value.toUpperCase();
+    form.key = input.value;
 }
 
 function removeProject(): void {
@@ -124,50 +154,104 @@ function removeProject(): void {
             @submit.prevent="submit"
         >
             <div class="flex flex-col gap-2">
-                <div class="flex items-center justify-between">
-                    <span
-                        class="text-label-sm font-label-sm text-on-surface font-medium"
-                    >
-                        Identidad Visual
-                    </span>
-                    <UiBadge label="Próximamente" tone="outline" />
-                </div>
-                <div class="flex flex-wrap items-center gap-2 opacity-70">
-                    <div class="flex items-center gap-1" aria-hidden="true">
-                        <span
-                            v-for="color in [
-                                '#5b5bd6',
-                                '#2563eb',
-                                '#10b981',
-                                '#f59e0b',
-                            ]"
-                            :key="color"
-                            class="h-6 w-6 rounded-full"
-                            :style="{ backgroundColor: color }"
-                        />
-                        <span
-                            class="text-label-xs font-label-xs text-on-surface-variant"
-                        >
-                            +3
-                        </span>
-                    </div>
+                <span
+                    class="text-label-sm font-label-sm text-on-surface font-medium"
+                >
+                    Identidad Visual
+                </span>
+                <div class="flex flex-wrap items-center gap-2">
                     <input
+                        v-model="form.key"
                         type="text"
-                        disabled
+                        maxlength="5"
                         placeholder="CLAVE"
-                        aria-label="Clave del proyecto (próximamente)"
+                        aria-label="Clave del proyecto"
                         class="placeholder:text-on-surface-variant/50 bg-surface-container-lowest text-body-sm font-body-sm shadow-card w-20 rounded-lg border-none px-3 py-1.5 text-center uppercase"
+                        :class="form.errors.key ? 'ring-error ring-2' : ''"
+                        @input="onKeyInput"
                     />
                     <input
+                        v-model="form.target_date"
                         type="date"
-                        disabled
-                        aria-label="Fecha objetivo (próximamente)"
-                        class="bg-surface-container-lowest text-body-sm font-body-sm text-on-surface-variant shadow-card rounded-lg border-none px-3 py-1.5"
+                        aria-label="Fecha objetivo"
+                        class="bg-surface-container-lowest text-body-sm font-body-sm text-on-surface shadow-card rounded-lg border-none px-3 py-1.5"
+                        :class="
+                            form.errors.target_date ? 'ring-error ring-2' : ''
+                        "
                     />
                 </div>
-                <p class="text-label-xs font-label-xs text-on-surface-variant">
-                    Clave, color de acento, icono y fecha objetivo estarán
-                    disponibles próximamente.
+                <p
+                    v-if="form.errors.key"
+                    class="text-label-xs font-label-xs text-error"
+                >
+                    {{ form.errors.key }}
+                </p>
+                <p
+                    v-if="form.errors.target_date"
+                    class="text-label-xs font-label-xs text-error"
+                >
+                    {{ form.errors.target_date }}
+                </p>
+                <div
+                    class="flex flex-wrap items-center gap-1.5"
+                    role="radiogroup"
+                    aria-label="Color del proyecto"
+                >
+                    <button
+                        v-for="color in PROJECT_PALETTE"
+                        :key="color"
+                        type="button"
+                        role="radio"
+                        :aria-checked="form.color === color"
+                        :aria-label="`Color ${color}`"
+                        class="h-6 w-6 rounded-full transition-transform"
+                        :class="
+                            form.color === color
+                                ? 'ring-on-surface scale-110 ring-2'
+                                : 'hover:scale-110'
+                        "
+                        :style="{ backgroundColor: color }"
+                        @click="
+                            form.color = form.color === color ? null : color
+                        "
+                    />
+                </div>
+                <p
+                    v-if="form.errors.color"
+                    class="text-label-xs font-label-xs text-error"
+                >
+                    {{ form.errors.color }}
+                </p>
+                <div
+                    class="grid w-fit grid-cols-4 gap-1.5"
+                    role="radiogroup"
+                    aria-label="Icono del proyecto"
+                >
+                    <button
+                        v-for="icon in PROJECT_ICONS"
+                        :key="icon"
+                        type="button"
+                        role="radio"
+                        :aria-checked="form.icon === icon"
+                        :aria-label="`Icono ${icon}`"
+                        class="text-on-surface-variant hover:bg-surface-container flex h-8 w-8 items-center justify-center rounded-lg transition-colors"
+                        :class="
+                            form.icon === icon
+                                ? 'bg-surface-container text-on-surface ring-on-surface ring-2'
+                                : ''
+                        "
+                        @click="
+                            form.icon = form.icon === icon ? null : icon
+                        "
+                    >
+                        <AppIcon :name="icon" :size="18" />
+                    </button>
+                </div>
+                <p
+                    v-if="form.errors.icon"
+                    class="text-label-xs font-label-xs text-error"
+                >
+                    {{ form.errors.icon }}
                 </p>
             </div>
 

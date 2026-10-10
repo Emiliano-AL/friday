@@ -57,6 +57,25 @@ test('directory payload exposes the full DirectoryProject shape', function () {
         );
 });
 
+test('directory payload exposes the project identity fields', function () {
+    $user = User::factory()->create();
+    $project = Project::factory()->for($user, 'owner')->create([
+        'key' => 'FRID',
+        'color' => '#8b5cf6',
+        'icon' => 'rocket',
+        'target_date' => '2026-12-31',
+    ]);
+
+    $this->actingAs($user)
+        ->get('/projects')
+        ->assertInertia(fn ($page) => $page
+            ->where('projects.0.key', 'FRID')
+            ->where('projects.0.color', '#8b5cf6')
+            ->where('projects.0.icon', 'rocket')
+            ->where('projects.0.targetDate', '2026-12-31')
+        );
+});
+
 test('active sprint is null when no sprint has started', function () {
     $user = User::factory()->create();
     $project = Project::factory()->for($user, 'owner')->create();

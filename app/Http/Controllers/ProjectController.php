@@ -6,7 +6,6 @@ use App\Enums\ProjectStatus;
 use App\Enums\TaskStatus;
 use App\Http\Requests\StoreProjectRequest;
 use App\Http\Requests\UpdateProjectRequest;
-use App\Models\Comment;
 use App\Models\Project;
 use App\Models\Sprint;
 use App\Models\Task;
@@ -43,6 +42,10 @@ class ProjectController extends Controller
                 'id' => $project->id,
                 'title' => $project->title,
                 'description' => $project->description,
+                'key' => $project->key,
+                'color' => $project->color?->value,
+                'icon' => $project->icon?->value,
+                'targetDate' => $project->target_date?->toDateString(),
                 'status' => $project->status->value,
                 'statusLabel' => $project->status->label(),
                 'progress' => $project->tasks_count === 0
@@ -109,8 +112,7 @@ class ProjectController extends Controller
     {
         $project = Project::query()->create([
             'owner_id' => $request->user()->id,
-            'title' => $request->string('title'),
-            'description' => $request->input('description'),
+            ...$request->validated(),
         ]);
 
         return redirect()->route('projects.show', $project)->with('success', 'Proyecto creado.');
@@ -139,7 +141,7 @@ class ProjectController extends Controller
     }
 
     /**
-     * Update the project's title and description (owner of an active project).
+     * Update the project's identity fields (title, description, key, color, icon, target date).
      */
     public function update(UpdateProjectRequest $request, Project $project): RedirectResponse
     {
@@ -147,10 +149,7 @@ class ProjectController extends Controller
 
         $this->authorize('update', $project);
 
-        $project->update([
-            'title' => $request->string('title'),
-            'description' => $request->input('description'),
-        ]);
+        $project->update($request->validated());
 
         return redirect()->route('projects.show', $project)->with('success', 'Proyecto actualizado.');
     }
@@ -209,16 +208,35 @@ class ProjectController extends Controller
             'members',
             'activeSprint',
             'sprints' => fn ($query) => $query->orderBy('start_date'),
-            'tasks' => fn ($query) => $query->orderByDesc('updated_at'),
+            'tasks' => fn ($query) => $query->orderByDesc('updated_at')->withCount('comments'),
             'tasks.assignee',
             'tasks.sprint',
-            'tasks.comments.author',
         ]);
+
+        $user = $request->user();
+
+        $canUpdateTasks = ($project->isOwnedBy($user) || $project->members->contains('id', $user->id))
+            && $project->status->isActive();
+
+        $canDeleteTasks = $project->isOwnedBy($user) && $project->status->isActive();
+
+        /** @var array<int, int> $openTasksCounts Open (non-Done) task count per assignee id. */
+        $openTasksCounts = $project->tasks()
+            ->selectRaw('assignee_id, COUNT(*) as aggregate')
+            ->where('status', '!=', TaskStatus::Done)
+            ->whereNotNull('assignee_id')
+            ->groupBy('assignee_id')
+            ->pluck('aggregate', 'assignee_id')
+            ->all();
 
         return [
             'id' => $project->id,
             'title' => $project->title,
             'description' => $project->description,
+            'key' => $project->key,
+            'color' => $project->color?->value,
+            'icon' => $project->icon?->value,
+            'targetDate' => $project->target_date?->toDateString(),
             'status' => $project->status->value,
             'statusLabel' => $project->status->label(),
             'progress' => $project->progressPercentage(),
@@ -240,12 +258,14 @@ class ProjectController extends Controller
                 'name' => $project->owner->name,
                 'email' => $project->owner->email,
                 'avatar' => $project->owner->avatar,
+                'openTasksCount' => (int) ($openTasksCounts[$project->owner->id] ?? 0),
             ],
             'members' => $project->members->map(fn (User $member) => [
                 'id' => $member->id,
                 'name' => $member->name,
                 'email' => $member->email,
                 'avatar' => $member->avatar,
+                'openTasksCount' => (int) ($openTasksCounts[$member->id] ?? 0),
             ])->values(),
             'sprints' => $project->sprints->map(fn (Sprint $sprint) => [
                 'id' => $sprint->id,
@@ -260,30 +280,34 @@ class ProjectController extends Controller
                 'id' => $task->id,
                 'title' => $task->title,
                 'description' => $task->description,
+                'code' => $task->code,
+                'points' => $task->points,
                 'type' => $task->type->value,
                 'typeLabel' => $task->type->label(),
                 'priority' => $task->priority->value,
                 'priorityLabel' => $task->priority->label(),
                 'status' => $task->status->value,
                 'statusLabel' => $task->status->label(),
+                'project' => [
+                    'id' => $project->id,
+                    'title' => $project->title,
+                ],
+                'sprint' => $task->sprint ? [
+                    'id' => $task->sprint->id,
+                    'name' => $task->sprint->name,
+                    'status' => $task->sprint->status->value,
+                ] : null,
                 'assignee' => $task->assignee ? [
                     'id' => $task->assignee->id,
                     'name' => $task->assignee->name,
                     'avatar' => $task->assignee->avatar,
                 ] : null,
-                'sprint' => $task->sprint ? [
-                    'id' => $task->sprint->id,
-                    'name' => $task->sprint->name,
-                ] : null,
-                'comments' => $task->comments->sortBy('created_at')->map(fn (Comment $comment) => [
-                    'id' => $comment->id,
-                    'body' => $comment->body,
-                    'author' => [
-                        'id' => $comment->author->id,
-                        'name' => $comment->author->name,
-                    ],
-                    'createdAt' => $comment->created_at->toIso8601String(),
-                ])->values(),
+                'authorId' => $task->author_id,
+                'createdAt' => $task->created_at->toIso8601String(),
+                'completedAt' => $task->completed_at?->toIso8601String(),
+                'commentsCount' => $task->comments_count,
+                'canUpdate' => $canUpdateTasks,
+                'canDelete' => $canDeleteTasks,
             ])->values(),
             'allowedTransitions' => array_map(
                 fn (ProjectStatus $status) => $status->value,

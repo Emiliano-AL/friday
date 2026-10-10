@@ -178,3 +178,176 @@ test('projects can not be updated with a whitespace-only title', function () {
     $response->assertSessionHasErrors('title');
     $this->assertDatabaseHas('projects', ['id' => $project->id, 'title' => 'Original']);
 });
+
+test('un proyecto se crea con clave color icono y fecha de término completos', function () {
+    $user = User::factory()->create();
+
+    $response = $this->actingAs($user)->post('/projects', [
+        'title' => 'Lanzamiento Q4',
+        'key' => 'frid',
+        'color' => '#8b5cf6',
+        'icon' => 'rocket',
+        'target_date' => '2026-12-31',
+    ]);
+
+    $response->assertSessionHasNoErrors();
+    $this->assertDatabaseHas('projects', [
+        'title' => 'Lanzamiento Q4',
+        'key' => 'FRID',
+        'color' => '#8b5cf6',
+        'icon' => 'rocket',
+        'target_date' => '2026-12-31',
+    ]);
+});
+
+test('la clave duplicada del mismo propietario se rechaza al crear', function () {
+    $user = User::factory()->create();
+    Project::factory()->for($user, 'owner')->create(['key' => 'FRID']);
+
+    $this->actingAs($user)->post('/projects', [
+        'title' => 'Duplicado mayúsculas',
+        'key' => 'FRID',
+    ])->assertSessionHasErrors('key');
+
+    $this->actingAs($user)->post('/projects', [
+        'title' => 'Duplicado minúsculas',
+        'key' => 'frid',
+    ])->assertSessionHasErrors('key');
+
+    expect(Project::query()->count())->toBe(1);
+});
+
+test('la clave duplicada del mismo propietario se rechaza al actualizar salvo la propia', function () {
+    $user = User::factory()->create();
+    $first = Project::factory()->for($user, 'owner')->create(['key' => 'FRID']);
+    $second = Project::factory()->for($user, 'owner')->create(['key' => 'WEB']);
+
+    $this->actingAs($user)->put("/projects/{$second->id}", [
+        'title' => $second->title,
+        'key' => 'FRID',
+    ])->assertSessionHasErrors('key');
+
+    $this->actingAs($user)->put("/projects/{$second->id}", [
+        'title' => $second->title,
+        'key' => 'WEB',
+    ])->assertSessionHasNoErrors();
+
+    $this->assertDatabaseHas('projects', ['id' => $first->id, 'key' => 'FRID']);
+    $this->assertDatabaseHas('projects', ['id' => $second->id, 'key' => 'WEB']);
+});
+
+test('la misma clave es válida para otro propietario', function () {
+    $owner = User::factory()->create();
+    $other = User::factory()->create();
+    Project::factory()->for($owner, 'owner')->create(['key' => 'FRID']);
+
+    $response = $this->actingAs($other)->post('/projects', [
+        'title' => 'Clave compartida',
+        'key' => 'FRID',
+    ]);
+
+    $response->assertSessionHasNoErrors();
+    $this->assertDatabaseHas('projects', ['key' => 'FRID', 'owner_id' => $other->id]);
+});
+
+test('la clave rechaza longitudes inválidas y caracteres no alfanuméricos', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)->post('/projects', [
+        'title' => 'Clave corta',
+        'key' => 'A',
+    ])->assertSessionHasErrors('key');
+
+    $this->actingAs($user)->post('/projects', [
+        'title' => 'Clave larga',
+        'key' => 'ABCDEF',
+    ])->assertSessionHasErrors('key');
+
+    $this->actingAs($user)->post('/projects', [
+        'title' => 'Clave con guion',
+        'key' => 'FR-ID',
+    ])->assertSessionHasErrors('key');
+
+    expect(Project::query()->count())->toBe(0);
+});
+
+test('la clave se normaliza a mayúsculas al guardar', function () {
+    $user = User::factory()->create();
+    $project = Project::factory()->for($user, 'owner')->create(['key' => 'WEB']);
+
+    $this->actingAs($user)->put("/projects/{$project->id}", [
+        'title' => $project->title,
+        'key' => 'frid',
+    ])->assertSessionHasNoErrors();
+
+    $this->assertDatabaseHas('projects', ['id' => $project->id, 'key' => 'FRID']);
+});
+
+test('se rechazan color e icono fuera del conjunto permitido', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)->post('/projects', [
+        'title' => 'Color inválido',
+        'color' => '#000000',
+    ])->assertSessionHasErrors('color');
+
+    $this->actingAs($user)->post('/projects', [
+        'title' => 'Icono inválido',
+        'icon' => 'not_an_icon',
+    ])->assertSessionHasErrors('icon');
+
+    expect(Project::query()->count())->toBe(0);
+});
+
+test('se rechaza una fecha de término imposible', function () {
+    $user = User::factory()->create();
+
+    $response = $this->actingAs($user)->post('/projects', [
+        'title' => 'Fecha imposible',
+        'target_date' => '2026-02-31',
+    ]);
+
+    $response->assertSessionHasErrors('target_date');
+    expect(Project::query()->count())->toBe(0);
+});
+
+test('actualizar con fecha de término vacía la deja sin valor', function () {
+    $user = User::factory()->create();
+    $project = Project::factory()->for($user, 'owner')->create(['target_date' => '2026-12-31']);
+
+    $response = $this->actingAs($user)->put("/projects/{$project->id}", [
+        'title' => $project->title,
+        'target_date' => null,
+    ]);
+
+    $response->assertSessionHasNoErrors();
+    $this->assertDatabaseHas('projects', ['id' => $project->id, 'target_date' => null]);
+});
+
+test('quien no es propietario no puede actualizar la identidad y recibe 404', function () {
+    $owner = User::factory()->create();
+    $collaborator = User::factory()->create();
+    $project = Project::factory()->for($owner, 'owner')->hasAttached($collaborator, [], 'members')->create([
+        'key' => 'FRID',
+        'color' => '#8b5cf6',
+        'icon' => 'rocket',
+        'target_date' => '2026-12-31',
+    ]);
+
+    $this->actingAs($collaborator)->put("/projects/{$project->id}", [
+        'title' => 'Cambiado',
+        'key' => 'OTRO',
+        'color' => '#ef4444',
+        'icon' => 'bug_report',
+        'target_date' => '2027-01-01',
+    ])->assertNotFound();
+
+    $this->assertDatabaseHas('projects', [
+        'id' => $project->id,
+        'title' => $project->title,
+        'key' => 'FRID',
+        'color' => '#8b5cf6',
+        'icon' => 'rocket',
+        'target_date' => '2026-12-31',
+    ]);
+});
