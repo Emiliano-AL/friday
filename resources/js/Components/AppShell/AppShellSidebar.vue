@@ -55,10 +55,6 @@ const emit = defineEmits<{
             >
                 <AppIcon name="add" />
                 <span>Nueva Tarea</span>
-                <span
-                    class="bg-on-primary/20 text-label-xs ml-auto rounded px-1.5 py-0.5 opacity-70"
-                    >C</span
-                >
             </button>
         </div>
 

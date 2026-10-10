@@ -116,7 +116,7 @@ test('tasks and comments remain visible for members when the project is not acti
         ->assertInertia(fn ($page) => $page
             ->component('Projects/Show')
             ->has('project.tasks', 1)
-            ->has('project.tasks.0.comments', 1)
+            ->where('project.tasks.0.commentsCount', 1)
         );
 })->with([
     'archived as owner' => ['archived', false],

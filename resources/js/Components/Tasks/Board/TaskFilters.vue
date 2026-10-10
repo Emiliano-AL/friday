@@ -5,22 +5,32 @@ import Avatar from '@/Components/AppShell/Avatar.vue';
 import UiBadge from '@/Components/Projects/UiBadge.vue';
 import type { TasksTab, TasksView, TaskOption } from '@/types/task';
 
-const props = defineProps<{
-    search: string;
-    tab: TasksTab;
-    projectId: number | 'all' | 'none';
-    assigneeId: number | 'all';
-    counts: {
-        all: number;
-        mine: number;
-        standalone: number;
-        urgent: number;
-        done: number;
-    };
-    view: TasksView;
-    projects: TaskOption[];
-    assignees: { id: number; name: string; avatar: string | null }[];
-}>();
+const props = withDefaults(
+    defineProps<{
+        search: string;
+        tab: TasksTab;
+        projectId: number | 'all' | 'none';
+        assigneeId: number | 'all';
+        counts: {
+            all: number;
+            mine: number;
+            standalone: number;
+            urgent: number;
+            done: number;
+        };
+        view: TasksView;
+        projects: TaskOption[];
+        assignees: { id: number; name: string; avatar: string | null }[];
+        showProjectFilter?: boolean;
+        showStandaloneTab?: boolean;
+        showViewToggle?: boolean;
+    }>(),
+    {
+        showProjectFilter: true,
+        showStandaloneTab: true,
+        showViewToggle: true,
+    },
+);
 
 const emit = defineEmits<{
     'update:search': [value: string];
@@ -58,6 +68,12 @@ const tabCount = computed(() => {
             return props.counts.all;
     }
 });
+
+const visibleTabs = computed(() =>
+    props.showStandaloneTab
+        ? tabs
+        : tabs.filter((tabOption) => tabOption.value !== 'standalone'),
+);
 
 function usePopover() {
     const open = ref(false);
@@ -171,7 +187,7 @@ defineExpose({ focus });
             </div>
 
             <div class="gap-space-sm flex flex-wrap items-center">
-                <div ref="projectMenu.root" class="relative">
+                <div v-if="showProjectFilter" ref="projectMenu.root" class="relative">
                     <button
                         type="button"
                         :aria-expanded="projectMenu.open.value"
@@ -284,6 +300,7 @@ defineExpose({ focus });
                 </div>
 
                 <div
+                    v-if="showViewToggle"
                     class="bg-surface-container-low flex items-center rounded-lg p-0.5"
                 >
                     <button
@@ -338,7 +355,7 @@ defineExpose({ focus });
                 class="gap-space-xs py-space-xs flex items-center overflow-x-auto"
             >
                 <button
-                    v-for="tabOption in tabs"
+                    v-for="tabOption in visibleTabs"
                     :key="tabOption.value"
                     type="button"
                     class="flex items-center gap-1.5 rounded-lg px-3 py-1.5 whitespace-nowrap transition-colors"

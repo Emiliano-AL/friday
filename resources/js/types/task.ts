@@ -9,6 +9,7 @@ export type TaskStatusValue =
 
 export interface BoardTask {
     id: number;
+    code?: string | null;
     title: string;
     description: string | null;
     type: TaskTypeValue;
@@ -17,9 +18,11 @@ export interface BoardTask {
     priorityLabel: string;
     status: TaskStatusValue;
     statusLabel: string;
+    points?: number | null;
     project: { id: number; title: string } | null;
     sprint: { id: number; name: string } | null;
     assignee: { id: number; name: string; avatar: string | null } | null;
+    authorId?: number | null;
     commentsCount: number;
     canUpdate: boolean;
     canDelete: boolean;
