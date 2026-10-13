@@ -1,5 +1,27 @@
-import type { TaskItem } from '@/Components/Tasks/types';
+import type { BoardTask } from '@/types/task';
 import type { SprintStatusValue } from '@/types/sprint';
+
+export const PROJECT_PALETTE = [
+    '#5b5bd6',
+    '#2563eb',
+    '#10b981',
+    '#f59e0b',
+    '#ef4444',
+    '#06b6d4',
+    '#8b5cf6',
+    '#ec4899',
+] as const;
+
+export const PROJECT_ICONS = [
+    'folder',
+    'rocket',
+    'bug_report',
+    'design_services',
+    'code',
+    'database',
+    'campaign',
+    'terminal',
+] as const;
 
 export interface ActiveSprint {
     id: number;
@@ -26,12 +48,26 @@ export interface ProjectMember {
     name: string;
     email: string;
     avatar: string | null;
+    openTasksCount: number;
+}
+
+export interface ProjectTask extends BoardTask {
+    code: string | null;
+    points: number | null;
+    authorId: number | null;
+    createdAt: string;
+    completedAt: string | null;
+    sprint: { id: number; name: string; status: SprintStatusValue } | null;
 }
 
 export interface ProjectDetail {
     id: number;
     title: string;
     description: string | null;
+    key: string | null;
+    color: string | null;
+    icon: string | null;
+    targetDate: string | null;
     status: 'active' | 'archived' | 'completed';
     statusLabel: string;
     progress: number;
@@ -41,9 +77,17 @@ export interface ProjectDetail {
     owner: ProjectMember;
     members: ProjectMember[];
     sprints: SprintSummary[];
-    tasks: TaskItem[];
+    tasks: ProjectTask[];
     allowedTransitions: string[];
     isOwner: boolean;
+    pendingInvitations: PendingInvitation[];
+}
+
+export interface PendingInvitation {
+    id: number;
+    email: string;
+    sentAt: string;
+    isExpired: boolean;
 }
 
 export interface ProjectPerson {
@@ -56,6 +100,10 @@ export interface DirectoryProject {
     id: number;
     title: string;
     description: string | null;
+    key: string | null;
+    color: string | null;
+    icon: string | null;
+    targetDate: string | null;
     status: 'active' | 'archived' | 'completed';
     statusLabel: string;
     progress: number;

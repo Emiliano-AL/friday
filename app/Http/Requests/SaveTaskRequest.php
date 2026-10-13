@@ -31,7 +31,6 @@ class SaveTaskRequest extends FormRequest
     public function rules(): array
     {
         $storing = $this->isMethod('post');
-        $standalone = $this->input('project_id') === null;
 
         return [
             'title' => [$storing ? 'required' : 'sometimes', 'string', 'max:255'],
@@ -41,12 +40,13 @@ class SaveTaskRequest extends FormRequest
             'status' => ['sometimes', Rule::enum(TaskStatus::class)],
             'project_id' => ['nullable', 'exists:projects,id'],
             'assignee_id' => [
-                $storing && $standalone ? 'required' : 'nullable',
+                'nullable',
                 'exists:users,id',
                 function (string $attribute, mixed $value, Closure $fail): void {
                     $this->validateAssignee($value, $fail);
                 },
             ],
+            'points' => ['sometimes', 'nullable', 'integer', 'min:0', 'max:99'],
             'sprint_id' => [
                 'nullable',
                 'exists:sprints,id',
@@ -62,15 +62,11 @@ class SaveTaskRequest extends FormRequest
      */
     private function validateAssignee(mixed $value, Closure $fail): void
     {
-        $projectId = $this->input('project_id');
-
         if ($value === null) {
-            if ($projectId === null && $this->isMethod('post')) {
-                $fail('Asigna la tarea a alguien.');
-            }
-
             return;
         }
+
+        $projectId = $this->input('project_id');
 
         if ($projectId === null) {
             if ((int) $value !== $this->user()->id) {

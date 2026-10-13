@@ -3,6 +3,7 @@ import { inject } from 'vue';
 import AppIcon from '@/Components/AppShell/AppIcon.vue';
 
 const openPalette = inject<() => void>('friday:open-palette', () => {});
+const openTaskForm = inject<() => void>('friday:open-task-form', () => {});
 </script>
 
 <template>
@@ -97,7 +98,7 @@ const openPalette = inject<() => void>('friday:open-palette', () => {});
                     <button
                         type="button"
                         class="group bg-surface-container-low p-space-md hover:bg-surface-container hover:shadow-card flex flex-col items-center rounded-lg text-left transition-all"
-                        @click="openPalette"
+                        @click="openTaskForm"
                     >
                         <span
                             class="mb-space-xs bg-surface-container-lowest text-on-surface-variant shadow-card group-hover:text-primary-container flex h-8 w-8 items-center justify-center rounded-lg transition-colors"

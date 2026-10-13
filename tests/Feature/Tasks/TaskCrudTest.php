@@ -9,6 +9,91 @@ use App\Models\Sprint;
 use App\Models\Task;
 use App\Models\User;
 
+test('global task creation honors an explicit backlog status', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)->post('/tasks', [
+        'title' => 'Pendiente del backlog',
+        'status' => 'backlog',
+    ])->assertSessionHasNoErrors();
+
+    $this->assertDatabaseHas('tasks', [
+        'title' => 'Pendiente del backlog',
+        'status' => 'backlog',
+        'author_id' => $user->id,
+    ]);
+});
+
+test('global task creation validates points', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)->post('/tasks', [
+        'title' => 'Puntos negativos',
+        'points' => -1,
+    ])->assertSessionHasErrors('points');
+
+    $this->actingAs($user)->post('/tasks', [
+        'title' => 'Demasiados puntos',
+        'points' => 100,
+    ])->assertSessionHasErrors('points');
+
+    $this->actingAs($user)->post('/tasks', [
+        'title' => 'Cero puntos',
+        'points' => 0,
+    ])->assertSessionHasNoErrors();
+
+    $this->actingAs($user)->post('/tasks', [
+        'title' => 'Casi cien',
+        'points' => 99,
+    ])->assertSessionHasNoErrors();
+
+    $this->assertDatabaseHas('tasks', ['title' => 'Cero puntos', 'points' => 0]);
+    $this->assertDatabaseHas('tasks', ['title' => 'Casi cien', 'points' => 99]);
+});
+
+test('global task update validates points', function () {
+    $user = User::factory()->create();
+    $task = Task::factory()->standalone()->for($user, 'author')->create();
+
+    $this->actingAs($user)->put("/tasks/{$task->id}", ['points' => -1])
+        ->assertSessionHasErrors('points');
+
+    $this->actingAs($user)->put("/tasks/{$task->id}", ['points' => 100])
+        ->assertSessionHasErrors('points');
+
+    $this->actingAs($user)->put("/tasks/{$task->id}", ['points' => 5])
+        ->assertSessionHasNoErrors();
+
+    $this->assertDatabaseHas('tasks', ['id' => $task->id, 'points' => 5]);
+});
+
+test('project task update validates points', function () {
+    $user = User::factory()->create();
+    $project = Project::factory()->for($user, 'owner')->create();
+    $task = Task::factory()->for($project)->create();
+
+    $payload = [
+        'title' => $task->title,
+        'type' => $task->type->value,
+        'priority' => $task->priority->value,
+        'status' => $task->status->value,
+    ];
+
+    $this->actingAs($user)->put("/projects/{$project->id}/tasks/{$task->id}", [...$payload, 'points' => -1])
+        ->assertSessionHasErrors('points');
+
+    $this->actingAs($user)->put("/projects/{$project->id}/tasks/{$task->id}", [...$payload, 'points' => 100])
+        ->assertSessionHasErrors('points');
+
+    $this->actingAs($user)->put("/projects/{$project->id}/tasks/{$task->id}", [...$payload, 'points' => 0])
+        ->assertSessionHasNoErrors();
+    $this->assertDatabaseHas('tasks', ['id' => $task->id, 'points' => 0]);
+
+    $this->actingAs($user)->put("/projects/{$project->id}/tasks/{$task->id}", [...$payload, 'points' => 99])
+        ->assertSessionHasNoErrors();
+    $this->assertDatabaseHas('tasks', ['id' => $task->id, 'points' => 99]);
+});
+
 test('project members can create a task and it appears in the project page', function () {
     $user = User::factory()->create();
     $project = Project::factory()->for($user, 'owner')->create();
@@ -50,7 +135,7 @@ test('project members can create a task and it appears in the project page', fun
             ->where('project.tasks.0.assignee.id', $assignee->id)
             ->where('project.tasks.0.sprint', null)
             ->where('project.tasks.0.description', '**Contexto** del problema')
-            ->has('project.tasks.0.comments', 0)
+            ->where('project.tasks.0.commentsCount', 0)
         );
 });
 
@@ -372,4 +457,67 @@ test('tasks from another project are not accessible for deletion', function () {
     $this->actingAs($user)->delete("/projects/{$project->id}/tasks/{$task->id}")->assertNotFound();
 
     $this->assertDatabaseHas('tasks', ['id' => $task->id, 'title' => 'Ajena']);
+});
+
+test('a project member can move a project task via status-only global update', function () {
+    $member = User::factory()->create();
+    $outsider = User::factory()->create();
+    $project = Project::factory()->hasAttached($member, [], 'members')->create();
+    $task = Task::factory()->for($project)->create([
+        'title' => 'Arrastrada',
+        'status' => TaskStatus::Todo,
+    ]);
+
+    $this->actingAs($member)->put("/tasks/{$task->id}", ['status' => 'in_progress'])
+        ->assertSessionHasNoErrors()
+        ->assertRedirect();
+
+    $this->assertDatabaseHas('tasks', [
+        'id' => $task->id,
+        'title' => 'Arrastrada',
+        'type' => $task->type->value,
+        'priority' => $task->priority->value,
+        'status' => 'in_progress',
+        'sprint_id' => $task->sprint_id,
+    ]);
+
+    $this->actingAs($outsider)->put("/tasks/{$task->id}", ['status' => 'done'])
+        ->assertForbidden();
+
+    $this->assertDatabaseHas('tasks', ['id' => $task->id, 'status' => 'in_progress']);
+});
+
+test('destroying a task through the global route redirects back to the page it was requested from', function () {
+    $user = User::factory()->create();
+    $task = Task::factory()->standalone()->for($user, 'author')->create(['status' => 'backlog']);
+
+    $this->actingAs($user)
+        ->from('/backlog')
+        ->delete("/tasks/{$task->id}")
+        ->assertRedirect('/backlog');
+
+    $this->assertDatabaseMissing('tasks', ['id' => $task->id]);
+});
+
+test('destroying a task through the global route falls back to the tasks index without a referer', function () {
+    $user = User::factory()->create();
+    $task = Task::factory()->standalone()->for($user, 'author')->create(['status' => 'backlog']);
+
+    $this->actingAs($user)
+        ->delete("/tasks/{$task->id}")
+        ->assertRedirect(route('tasks.index', absolute: false));
+
+    $this->assertDatabaseMissing('tasks', ['id' => $task->id]);
+});
+
+test('destroying a task ignores a referer that points to another origin', function () {
+    $user = User::factory()->create();
+    $task = Task::factory()->standalone()->for($user, 'author')->create(['status' => 'backlog']);
+
+    $this->actingAs($user)
+        ->from('https://evil.example.com/backlog')
+        ->delete("/tasks/{$task->id}")
+        ->assertRedirect(route('tasks.index', absolute: false));
+
+    $this->assertDatabaseMissing('tasks', ['id' => $task->id]);
 });

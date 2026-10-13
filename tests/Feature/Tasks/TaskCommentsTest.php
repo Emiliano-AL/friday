@@ -27,10 +27,7 @@ test('project members can add a comment to a task and it appears chronologically
         ->get("/projects/{$project->id}")
         ->assertInertia(fn ($page) => $page
             ->has('project.tasks', 1)
-            ->has('project.tasks.0.comments', 1)
-            ->where('project.tasks.0.comments.0.body', 'Primera nota de avance')
-            ->where('project.tasks.0.comments.0.author.id', $user->id)
-            ->where('project.tasks.0.comments.0.author.name', $user->name)
+            ->where('project.tasks.0.commentsCount', 1)
         );
 });
 
@@ -48,11 +45,14 @@ test('comments are listed in chronological order with their authors', function (
     ]);
 
     $this->actingAs($user)
-        ->get("/projects/{$project->id}")
-        ->assertInertia(fn ($page) => $page
-            ->has('project.tasks.0.comments', 2)
-            ->where('project.tasks.0.comments.0.body', 'Comentario viejo')
-            ->where('project.tasks.0.comments.1.body', 'Comentario nuevo')
+        ->get("/tasks/{$task->id}")
+        ->assertOk()
+        ->assertJson(fn ($json) => $json
+            ->has('comments', 2)
+            ->where('comments.0.body', 'Comentario viejo')
+            ->where('comments.0.author.id', $user->id)
+            ->where('comments.1.body', 'Comentario nuevo')
+            ->etc()
         );
 });
 

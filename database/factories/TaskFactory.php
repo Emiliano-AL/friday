@@ -7,6 +7,7 @@ use App\Enums\TaskStatus;
 use App\Enums\TaskType;
 use App\Models\Project;
 use App\Models\Task;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -25,6 +26,7 @@ class TaskFactory extends Factory
             'project_id' => Project::factory(),
             'sprint_id' => null,
             'assignee_id' => null,
+            'author_id' => User::factory(),
             'title' => fake()->words(4, true),
             'description' => fake()->optional()->sentence(),
             'type' => fake()->randomElement(TaskType::cases()),
@@ -42,5 +44,13 @@ class TaskFactory extends Factory
             'project_id' => null,
             'sprint_id' => null,
         ]);
+    }
+
+    /**
+     * A task with the given story points estimate.
+     */
+    public function withPoints(int $points): static
+    {
+        return $this->state(['points' => $points]);
     }
 }

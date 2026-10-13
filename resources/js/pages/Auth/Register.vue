@@ -8,9 +8,13 @@ import { login, register } from '@/routes';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { ref } from 'vue';
 
+const props = defineProps<{
+    email?: string | null;
+}>();
+
 const form = useForm({
     name: '',
-    email: '',
+    email: props.email ?? '',
     password: '',
     password_confirmation: '',
 });

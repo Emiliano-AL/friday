@@ -107,18 +107,16 @@ const priorityChip = computed(() => {
         case 'low':
             return { icon: 'south', classes: 'text-on-surface-variant' };
         case 'medium':
-            return { icon: 'drag_handle', classes: 'text-primary' };
+            return { icon: 'drag_handle', classes: 'text-on-surface-variant' };
         case 'high':
             return {
                 icon: 'priority_high',
-                classes:
-                    'bg-tertiary-fixed text-on-tertiary-fixed font-semibold',
+                classes: 'text-tertiary font-semibold',
             };
         default:
             return {
                 icon: 'emergency',
-                classes:
-                    'bg-error-container text-on-error-container font-semibold',
+                classes: 'text-error font-semibold',
             };
     }
 });
@@ -213,62 +211,64 @@ function onAction(key: 'edit' | 'comment' | 'remove') {
         </div>
 
         <div
-            class="gap-space-md font-label-xs text-label-xs flex shrink-0 items-center"
+            class="gap-space-md text-label-sm flex shrink-0 items-center"
         >
             <span
-                v-if="task.project"
-                :title="task.project.title"
-                class="bg-surface-container-low text-on-surface-variant flex items-center gap-1.5 rounded px-2 py-1 font-medium"
+                class="text-on-surface-variant hidden w-44 min-w-0 items-center gap-1.5 lg:flex"
+                :title="task.project?.title"
             >
-                <span
-                    class="bg-primary h-1.5 w-1.5 shrink-0 rounded-full"
-                    aria-hidden="true"
-                />
-                <span class="max-w-[10rem] truncate">{{
-                    task.project.title
-                }}</span>
-            </span>
-            <span
-                v-else
-                class="bg-surface-container text-on-surface-variant flex items-center gap-1.5 rounded px-2 py-1 font-medium"
-            >
-                <AppIcon name="folder_off" :size="12" />
-                Sin Proyecto
+                <template v-if="task.project">
+                    <span
+                        class="bg-primary h-1.5 w-1.5 shrink-0 rounded-full"
+                        aria-hidden="true"
+                    />
+                    <span class="truncate">{{ task.project.title }}</span>
+                </template>
+                <span v-else class="italic">Sin proyecto</span>
             </span>
 
             <span
-                class="bg-surface-container-low text-on-surface-variant rounded px-2 py-1"
+                class="text-on-surface-variant hidden w-36 truncate xl:inline"
                 :class="{ italic: !task.sprint }"
             >
-                {{ task.sprint?.name ?? 'Sin Sprint' }}
+                {{ task.sprint?.name ?? 'Sin sprint' }}
             </span>
 
             <span
                 :class="priorityChip.classes"
-                class="flex items-center gap-1 rounded px-2 py-1"
+                class="text-label-xs font-label-xs flex w-20 items-center gap-1"
             >
                 <AppIcon :name="priorityChip.icon" :size="13" />
                 {{ task.priorityLabel }}
             </span>
 
-            <span v-if="task.assignee" class="flex items-center gap-1.5">
-                <Avatar
-                    :name="task.assignee.name"
-                    :src="task.assignee.avatar"
-                    :size="20"
-                />
-                <span
-                    class="text-on-surface hidden max-w-[6rem] truncate font-medium xl:inline"
-                >
-                    {{ assigneeShortName }}
-                </span>
-            </span>
             <span
-                v-else
-                class="text-on-surface-variant flex items-center gap-1"
+                class="flex w-6 items-center gap-1.5 xl:w-28"
+                :title="task.assignee?.name ?? 'Sin asignar'"
             >
-                <AppIcon name="person" :size="13" />
-                Sin asignar
+                <template v-if="task.assignee">
+                    <Avatar
+                        :name="task.assignee.name"
+                        :src="task.assignee.avatar"
+                        :size="20"
+                    />
+                    <span
+                        class="text-on-surface hidden truncate xl:inline"
+                    >
+                        {{ assigneeShortName }}
+                    </span>
+                </template>
+                <template v-else>
+                    <span
+                        class="border-outline-variant text-on-surface-variant flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-dashed"
+                    >
+                        <AppIcon name="person" :size="11" />
+                    </span>
+                    <span
+                        class="text-on-surface-variant hidden truncate xl:inline"
+                        >Sin asignar</span
+                    >
+                </template>
             </span>
 
             <div ref="actionsMenu.root" class="relative" @click.stop>

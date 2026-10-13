@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import AppIcon from '@/Components/AppShell/AppIcon.vue';
 import AvatarStack from '@/Components/Projects/AvatarStack.vue';
 import ProjectContextMenu from '@/Components/Projects/ProjectContextMenu.vue';
 import UiBadge from '@/Components/Projects/UiBadge.vue';
@@ -18,17 +19,6 @@ const emit = defineEmits<{
     ];
     view: [project: DirectoryProject];
 }>();
-
-const statusColor = computed(() => {
-    switch (props.project.status) {
-        case 'active':
-            return 'bg-primary';
-        case 'completed':
-            return 'bg-tertiary';
-        case 'archived':
-            return 'bg-outline-variant';
-    }
-});
 
 const people = computed(() => [props.project.owner, ...props.project.members]);
 
@@ -49,20 +39,44 @@ function onTransition(
         @keydown.enter="emit('open', project)"
     >
         <span
-            class="h-2 w-2 shrink-0 rounded-full"
-            :class="statusColor"
+            class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
+            :class="project.color ? '' : 'bg-primary/10 text-primary'"
+            :style="
+                project.color
+                    ? {
+                          backgroundColor: `${project.color}1A`,
+                          color: project.color,
+                      }
+                    : undefined
+            "
             aria-hidden="true"
-        />
+        >
+            <AppIcon :name="project.icon ?? 'folder'" :size="16" />
+        </span>
         <span
             class="font-body-sm text-body-sm text-on-surface min-w-0 flex-1 truncate font-medium"
         >
             {{ project.title }}
         </span>
         <UiBadge :label="project.statusLabel" tone="neutral" />
-        <span
-            class="text-on-surface-variant text-label-xs font-label-xs w-14 text-right"
-        >
-            {{ project.progress }}%
+        <span class="hidden w-28 shrink-0 items-center gap-2 sm:flex">
+            <span
+                class="bg-surface-container h-1.5 flex-1 overflow-hidden rounded-full"
+            >
+                <span
+                    class="block h-full rounded-full"
+                    :class="project.color ? '' : 'bg-primary'"
+                    :style="{
+                        width: `${project.progress}%`,
+                        backgroundColor: project.color ?? undefined,
+                    }"
+                />
+            </span>
+            <span
+                class="text-on-surface-variant text-label-xs font-label-xs w-9 text-right tabular-nums"
+            >
+                {{ project.progress }}%
+            </span>
         </span>
         <AvatarStack :people="people" :max="3" />
         <ProjectContextMenu

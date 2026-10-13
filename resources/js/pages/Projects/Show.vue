@@ -1,39 +1,37 @@
 <script setup lang="ts">
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import InputError from '@/Components/InputError.vue';
-import InputLabel from '@/Components/InputLabel.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
-import TextInput from '@/Components/TextInput.vue';
 import AppIcon from '@/Components/AppShell/AppIcon.vue';
 import Avatar from '@/Components/AppShell/Avatar.vue';
 import AvatarStack from '@/Components/Projects/AvatarStack.vue';
+import MembersModal from '@/Components/Projects/MembersModal.vue';
 import ProjectFormModal from '@/Components/Projects/ProjectFormModal.vue';
 import ProjectTabs from '@/Components/Projects/ProjectTabs.vue';
 import RichTextContent from '@/Components/RichText/RichTextContent.vue';
 import UiBadge from '@/Components/Projects/UiBadge.vue';
 import { index as projectsIndex, status } from '@/routes/projects';
 import {
-    store as storeMember,
-    destroy as destroyMember,
-} from '@/routes/projects/members';
-import {
+    complete as completeSprint,
     destroy as destroySprint,
-    show as showSprint,
 } from '@/routes/projects/sprints';
-import {
-    store as storeTask,
-    update as updateTask,
-    destroy as destroyTask,
-} from '@/routes/projects/tasks';
-import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
-import { computed, onMounted, ref } from 'vue';
-import BacklogView from '@/Components/Tasks/BacklogView.vue';
-import KanbanBoard from '@/Components/Tasks/KanbanBoard.vue';
+import { destroy as destroyTask } from '@/routes/projects/tasks';
+import { show as taskShow, update as updateTaskGlobal } from '@/routes/tasks';
+import { store as storeGlobalTaskComment } from '@/routes/tasks/comments';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import BacklogSectionList from '@/Components/Backlog/BacklogSectionList.vue';
+import ProjectSprintsSection from '@/Components/Sprints/ProjectSprintsSection.vue';
 import SprintFormModal from '@/Components/Sprints/SprintFormModal.vue';
+import TaskBoard from '@/Components/Tasks/Board/TaskBoard.vue';
 import TaskCommentsModal from '@/Components/Tasks/TaskCommentsModal.vue';
-import TaskList from '@/Components/Tasks/TaskList.vue';
-import TaskModal from '@/Components/Tasks/TaskModal.vue';
-import type { TaskItem } from '@/Components/Tasks/types';
+import TaskFormModal from '@/Components/Tasks/Board/TaskFormModal.vue';
+import TaskImportModal from '@/Components/Tasks/TaskImportModal.vue';
+import TaskListPanel from '@/Components/Tasks/Board/TaskListPanel.vue';
+import type {
+    BoardTask,
+    TaskProjectOption,
+    TaskStatusValue,
+} from '@/types/task';
+import type { BacklogSort, BacklogTask } from '@/types/backlog';
 import type { ProjectDetail, SprintSummary } from '@/types/project';
 
 const props = defineProps<{
@@ -48,42 +46,92 @@ const canWriteSprints = computed(
 
 const canWriteTasks = computed(() => props.project.status === 'active');
 
+const importOpen = ref(false);
+
 const activeTab = ref<'general' | 'sprints'>('general');
 
 const editModalOpen = ref(false);
 
+const membersModalOpen = ref(false);
+
 const taskView = ref<'lista' | 'backlog' | 'kanban'>('lista');
 
-const editingTask = ref<TaskItem | null>(null);
+const sprintFilter = ref<'none' | 'all' | number>('none');
+
+const backlogSort = ref<BacklogSort>('priority');
+
+const taskModalOpen = ref(false);
+const taskModalMode = ref<'create' | 'edit'>('create');
+const editingBoardTask = ref<BoardTask | BacklogTask | null>(null);
+const taskInitialStatus = ref<Exclude<TaskStatusValue, 'done'> | undefined>(
+    undefined,
+);
+
+const currentUser = computed(() => {
+    const user = page.props.auth.user;
+
+    return { id: user.id, name: user.name, avatar: user.avatar ?? null };
+});
+
+const projectOption = computed<TaskProjectOption>(() => ({
+    id: props.project.id,
+    title: props.project.title,
+    members: [
+        {
+            id: props.project.owner.id,
+            name: props.project.owner.name,
+            avatar: props.project.owner.avatar,
+        },
+        ...props.project.members.map((member) => ({
+            id: member.id,
+            name: member.name,
+            avatar: member.avatar,
+        })),
+    ],
+    sprints: props.project.sprints.map((sprint) => ({
+        id: sprint.id,
+        name: sprint.name,
+    })),
+}));
+
+const projectOptions = computed(() => [projectOption.value]);
 
 const memberOptions = computed(() => [
     props.project.owner,
     ...props.project.members,
 ]);
 
-const openTaskEdit = (task: TaskItem) => {
-    editingTask.value = task;
+const openTaskCreate = (status?: Exclude<TaskStatusValue, 'done'>) => {
+    taskModalMode.value = 'create';
+    editingBoardTask.value = null;
+    taskInitialStatus.value = status;
+    taskModalOpen.value = true;
 };
 
-const closeTaskEdit = () => {
-    editingTask.value = null;
-};
-
-const commentingTask = ref<TaskItem | null>(null);
-
-const commentingTaskFresh = computed(() => {
-    if (!commentingTask.value) {
-        return null;
+const openTaskCreateFromColumn = (status: TaskStatusValue) => {
+    if (
+        status === 'todo' ||
+        status === 'in_progress' ||
+        status === 'in_review'
+    ) {
+        openTaskCreate(status);
     }
+};
 
-    return (
-        props.project.tasks.find(
-            (task) => task.id === commentingTask.value?.id,
-        ) ?? commentingTask.value
-    );
-});
+const closeTaskModal = () => {
+    taskModalOpen.value = false;
+};
 
-const openTaskComments = (task: TaskItem) => {
+const openTaskEdit = (task: BoardTask | BacklogTask) => {
+    taskModalMode.value = 'edit';
+    editingBoardTask.value = task;
+    taskInitialStatus.value = undefined;
+    taskModalOpen.value = true;
+};
+
+const commentingTask = ref<BoardTask | null>(null);
+
+const openTaskComments = (task: BoardTask) => {
     commentingTask.value = task;
 };
 
@@ -91,59 +139,17 @@ const closeTaskComments = () => {
     commentingTask.value = null;
 };
 
-const confirmTaskDestroy = (task: TaskItem) => {
-    if (
-        window.confirm(
-            `¿Eliminar la tarea "${task.title}"? Esta acción no se puede deshacer.`,
-        )
-    ) {
-        router.delete(destroyTask.url([props.project.id, task.id]), {
-            preserveScroll: true,
-        });
-    }
+const reloadProjectTasks = () => {
+    router.reload();
 };
 
-const moveTask = ({ task, status }: { task: TaskItem; status: string }) => {
+const changeTaskStatus = (task: BoardTask, status: TaskStatusValue) => {
     router.put(
-        updateTask.url([props.project.id, task.id]),
-        {
-            title: task.title,
-            description: task.description,
-            type: task.type,
-            priority: task.priority,
-            status,
-            assignee_id: task.assignee ? task.assignee.id : null,
-            sprint_id: task.sprint ? task.sprint.id : null,
-        },
+        updateTaskGlobal.url(task.id),
+        { status },
         { preserveScroll: true },
     );
 };
-
-const taskForm = useForm({
-    title: '',
-    description: '',
-    type: 'other',
-    priority: 'medium',
-    assignee_id: '',
-    sprint_id: '',
-});
-
-const submitTask = (projectId: number) => {
-    taskForm
-        .transform((data) => ({
-            ...data,
-            assignee_id: data.assignee_id === '' ? null : data.assignee_id,
-            sprint_id: data.sprint_id === '' ? null : data.sprint_id,
-        }))
-        .post(storeTask.url(projectId), {
-            onSuccess: () => taskForm.reset('title', 'description'),
-            preserveScroll: true,
-        });
-};
-
-const memberForm = useForm({
-    email: '',
-});
 
 const sprintModalOpen = ref(false);
 const sprintModalSprint = ref<SprintSummary | null>(null);
@@ -164,6 +170,57 @@ const transitionLabels: Record<string, string> = {
     completed: 'Completar',
 };
 
+const transitionIcons: Record<string, string> = {
+    active: 'undo',
+    archived: 'archive',
+    completed: 'task_alt',
+};
+
+const canEditProject = computed(
+    () => props.project.isOwner && props.project.status === 'active',
+);
+
+const hasProjectMenu = computed(
+    () =>
+        canEditProject.value ||
+        (props.project.isOwner && props.project.allowedTransitions.length > 0),
+);
+
+const projectMenuOpen = ref(false);
+const projectMenuRoot = ref<HTMLElement | null>(null);
+
+function onProjectMenuDocumentClick(event: MouseEvent): void {
+    if (!projectMenuRoot.value?.contains(event.target as Node)) {
+        projectMenuOpen.value = false;
+    }
+}
+
+function onProjectMenuKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Escape') {
+        projectMenuOpen.value = false;
+    }
+}
+
+watch(projectMenuOpen, (isOpen) => {
+    if (isOpen) {
+        document.addEventListener('click', onProjectMenuDocumentClick, true);
+        document.addEventListener('keydown', onProjectMenuKeydown);
+    } else {
+        document.removeEventListener('click', onProjectMenuDocumentClick, true);
+        document.removeEventListener('keydown', onProjectMenuKeydown);
+    }
+});
+
+onBeforeUnmount(() => {
+    document.removeEventListener('click', onProjectMenuDocumentClick, true);
+    document.removeEventListener('keydown', onProjectMenuKeydown);
+});
+
+function transitionProject(target: string): void {
+    projectMenuOpen.value = false;
+    router.put(status.url(props.project.id), { status: target });
+}
+
 const statusTone = computed<'primary' | 'tertiary' | 'outline'>(() => {
     switch (props.project.status) {
         case 'completed':
@@ -174,19 +231,6 @@ const statusTone = computed<'primary' | 'tertiary' | 'outline'>(() => {
             return 'primary';
     }
 });
-
-const submitMember = (projectId: number) => {
-    memberForm.post(storeMember.url(projectId), {
-        onSuccess: () => memberForm.reset('email'),
-        preserveScroll: true,
-    });
-};
-
-const removeMember = (projectId: number, userId: number) => {
-    router.delete(destroyMember.url([projectId, userId]), {
-        preserveScroll: true,
-    });
-};
 
 const confirmSprintDestroy = (projectId: number, sprint: SprintSummary) => {
     if (
@@ -203,6 +247,55 @@ const confirmSprintDestroy = (projectId: number, sprint: SprintSummary) => {
 const goToSprintsTab = () => {
     activeTab.value = 'sprints';
 };
+
+const completeActiveSprint = () => {
+    const sprint = props.project.activeSprint;
+
+    if (!sprint) {
+        return;
+    }
+
+    if (
+        window.confirm(
+            `¿Completar el sprint "${sprint.name}"? Esta acción no se puede deshacer.`,
+        )
+    ) {
+        router.post(completeSprint.url([props.project.id, sprint.id]), {
+            preserveScroll: true,
+        });
+    }
+};
+
+const filteredTasks = computed(() => {
+    if (sprintFilter.value === 'all') {
+        return props.project.tasks;
+    }
+
+    if (sprintFilter.value === 'none') {
+        return props.project.tasks.filter((task) => task.sprint === null);
+    }
+
+    return props.project.tasks.filter(
+        (task) => task.sprint?.id === sprintFilter.value,
+    );
+});
+
+const backlogTasks = computed(() =>
+    filteredTasks.value.filter((task) => task.status !== 'done'),
+);
+
+const boardTaskStatuses: TaskStatusValue[] = [
+    'todo',
+    'in_progress',
+    'in_review',
+    'done',
+];
+
+const boardTasks = computed(() =>
+    filteredTasks.value.filter((task) =>
+        boardTaskStatuses.includes(task.status),
+    ),
+);
 
 const activeSprintTasks = computed(() => {
     if (!props.project.activeSprint) {
@@ -263,6 +356,33 @@ const backlogTaskCount = computed(
         props.project.tasks.filter((task) => task.status === 'backlog').length,
 );
 
+const targetDateValue = computed(() =>
+    props.project.targetDate
+        ? new Date(`${props.project.targetDate}T00:00:00`)
+        : null,
+);
+
+const formattedTargetDate = computed(() =>
+    targetDateValue.value
+        ? targetDateValue.value.toLocaleDateString('es-MX', {
+              day: 'numeric',
+              month: 'short',
+              year: 'numeric',
+          })
+        : null,
+);
+
+const isTargetDateOverdue = computed(() => {
+    if (!targetDateValue.value) {
+        return false;
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    return targetDateValue.value < today;
+});
+
 onMounted(() => {
     const params = new URLSearchParams(window.location.search);
 
@@ -281,7 +401,12 @@ onMounted(() => {
 
     <AuthenticatedLayout>
         <div
-            class="gap-space-lg py-space-md mx-auto flex w-full max-w-7xl flex-col"
+            class="project-accent-scope gap-space-lg py-space-md mx-auto flex w-full max-w-7xl flex-col"
+            :style="
+                project.color
+                    ? { '--project-accent': project.color }
+                    : undefined
+            "
         >
             <div
                 v-if="project.status !== 'active'"
@@ -304,9 +429,7 @@ onMounted(() => {
                 {{ page.props.errors.project }}
             </div>
 
-            <div
-                class="gap-space-md flex flex-wrap items-center justify-between"
-            >
+            <div class="gap-space-md flex flex-col">
                 <nav
                     aria-label="Migas de pan"
                     class="text-body-sm font-body-sm gap-space-xs flex min-w-0 items-center"
@@ -321,106 +444,145 @@ onMounted(() => {
                     <span aria-hidden="true" class="text-on-surface-variant/40">
                         /
                     </span>
-                    <span
-                        class="text-on-surface min-w-0 truncate font-semibold"
-                    >
+                    <span class="text-on-surface min-w-0 truncate">
                         {{ project.title }}
                     </span>
                 </nav>
 
-                <div class="gap-space-xs flex flex-wrap items-center">
-                    <button
-                        type="button"
-                        disabled
-                        title="Disponible próximamente"
-                        class="bg-surface-container-lowest text-on-surface-variant shadow-card text-label-sm font-label-sm gap-space-xs flex cursor-not-allowed items-center rounded-lg px-3 py-1.5 opacity-60"
+                <header class="gap-space-md flex flex-wrap items-start">
+                    <div
+                        class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl"
+                        :class="
+                            project.color ? '' : 'bg-primary text-on-primary'
+                        "
+                        :style="
+                            project.color
+                                ? {
+                                      backgroundColor: `${project.color}1A`,
+                                      color: project.color,
+                                  }
+                                : undefined
+                        "
                     >
-                        <AppIcon name="share" :size="16" />
-                        <span>Compartir</span>
-                        <UiBadge label="Próximamente" tone="outline" />
-                    </button>
+                        <AppIcon :name="project.icon ?? 'folder'" :size="26" />
+                    </div>
+                    <div class="min-w-0 flex-1 basis-80">
+                        <div class="gap-space-sm flex flex-wrap items-center">
+                            <h1
+                                class="text-headline-xl font-headline-xl text-on-surface"
+                            >
+                                {{ project.title }}
+                            </h1>
+                            <span
+                                v-if="project.key"
+                                class="bg-surface-container-low text-on-surface-variant text-label-sm font-label-sm rounded px-1.5 py-0.5 font-medium tracking-wide"
+                            >
+                                {{ project.key }}
+                            </span>
+                            <UiBadge
+                                :label="project.statusLabel"
+                                :tone="statusTone"
+                                dot
+                            />
+                        </div>
+                        <RichTextContent
+                            v-if="project.description"
+                            :content="project.description"
+                            class="text-on-surface-variant mt-1 max-w-3xl"
+                        />
+                    </div>
 
-                    <button
-                        v-if="project.isOwner && project.status === 'active'"
-                        type="button"
-                        class="bg-surface-container-lowest text-on-surface hover:bg-surface-container-high shadow-card text-label-sm font-label-sm gap-space-xs flex items-center rounded-lg px-3 py-1.5 transition-colors"
-                        @click="editModalOpen = true"
-                    >
-                        <AppIcon name="settings" :size="16" />
-                        <span>Ajustes</span>
-                    </button>
-
-                    <button
-                        type="button"
-                        class="bg-surface-container-lowest text-on-surface hover:bg-surface-container-high shadow-card text-label-sm font-label-sm gap-space-xs flex items-center rounded-lg px-3 py-1.5 transition-colors"
-                        @click="goToSprintsTab"
-                    >
-                        <AppIcon name="pace" :size="16" />
-                        <span>Nuevo Sprint</span>
-                    </button>
-
-                    <template v-if="project.isOwner">
+                    <div class="gap-space-sm flex items-center">
                         <button
-                            v-for="target in project.allowedTransitions"
-                            :key="target"
+                            v-if="canWriteSprints"
                             type="button"
-                            class="bg-surface-container-lowest text-on-surface hover:bg-surface-container-high shadow-card text-label-sm font-label-sm gap-space-xs flex items-center rounded-lg px-3 py-1.5 transition-colors"
+                            class="bg-surface-container-lowest text-on-surface hover:bg-surface-container-high shadow-card text-label-md font-label-md gap-space-xs flex items-center rounded-lg px-3 py-2 transition-colors"
                             @click="
-                                router.put(status.url(project.id), {
-                                    status: target,
-                                })
+                                goToSprintsTab();
+                                openSprintCreate();
                             "
                         >
-                            {{ transitionLabels[target] ?? target }}
+                            <AppIcon name="pace" :size="16" />
+                            <span>Nuevo Sprint</span>
                         </button>
-                    </template>
-
-                    <button
-                        type="button"
-                        class="bg-primary hover:bg-primary-container text-on-primary shadow-card text-label-md font-label-md gap-space-xs flex items-center rounded-lg px-3.5 py-1.5 transition-colors"
-                        @click="goToSprintsTab"
-                    >
-                        <AppIcon name="add" :size="16" />
-                        <span>Nueva Tarea</span>
-                    </button>
-                </div>
-            </div>
-
-            <div class="gap-space-md flex flex-wrap items-center">
-                <div
-                    class="bg-primary text-on-primary flex h-12 w-12 shrink-0 items-center justify-center rounded-xl"
-                >
-                    <AppIcon name="folder" :size="26" />
-                </div>
-                <div class="min-w-0 flex-1">
-                    <h1
-                        class="text-headline-xl font-headline-xl text-on-surface"
-                    >
-                        {{ project.title }}
-                    </h1>
-                    <RichTextContent
-                        v-if="project.description"
-                        :content="project.description"
-                        class="text-on-surface-variant mt-1"
-                    />
-                </div>
-                <div class="gap-space-xs flex flex-wrap items-center">
-                    <UiBadge
-                        :label="project.statusLabel"
-                        :tone="statusTone"
-                        dot
-                    />
-                    <UiBadge
-                        v-if="project.activeSprint"
-                        :label="`${project.statusLabel} • ${project.activeSprint.name}`"
-                        tone="neutral"
-                    />
-                </div>
+                        <button
+                            v-if="canWriteTasks"
+                            type="button"
+                            class="bg-primary hover:bg-primary-container text-on-primary shadow-card text-label-md font-label-md gap-space-xs flex items-center rounded-lg px-3.5 py-2 transition-colors"
+                            @click="openTaskCreate()"
+                        >
+                            <AppIcon name="add" :size="16" />
+                            <span>Nueva Tarea</span>
+                        </button>
+                        <div
+                            v-if="hasProjectMenu"
+                            ref="projectMenuRoot"
+                            class="relative"
+                        >
+                            <button
+                                type="button"
+                                aria-label="Más acciones del proyecto"
+                                aria-haspopup="menu"
+                                :aria-expanded="projectMenuOpen"
+                                class="text-on-surface-variant hover:bg-surface-container hover:text-on-surface flex h-9 w-9 items-center justify-center rounded-lg transition-colors"
+                                @click="projectMenuOpen = !projectMenuOpen"
+                            >
+                                <AppIcon name="more_horiz" :size="20" />
+                            </button>
+                            <div
+                                v-if="projectMenuOpen"
+                                role="menu"
+                                class="bg-surface-container-lowest shadow-popover absolute top-10 right-0 z-30 w-48 rounded-lg py-1"
+                            >
+                                <button
+                                    v-if="canEditProject"
+                                    type="button"
+                                    role="menuitem"
+                                    class="text-label-sm font-label-sm text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface flex w-full items-center gap-2 px-3 py-1.5 text-left transition-colors"
+                                    @click="
+                                        projectMenuOpen = false;
+                                        editModalOpen = true;
+                                    "
+                                >
+                                    <AppIcon name="edit" :size="16" />
+                                    Editar proyecto
+                                </button>
+                                <template v-if="project.isOwner">
+                                    <div
+                                        v-if="
+                                            canEditProject &&
+                                            project.allowedTransitions.length >
+                                                0
+                                        "
+                                        class="border-surface-container my-1 border-t"
+                                    />
+                                    <button
+                                        v-for="target in project.allowedTransitions"
+                                        :key="target"
+                                        type="button"
+                                        role="menuitem"
+                                        class="text-label-sm font-label-sm text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface flex w-full items-center gap-2 px-3 py-1.5 text-left transition-colors"
+                                        @click="transitionProject(target)"
+                                    >
+                                        <AppIcon
+                                            :name="
+                                                transitionIcons[target] ??
+                                                'swap_horiz'
+                                            "
+                                            :size="16"
+                                        />
+                                        {{ transitionLabels[target] ?? target }}
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                </header>
             </div>
 
             <section
                 aria-label="Resumen del proyecto"
-                class="bg-surface-container-lowest shadow-card gap-space-md p-space-md grid grid-cols-2 rounded-xl md:grid-cols-4"
+                class="bg-surface-container-lowest shadow-card gap-space-md p-space-md grid grid-cols-2 rounded-xl border-t-[3px] border-t-(--project-accent) md:grid-cols-4"
             >
                 <div class="gap-space-sm flex items-center">
                     <Avatar
@@ -430,9 +592,9 @@ onMounted(() => {
                     />
                     <div class="min-w-0">
                         <p
-                            class="text-label-xs font-label-xs text-on-surface-variant uppercase"
+                            class="text-label-xs font-label-xs text-on-surface-variant"
                         >
-                            Líder de Proyecto
+                            Líder del proyecto
                         </p>
                         <p
                             class="text-label-md font-label-md text-on-surface truncate font-semibold"
@@ -446,14 +608,19 @@ onMounted(() => {
                     <AvatarStack :people="memberOptions" :max="3" />
                     <div class="min-w-0">
                         <p
-                            class="text-label-xs font-label-xs text-on-surface-variant uppercase"
+                            class="text-label-xs font-label-xs text-on-surface-variant"
                         >
-                            Equipo Asignado
+                            Equipo
                         </p>
                         <p
                             class="text-label-md font-label-md text-on-surface font-semibold"
                         >
-                            {{ 1 + project.members.length }} Especialistas
+                            {{ 1 + project.members.length }}
+                            {{
+                                project.members.length === 0
+                                    ? 'persona'
+                                    : 'personas'
+                            }}
                         </p>
                     </div>
                 </div>
@@ -463,12 +630,12 @@ onMounted(() => {
                         class="gap-space-sm flex items-baseline justify-between"
                     >
                         <p
-                            class="text-label-xs font-label-xs text-on-surface-variant uppercase"
+                            class="text-label-xs font-label-xs text-on-surface-variant"
                         >
-                            Progreso Global
+                            Progreso
                         </p>
                         <p
-                            class="text-label-md font-label-md text-primary font-semibold"
+                            class="text-label-md font-label-md font-semibold text-(--project-accent-ink)"
                         >
                             {{ project.progress }}%
                         </p>
@@ -477,7 +644,7 @@ onMounted(() => {
                         class="bg-surface-container-high h-2 w-full rounded-full"
                     >
                         <div
-                            class="bg-primary h-full rounded-full"
+                            class="h-full rounded-full bg-(--project-accent)"
                             :style="{ width: `${project.progress}%` }"
                         />
                     </div>
@@ -497,11 +664,31 @@ onMounted(() => {
                     </div>
                     <div>
                         <p
-                            class="text-label-xs font-label-xs text-on-surface-variant uppercase"
+                            class="text-label-xs font-label-xs text-on-surface-variant"
                         >
-                            Fecha Objetivo
+                            Fecha objetivo
                         </p>
-                        <UiBadge label="Próximamente" tone="outline" />
+                        <div
+                            v-if="formattedTargetDate"
+                            class="gap-space-2xs flex items-center"
+                        >
+                            <p
+                                class="text-label-md font-label-md text-on-surface font-semibold"
+                            >
+                                {{ formattedTargetDate }}
+                            </p>
+                            <UiBadge
+                                v-if="isTargetDateOverdue"
+                                label="Vencida"
+                                tone="error"
+                            />
+                        </div>
+                        <p
+                            v-else
+                            class="text-label-md font-label-md text-on-surface-variant"
+                        >
+                            Sin fecha
+                        </p>
                     </div>
                 </div>
             </section>
@@ -564,7 +751,7 @@ onMounted(() => {
                                     este sprint
                                 </span>
                                 <span
-                                    class="text-label-md font-label-md text-primary font-semibold"
+                                    class="text-label-md font-label-md font-semibold text-(--project-accent-ink)"
                                 >
                                     {{ activeSprintProgress }}%
                                 </span>
@@ -573,7 +760,7 @@ onMounted(() => {
                                 class="bg-surface-container-high mt-1 h-2 w-full rounded-full"
                             >
                                 <div
-                                    class="bg-primary h-full rounded-full"
+                                    class="h-full rounded-full bg-(--project-accent)"
                                     :style="{
                                         width: `${activeSprintProgress}%`,
                                     }"
@@ -660,11 +847,22 @@ onMounted(() => {
                     aria-label="Equipo del proyecto"
                     class="bg-surface-container-lowest shadow-card gap-space-md p-space-md flex flex-col rounded-xl lg:col-span-2"
                 >
-                    <h2
-                        class="text-headline-sm font-headline-sm text-on-surface"
-                    >
-                        Equipo
-                    </h2>
+                    <div class="gap-space-sm flex items-center justify-between">
+                        <h2
+                            class="text-headline-sm font-headline-sm text-on-surface"
+                        >
+                            Equipo
+                        </h2>
+                        <button
+                            v-if="project.isOwner"
+                            type="button"
+                            class="bg-surface-container-lowest text-on-surface hover:bg-surface-container-high shadow-card text-label-sm font-label-sm gap-space-xs flex items-center rounded-lg px-3 py-1.5 transition-colors"
+                            @click="membersModalOpen = true"
+                        >
+                            <AppIcon name="group" :size="16" />
+                            <span>Gestionar colaboradores</span>
+                        </button>
+                    </div>
 
                     <ul class="gap-space-sm flex flex-col">
                         <li class="gap-space-sm flex items-center">
@@ -697,14 +895,6 @@ onMounted(() => {
                                     {{ member.name }}
                                 </span>
                             </span>
-                            <button
-                                v-if="project.isOwner"
-                                type="button"
-                                class="text-label-xs font-label-xs text-error hover:underline"
-                                @click="removeMember(project.id, member.id)"
-                            >
-                                Retirar
-                            </button>
                         </li>
                         <li
                             v-if="project.members.length === 0"
@@ -713,36 +903,6 @@ onMounted(() => {
                             Sin colaboradores todavía.
                         </li>
                     </ul>
-
-                    <form
-                        v-if="project.isOwner"
-                        class="gap-space-sm mt-2 flex max-w-md items-start"
-                        @submit.prevent="submitMember(project.id)"
-                    >
-                        <div class="flex-1">
-                            <TextInput
-                                id="member-email"
-                                type="email"
-                                class="mt-1 block w-full"
-                                v-model="memberForm.email"
-                                placeholder="correo@ejemplo.com"
-                                required
-                            />
-                            <InputError
-                                class="mt-2"
-                                :message="memberForm.errors.email"
-                            />
-                        </div>
-                        <PrimaryButton
-                            class="mt-1"
-                            :class="{
-                                'opacity-25': memberForm.processing,
-                            }"
-                            :disabled="memberForm.processing"
-                        >
-                            Añadir
-                        </PrimaryButton>
-                    </form>
                 </section>
             </div>
 
@@ -752,91 +912,17 @@ onMounted(() => {
                 aria-label="Sprints y tareas"
                 class="gap-space-lg flex flex-col"
             >
-                <section
-                    aria-label="Sprints"
-                    class="bg-surface-container-lowest shadow-card gap-space-md p-space-md flex flex-col rounded-xl"
-                >
-                    <h2
-                        class="text-headline-sm font-headline-sm text-on-surface"
-                    >
-                        Sprints
-                    </h2>
-
-                    <ul class="gap-space-sm flex flex-col">
-                        <li
-                            v-for="sprint in project.sprints"
-                            :key="sprint.id"
-                            class="gap-space-sm flex items-center justify-between"
-                        >
-                            <span
-                                class="text-body-sm font-body-sm text-on-surface flex min-w-0 items-center gap-2"
-                            >
-                                <a
-                                    :href="
-                                        showSprint.url([project.id, sprint.id])
-                                    "
-                                    class="text-primary truncate font-medium hover:underline"
-                                >
-                                    {{ sprint.name }}
-                                </a>
-                                <UiBadge
-                                    :label="sprint.statusLabel"
-                                    :tone="
-                                        sprint.status === 'active'
-                                            ? 'primary'
-                                            : sprint.status === 'completed'
-                                              ? 'outline'
-                                              : 'neutral'
-                                    "
-                                />
-                                <span class="text-on-surface-variant truncate">
-                                    ({{ sprint.startDate }} —
-                                    {{ sprint.endDate }})
-                                </span>
-                            </span>
-                            <span
-                                v-if="
-                                    canWriteSprints &&
-                                    sprint.status !== 'completed'
-                                "
-                                class="flex shrink-0 gap-3"
-                            >
-                                <button
-                                    type="button"
-                                    class="text-label-xs font-label-xs text-on-surface-variant hover:text-on-surface hover:underline"
-                                    @click="openSprintEdit(sprint)"
-                                >
-                                    Editar
-                                </button>
-                                <button
-                                    type="button"
-                                    class="text-label-xs font-label-xs text-error hover:underline"
-                                    @click="
-                                        confirmSprintDestroy(project.id, sprint)
-                                    "
-                                >
-                                    Eliminar
-                                </button>
-                            </span>
-                        </li>
-                        <li
-                            v-if="project.sprints.length === 0"
-                            class="text-body-sm font-body-sm text-on-surface-variant"
-                        >
-                            Sin sprints todavía.
-                        </li>
-                    </ul>
-
-                    <button
-                        v-if="canWriteSprints"
-                        type="button"
-                        class="bg-primary-container hover:bg-primary mt-2 flex w-fit items-center gap-1.5 self-start rounded-lg px-3 py-2 text-white shadow-md transition-colors"
-                        @click="openSprintCreate"
-                    >
-                        <AppIcon name="add" :size="15" />
-                        Planificar un sprint
-                    </button>
-                </section>
+                <ProjectSprintsSection
+                    :project="project"
+                    :tasks="project.tasks"
+                    :can-write-sprints="canWriteSprints"
+                    @create="openSprintCreate"
+                    @edit="openSprintEdit"
+                    @destroy="
+                        (sprint) => confirmSprintDestroy(project.id, sprint)
+                    "
+                    @complete="completeActiveSprint"
+                />
 
                 <section
                     aria-label="Tareas"
@@ -850,6 +936,15 @@ onMounted(() => {
                         >
                             Tareas
                         </h2>
+                        <button
+                            v-if="canWriteTasks"
+                            type="button"
+                            class="text-label-sm font-label-sm text-on-surface-variant hover:bg-surface-container hover:text-on-surface ml-auto flex items-center gap-1.5 rounded-lg px-3 py-1.5 transition-colors"
+                            @click="importOpen = true"
+                        >
+                            <AppIcon name="upload_file" :size="16" />
+                            Importar
+                        </button>
                         <div
                             class="bg-surface-container-low flex items-center rounded-lg p-0.5"
                         >
@@ -892,164 +987,125 @@ onMounted(() => {
                         </div>
                     </div>
 
+                    <div
+                        v-if="taskView !== 'lista'"
+                        class="gap-space-sm flex flex-wrap items-center justify-between"
+                    >
+                        <div class="gap-space-xs flex items-center">
+                            <label
+                                for="tasks-sprint-filter"
+                                class="text-label-xs font-label-xs text-on-surface-variant flex items-center gap-1 font-semibold tracking-wider uppercase"
+                            >
+                                <AppIcon name="pace" :size="14" />
+                                Sprint
+                            </label>
+                            <select
+                                id="tasks-sprint-filter"
+                                v-model="sprintFilter"
+                                class="text-body-sm font-body-sm border-outline-variant/40 bg-surface-container-lowest text-on-surface focus:ring-primary h-9 cursor-pointer appearance-none rounded-lg border px-3 pr-8 shadow-xs focus:ring-2 focus:outline-none"
+                            >
+                                <option value="none">Sin sprint</option>
+                                <option
+                                    v-for="sprint in project.sprints"
+                                    :key="sprint.id"
+                                    :value="sprint.id"
+                                >
+                                    {{ sprint.name }} · {{ sprint.startDate }} —
+                                    {{ sprint.endDate }}
+                                </option>
+                                <option value="all">Todos</option>
+                            </select>
+                        </div>
+
+                        <div
+                            v-if="taskView === 'backlog'"
+                            class="bg-surface-container-low flex items-center rounded-lg p-0.5"
+                        >
+                            <button
+                                type="button"
+                                :aria-pressed="backlogSort === 'priority'"
+                                class="text-label-xs font-label-xs flex h-7 items-center gap-1 rounded-md px-2.5 transition-colors"
+                                :class="
+                                    backlogSort === 'priority'
+                                        ? 'bg-surface-container-lowest text-primary shadow-card'
+                                        : 'text-on-surface-variant hover:text-on-surface'
+                                "
+                                @click="backlogSort = 'priority'"
+                            >
+                                <AppIcon name="flag" :size="14" />
+                                Prioridad
+                            </button>
+                            <button
+                                type="button"
+                                :aria-pressed="backlogSort === 'recent'"
+                                class="text-label-xs font-label-xs flex h-7 items-center gap-1 rounded-md px-2.5 transition-colors"
+                                :class="
+                                    backlogSort === 'recent'
+                                        ? 'bg-surface-container-lowest text-primary shadow-card'
+                                        : 'text-on-surface-variant hover:text-on-surface'
+                                "
+                                @click="backlogSort = 'recent'"
+                            >
+                                <AppIcon name="schedule" :size="14" />
+                                Recientes
+                            </button>
+                        </div>
+                    </div>
+
                     <template v-if="taskView === 'lista'">
-                        <TaskList
+                        <TaskListPanel
                             :tasks="project.tasks"
-                            :editable="canWriteTasks"
-                            :deletable="project.isOwner && canWriteTasks"
+                            :current-user="currentUser"
+                            :view="null"
+                            :show-project-filter="false"
+                            :show-standalone-tab="false"
+                            @create="openTaskCreate()"
                             @edit="openTaskEdit"
+                            @status="changeTaskStatus"
                             @comment="openTaskComments"
-                            @remove="confirmTaskDestroy"
+                            @remove="openTaskEdit"
+                        />
+                    </template>
+                    <template v-else-if="taskView === 'backlog'">
+                        <BacklogSectionList
+                            v-if="backlogTasks.length > 0"
+                            :tasks="backlogTasks"
+                            :sort="backlogSort"
+                            hide-project-chip
+                            @select="openTaskEdit"
                         />
 
-                        <form
-                            v-if="canWriteTasks"
-                            class="mt-2 max-w-2xl space-y-3"
-                            @submit.prevent="submitTask(project.id)"
+                        <div
+                            v-else
+                            class="border-outline-variant/30 bg-surface-container-low/40 gap-space-sm px-space-md py-space-xl flex flex-col items-center justify-center rounded-xl border border-dashed text-center"
                         >
-                            <div>
-                                <InputLabel for="task-title" value="Título" />
-                                <TextInput
-                                    id="task-title"
-                                    type="text"
-                                    class="mt-1 block w-full"
-                                    v-model="taskForm.title"
-                                    required
-                                />
-                                <InputError
-                                    class="mt-2"
-                                    :message="taskForm.errors.title"
-                                />
-                            </div>
-                            <div>
-                                <InputLabel
-                                    for="task-description"
-                                    value="Descripción (opcional, markdown)"
-                                />
-                                <TextInput
-                                    id="task-description"
-                                    type="text"
-                                    class="mt-1 block w-full"
-                                    v-model="taskForm.description"
-                                />
-                                <InputError
-                                    class="mt-2"
-                                    :message="taskForm.errors.description"
-                                />
-                            </div>
-                            <div class="gap-space-sm flex flex-wrap items-end">
-                                <div>
-                                    <InputLabel for="task-type" value="Tipo" />
-                                    <select
-                                        id="task-type"
-                                        v-model="taskForm.type"
-                                        class="mt-1 block rounded-md border-gray-300 shadow-sm"
-                                    >
-                                        <option value="other">Otro</option>
-                                        <option value="feature">Feature</option>
-                                        <option value="bug">Bug</option>
-                                        <option value="test">Test</option>
-                                    </select>
-                                    <InputError
-                                        class="mt-2"
-                                        :message="taskForm.errors.type"
-                                    />
-                                </div>
-                                <div>
-                                    <InputLabel
-                                        for="task-priority"
-                                        value="Prioridad"
-                                    />
-                                    <select
-                                        id="task-priority"
-                                        v-model="taskForm.priority"
-                                        class="mt-1 block rounded-md border-gray-300 shadow-sm"
-                                    >
-                                        <option value="medium">Media</option>
-                                        <option value="low">Baja</option>
-                                        <option value="high">Alta</option>
-                                        <option value="urgent">Urgente</option>
-                                    </select>
-                                    <InputError
-                                        class="mt-2"
-                                        :message="taskForm.errors.priority"
-                                    />
-                                </div>
-                                <div>
-                                    <InputLabel
-                                        for="task-assignee"
-                                        value="Responsable"
-                                    />
-                                    <select
-                                        id="task-assignee"
-                                        v-model="taskForm.assignee_id"
-                                        class="mt-1 block rounded-md border-gray-300 shadow-sm"
-                                    >
-                                        <option value="">
-                                            Sin responsable
-                                        </option>
-                                        <option :value="project.owner.id">
-                                            {{ project.owner.name }}
-                                        </option>
-                                        <option
-                                            v-for="member in project.members"
-                                            :key="member.id"
-                                            :value="member.id"
-                                        >
-                                            {{ member.name }}
-                                        </option>
-                                    </select>
-                                    <InputError
-                                        class="mt-2"
-                                        :message="taskForm.errors.assignee_id"
-                                    />
-                                </div>
-                                <div>
-                                    <InputLabel
-                                        for="task-sprint"
-                                        value="Sprint"
-                                    />
-                                    <select
-                                        id="task-sprint"
-                                        v-model="taskForm.sprint_id"
-                                        class="mt-1 block rounded-md border-gray-300 shadow-sm"
-                                    >
-                                        <option value="">Sin sprint</option>
-                                        <option
-                                            v-for="sprint in project.sprints"
-                                            :key="sprint.id"
-                                            :value="sprint.id"
-                                        >
-                                            {{ sprint.name }}
-                                        </option>
-                                    </select>
-                                    <InputError
-                                        class="mt-2"
-                                        :message="taskForm.errors.sprint_id"
-                                    />
-                                </div>
-                                <PrimaryButton
-                                    :class="{
-                                        'opacity-25': taskForm.processing,
-                                    }"
-                                    :disabled="taskForm.processing"
-                                >
-                                    Añadir
-                                </PrimaryButton>
-                            </div>
-                        </form>
+                            <AppIcon
+                                name="playlist_add"
+                                :size="28"
+                                class="text-on-surface-variant/60"
+                            />
+                            <p
+                                class="text-body-md font-body-md text-on-surface font-medium"
+                            >
+                                No hay tareas en el backlog de este proyecto
+                            </p>
+                            <p
+                                class="text-body-sm font-body-sm text-on-surface-variant"
+                            >
+                                Crea una nueva tarea con el botón «Nueva Tarea»
+                                para empezar.
+                            </p>
+                        </div>
                     </template>
-                    <BacklogView
-                        v-else-if="taskView === 'backlog'"
-                        :tasks="project.tasks"
-                        :sprints="project.sprints"
-                    />
-                    <KanbanBoard
+                    <TaskBoard
                         v-else-if="taskView === 'kanban'"
-                        :tasks="project.tasks"
-                        :project-id="project.id"
+                        :tasks="boardTasks"
                         :can-write="canWriteTasks"
-                        @moved="moveTask"
+                        @moved="changeTaskStatus"
+                        @open="openTaskEdit"
+                        @edit="openTaskEdit"
+                        @comment="openTaskComments"
+                        @add="openTaskCreateFromColumn"
                     />
                 </section>
             </div>
@@ -1061,21 +1117,41 @@ onMounted(() => {
                 @close="sprintModalOpen = false"
             />
 
-            <TaskModal
-                :show="editingTask !== null"
-                :task="editingTask"
-                :project-id="project.id"
-                :members="memberOptions"
-                :sprints="project.sprints"
-                @close="closeTaskEdit"
+            <TaskFormModal
+                :open="taskModalOpen"
+                :mode="taskModalMode"
+                :task="editingBoardTask ?? undefined"
+                :projects="projectOptions"
+                :current-user="currentUser"
+                :initial-project="{ id: project.id, title: project.title }"
+                :initial-status="taskInitialStatus"
+                :destroy-url="
+                    taskModalMode === 'edit' && editingBoardTask
+                        ? destroyTask.url([project.id, editingBoardTask.id])
+                        : undefined
+                "
+                @close="closeTaskModal"
             />
 
             <TaskCommentsModal
                 :show="commentingTask !== null"
-                :task="commentingTaskFresh"
-                :project-id="project.id"
-                :can-comment="canWriteTasks"
+                :task="
+                    commentingTask ? { ...commentingTask, comments: [] } : null
+                "
+                :can-comment="commentingTask?.canUpdate ?? false"
+                use-global
+                :endpoints="
+                    commentingTask
+                        ? {
+                              show: taskShow.url(commentingTask.id),
+                              store: storeGlobalTaskComment.url(
+                                  commentingTask.id,
+                              ),
+                          }
+                        : { show: '', store: '' }
+                "
                 @close="closeTaskComments"
+                @submitted="reloadProjectTasks"
             />
 
             <ProjectFormModal
@@ -1085,9 +1161,25 @@ onMounted(() => {
                     id: project.id,
                     title: project.title,
                     description: project.description,
+                    key: project.key,
+                    color: project.color,
+                    icon: project.icon,
+                    targetDate: project.targetDate,
                 }"
                 @close="editModalOpen = false"
             />
+
+            <MembersModal
+                :open="membersModalOpen"
+                :project="project"
+                @close="membersModalOpen = false"
+            />
         </div>
+        <TaskImportModal
+            :open="importOpen"
+            :project-id="project.id"
+            :destination-label="project.title"
+            @close="importOpen = false"
+        />
     </AuthenticatedLayout>
 </template>

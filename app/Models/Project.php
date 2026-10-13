@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\ProjectColor;
+use App\Enums\ProjectIcon;
 use App\Enums\ProjectStatus;
 use App\Enums\SprintStatus;
 use App\Enums\TaskStatus;
@@ -15,12 +17,17 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection as SupportCollection;
 
 /**
  * @property int $id
  * @property int $owner_id
  * @property string $title
  * @property string|null $description
+ * @property string|null $key
+ * @property ProjectColor|null $color
+ * @property ProjectIcon|null $icon
+ * @property Carbon|null $target_date
  * @property ProjectStatus $status
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
@@ -28,7 +35,7 @@ use Illuminate\Support\Carbon;
  * @property-read Collection<int, Sprint> $sprints
  * @property-read Collection<int, Task> $tasks
  */
-#[Fillable(['owner_id', 'title', 'description', 'status'])]
+#[Fillable(['owner_id', 'title', 'description', 'key', 'color', 'icon', 'target_date', 'status'])]
 class Project extends Model
 {
     /** @use HasFactory<ProjectFactory> */
@@ -42,6 +49,9 @@ class Project extends Model
     protected function casts(): array
     {
         return [
+            'color' => ProjectColor::class,
+            'icon' => ProjectIcon::class,
+            'target_date' => 'date:Y-m-d',
             'status' => ProjectStatus::class,
         ];
     }
@@ -64,6 +74,26 @@ class Project extends Model
     public function members(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'project_user')->withTimestamps();
+    }
+
+    /**
+     * Get every invitation sent for the project.
+     *
+     * @return HasMany<ProjectInvitation, $this>
+     */
+    public function invitations(): HasMany
+    {
+        return $this->hasMany(ProjectInvitation::class);
+    }
+
+    /**
+     * Get the invitations still awaiting an answer, most recently sent first.
+     *
+     * @return HasMany<ProjectInvitation, $this>
+     */
+    public function pendingInvitations(): HasMany
+    {
+        return $this->invitations()->pending()->latest('last_sent_at');
     }
 
     /**
@@ -129,5 +159,44 @@ class Project extends Model
         $done = $this->tasks()->where('status', TaskStatus::Done)->count();
 
         return $total === 0 ? 0 : (int) round($done / $total * 100);
+    }
+
+    /**
+     * Project choices for the task form: projects the user owns or belongs to,
+     * with their people (owner first) and their active or planned sprints.
+     *
+     * @return SupportCollection<int, array{id: int, title: string, members: SupportCollection<int, array{id: int, name: string, avatar: string|null}>, sprints: SupportCollection<int, array{id: int, name: string}>}>
+     */
+    public static function taskFormOptionsFor(User $user): SupportCollection
+    {
+        return self::query()
+            ->where('owner_id', $user->id)
+            ->orWhereHas('members', fn ($members) => $members->whereKey($user->id))
+            ->with([
+                'owner:id,name,avatar',
+                'members:id,name,avatar',
+                'sprints' => fn ($sprints) => $sprints
+                    ->whereIn('status', [SprintStatus::Active, SprintStatus::Planned])
+                    ->select('id', 'project_id', 'name'),
+            ])
+            ->orderBy('title')
+            ->get(['id', 'title', 'owner_id', 'status'])
+            ->map(fn (Project $project) => [
+                'id' => $project->id,
+                'title' => $project->title,
+                'members' => $project->members
+                    ->prepend($project->owner)
+                    ->unique('id')
+                    ->map(fn (User $member) => [
+                        'id' => $member->id,
+                        'name' => $member->name,
+                        'avatar' => $member->avatar,
+                    ])->values(),
+                'sprints' => $project->sprints->map(fn (Sprint $sprint) => [
+                    'id' => $sprint->id,
+                    'name' => $sprint->name,
+                ])->values(),
+            ])
+            ->values();
     }
 }

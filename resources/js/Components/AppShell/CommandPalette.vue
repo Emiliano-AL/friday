@@ -33,6 +33,23 @@ const filtered = computed(() => {
     );
 });
 
+const groupTitles: Record<CommandAction['group'], string> = {
+    create: 'Crear',
+    navigate: 'Ir a',
+};
+
+const groups = computed(() =>
+    (['create', 'navigate'] as const)
+        .map((group) => ({
+            key: group,
+            title: groupTitles[group],
+            items: filtered.value
+                .map((action, index) => ({ action, index }))
+                .filter(({ action }) => action.group === group),
+        }))
+        .filter((group) => group.items.length > 0),
+);
+
 watch(
     () => props.open,
     async (isOpen) => {
@@ -99,7 +116,7 @@ function run(action: CommandAction | undefined): void {
 <template>
     <div
         v-if="open"
-        class="bg-inverse-surface/20 fixed inset-0 z-[60] flex items-start justify-center pt-24 backdrop-blur-sm"
+        class="bg-inverse-surface/20 fixed inset-0 z-[60] flex items-start justify-center px-4 pt-24 backdrop-blur-sm"
         role="presentation"
         @click.self="emit('close')"
         @keydown="onKeydown"
@@ -111,73 +128,109 @@ function run(action: CommandAction | undefined): void {
             class="bg-surface-container-lowest shadow-modal w-full max-w-xl overflow-hidden rounded-xl"
         >
             <div
-                class="bg-surface-container-low px-space-md py-space-md flex items-center"
+                class="border-surface-container px-space-md gap-space-sm flex items-center border-b"
             >
                 <AppIcon
                     name="search"
                     :size="20"
-                    class="text-primary-container mr-space-sm"
+                    class="text-on-surface-variant shrink-0"
                 />
                 <input
                     ref="input"
                     v-model="query"
                     type="text"
-                    placeholder="Escribe un comando o busca tareas..."
-                    class="text-body-md text-on-surface placeholder:text-on-surface-variant w-full bg-transparent outline-none"
+                    placeholder="Busca una acción o página..."
+                    aria-label="Buscar comando"
+                    class="text-body-lg font-body-lg text-on-surface placeholder:text-on-surface-variant/60 h-14 w-full border-0 bg-transparent p-0 focus:ring-0 focus:outline-none"
                 />
-                <kbd
-                    class="bg-surface text-label-xs text-on-surface-variant rounded px-1.5 py-0.5"
-                    >ESC</kbd
-                >
             </div>
 
             <div
                 ref="list"
-                class="p-space-xs flex max-h-80 flex-col gap-0.5 overflow-y-auto"
+                class="p-space-xs flex max-h-80 flex-col overflow-y-auto"
+                role="listbox"
             >
-                <div
-                    class="px-space-md py-space-xs text-label-xs text-on-surface-variant tracking-wider uppercase"
+                <section
+                    v-for="group in groups"
+                    :key="group.key"
+                    class="flex flex-col gap-0.5 py-1"
                 >
-                    Acciones sugeridas
-                </div>
-                <button
-                    v-for="(action, index) in filtered"
-                    :key="action.label"
-                    type="button"
-                    :data-active="index === activeIndex"
-                    class="px-space-md py-space-sm text-label-md flex items-center justify-between rounded-lg text-left transition-colors"
-                    :class="
-                        index === activeIndex
-                            ? 'bg-surface-container text-on-surface'
-                            : 'text-on-surface hover:bg-surface-container'
-                    "
-                    @click="run(action)"
-                    @mousemove="activeIndex = index"
-                >
-                    <span class="gap-space-sm flex items-center">
+                    <h3
+                        class="px-space-md text-label-xs font-label-xs text-on-surface-variant pt-1 pb-1.5"
+                    >
+                        {{ group.title }}
+                    </h3>
+                    <button
+                        v-for="{ action, index } in group.items"
+                        :key="action.label"
+                        type="button"
+                        role="option"
+                        :aria-selected="index === activeIndex"
+                        :data-active="index === activeIndex"
+                        class="px-space-md text-body-md font-body-md gap-space-sm text-on-surface flex h-10 items-center rounded-lg text-left transition-colors"
+                        :class="
+                            index === activeIndex ? 'bg-surface-container' : ''
+                        "
+                        @click="run(action)"
+                        @mousemove="activeIndex = index"
+                    >
                         <AppIcon
                             :name="action.icon"
+                            :size="18"
+                            class="shrink-0"
                             :class="
                                 index === activeIndex
                                     ? 'text-primary'
                                     : 'text-on-surface-variant'
                             "
                         />
-                        {{ action.label }}
-                    </span>
-                    <kbd
-                        v-if="action.shortcut"
-                        class="bg-surface-container-high text-label-xs text-on-surface-variant rounded px-1.5 py-0.5"
-                        >{{ action.shortcut }}</kbd
-                    >
-                </button>
-                <div
+                        <span class="min-w-0 flex-1 truncate">{{
+                            action.label
+                        }}</span>
+                        <kbd
+                            v-if="action.shortcut"
+                            class="border-outline-variant/60 text-label-xs font-label-xs text-on-surface-variant flex h-5 min-w-5 items-center justify-center rounded border px-1"
+                            >{{ action.shortcut }}</kbd
+                        >
+                    </button>
+                </section>
+                <p
                     v-if="filtered.length === 0"
                     class="text-body-sm text-on-surface-variant px-space-md py-space-lg text-center"
                 >
                     Sin resultados para "{{ query }}"
-                </div>
+                </p>
             </div>
+
+            <footer
+                class="border-surface-container bg-surface-container-low/50 px-space-md text-label-xs font-label-xs text-on-surface-variant gap-space-md hidden h-9 items-center border-t sm:flex"
+            >
+                <span class="flex items-center gap-1">
+                    <kbd
+                        class="border-outline-variant/60 bg-surface-container-lowest flex h-5 min-w-5 items-center justify-center rounded border px-1"
+                        >↑</kbd
+                    >
+                    <kbd
+                        class="border-outline-variant/60 bg-surface-container-lowest flex h-5 min-w-5 items-center justify-center rounded border px-1"
+                        >↓</kbd
+                    >
+                    navegar
+                </span>
+                <span class="flex items-center gap-1">
+                    <kbd
+                        class="border-outline-variant/60 bg-surface-container-lowest flex h-5 min-w-5 items-center justify-center rounded border px-1"
+                        >↵</kbd
+                    >
+                    abrir
+                </span>
+                <span class="ml-auto flex items-center gap-1">
+                    <kbd
+                        class="border-outline-variant/60 bg-surface-container-lowest flex h-5 items-center justify-center rounded border px-1"
+                        >esc</kbd
+                    >
+                    cerrar
+                </span>
+            </footer>
         </div>
     </div>
 </template>

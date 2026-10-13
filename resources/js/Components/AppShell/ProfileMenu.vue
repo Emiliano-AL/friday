@@ -1,12 +1,17 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
 import { logout } from '@/routes';
+import { edit as settingsEdit } from '@/routes/settings';
 import AppIcon from '@/Components/AppShell/AppIcon.vue';
 import Avatar from '@/Components/AppShell/Avatar.vue';
 import type { ShellUser } from '@/types/shell';
 
 defineProps<{
     user: ShellUser;
+}>();
+
+const emit = defineEmits<{
+    close: [];
 }>();
 </script>
 
@@ -36,28 +41,22 @@ defineProps<{
         </div>
 
         <div class="px-space-xs pb-space-2xs flex flex-col gap-0.5">
-            <span
-                title="Detalles del perfil (próximamente)"
-                class="gap-space-sm px-space-md py-space-sm text-label-md text-on-surface-variant/60 flex cursor-not-allowed items-center rounded-lg"
+            <Link
+                :href="`${settingsEdit.url()}#perfil`"
+                @click="emit('close')"
+                class="gap-space-sm px-space-md py-space-sm text-label-md text-on-surface hover:bg-surface-container flex items-center rounded-lg font-medium transition-colors"
             >
                 <AppIcon name="person" />
                 <span class="flex-1 truncate">Detalles del perfil</span>
-                <span
-                    class="bg-surface-container-high text-label-xs rounded px-1.5 py-0.5"
-                    >Próximamente</span
-                >
-            </span>
-            <span
-                title="Ajustes de cuenta (próximamente)"
-                class="gap-space-sm px-space-md py-space-sm text-label-md text-on-surface-variant/60 flex cursor-not-allowed items-center rounded-lg"
+            </Link>
+            <Link
+                :href="`${settingsEdit.url()}#seguridad`"
+                @click="emit('close')"
+                class="gap-space-sm px-space-md py-space-sm text-label-md text-on-surface hover:bg-surface-container flex items-center rounded-lg font-medium transition-colors"
             >
                 <AppIcon name="tune" />
                 <span class="flex-1 truncate">Ajustes de cuenta</span>
-                <span
-                    class="bg-surface-container-high text-label-xs rounded px-1.5 py-0.5"
-                    >Próximamente</span
-                >
-            </span>
+            </Link>
         </div>
 
         <div

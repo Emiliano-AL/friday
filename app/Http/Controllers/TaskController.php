@@ -35,7 +35,7 @@ class TaskController extends Controller
         $projectsById = Project::query()
             ->where('owner_id', $user->id)
             ->orWhereHas('members', fn ($members) => $members->whereKey($user->id))
-            ->with(['members:id,name,avatar', 'sprints:id,project_id,name'])
+            ->with(['owner:id,name,avatar', 'members:id,name,avatar', 'sprints:id,project_id,name'])
             ->orderBy('title')
             ->get(['id', 'title', 'owner_id', 'status'])
             ->keyBy('id');
@@ -45,11 +45,14 @@ class TaskController extends Controller
             'projects' => $projectsById->map(fn (Project $project) => [
                 'id' => $project->id,
                 'title' => $project->title,
-                'members' => $project->members->map(fn (User $member) => [
-                    'id' => $member->id,
-                    'name' => $member->name,
-                    'avatar' => $member->avatar,
-                ])->values(),
+                'members' => $project->members
+                    ->prepend($project->owner)
+                    ->unique('id')
+                    ->map(fn (User $member) => [
+                        'id' => $member->id,
+                        'name' => $member->name,
+                        'avatar' => $member->avatar,
+                    ])->values(),
                 'sprints' => $project->sprints->map(fn ($sprint) => [
                     'id' => $sprint->id,
                     'name' => $sprint->name,
@@ -67,6 +70,7 @@ class TaskController extends Controller
         $validated['type'] ??= 'other';
         $validated['priority'] ??= 'medium';
         $validated['status'] ??= 'todo';
+        $validated['author_id'] ??= $request->user()->id;
 
         if ($validated['project_id'] ?? null) {
             $project = Project::query()->findOrFail($validated['project_id']);
@@ -88,6 +92,12 @@ class TaskController extends Controller
     {
         $this->authorize('update', $task);
 
+        if ($projectId = $request->validated('project_id')) {
+            $project = Project::query()->findOrFail($projectId);
+
+            abort_unless($project->isMember($request->user()), 404);
+        }
+
         $task->update($request->validated());
 
         return back()->with('success', 'Tarea actualizada.');
@@ -102,7 +112,27 @@ class TaskController extends Controller
 
         $task->delete();
 
-        return redirect()->route('tasks.index')->with('success', 'Tarea eliminada.');
+        return redirect()->to($this->previousUrl($request))->with('success', 'Tarea eliminada.');
+    }
+
+    /**
+     * Resolve the page the deletion was requested from, but only when it
+     * belongs to this application; otherwise fall back to the tasks board.
+     */
+    private function previousUrl(Request $request): string
+    {
+        $fallback = route('tasks.index');
+        $referer = $request->headers->get('referer');
+
+        if ($referer !== null) {
+            $target = url()->to($referer);
+
+            if (parse_url($target, PHP_URL_HOST) === parse_url($fallback, PHP_URL_HOST)) {
+                return $target;
+            }
+        }
+
+        return $fallback;
     }
 
     /**

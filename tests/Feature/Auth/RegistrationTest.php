@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\ProjectInvitation;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 
@@ -65,4 +66,20 @@ test('users can not register without a matching password confirmation', function
 
     $response->assertSessionHasErrors('password');
     $this->assertGuest();
+});
+
+test('registering from an invitation link prefills the email and returns to the invitation', function () {
+    ProjectInvitation::factory()->withToken('valid-token')->create(['email' => 'nuevo@example.com']);
+
+    $this->get('/invitations/valid-token');
+
+    $this->get('/register')
+        ->assertInertia(fn ($page) => $page->where('email', 'nuevo@example.com'));
+
+    $this->post('/register', [
+        'name' => 'Nuevo',
+        'email' => 'nuevo@example.com',
+        'password' => 'password',
+        'password_confirmation' => 'password',
+    ])->assertRedirect(route('invitations.show', 'valid-token'));
 });

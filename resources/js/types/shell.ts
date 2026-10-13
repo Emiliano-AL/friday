@@ -1,6 +1,8 @@
 export interface ProjectSummary {
     id: number;
     title: string;
+    color: string | null;
+    icon: string | null;
 }
 
 export interface ShellUser {
@@ -19,6 +21,7 @@ export interface NavItem {
 }
 
 export interface CommandAction {
+    group: 'create' | 'navigate';
     label: string;
     icon: string;
     shortcut?: string;

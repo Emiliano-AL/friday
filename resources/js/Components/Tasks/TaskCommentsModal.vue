@@ -22,7 +22,7 @@ const props = withDefaults(
     },
 );
 
-const emit = defineEmits(['close']);
+const emit = defineEmits(['close', 'submitted']);
 
 const form = useForm({
     body: '',
@@ -102,6 +102,7 @@ const submitGlobal = async () => {
             const data = await response.json();
             globalComments.value = data.comments ?? globalComments.value;
             globalBody.value = '';
+            emit('submitted');
         }
     } finally {
         globalSubmitting.value = false;

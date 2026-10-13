@@ -69,9 +69,28 @@ onBeforeUnmount(() => {
         >
             <span class="gap-space-sm flex min-w-0 items-center">
                 <span
-                    class="bg-primary-container text-label-xs text-on-primary flex h-5 w-5 shrink-0 items-center justify-center rounded font-semibold"
-                    >{{ currentInitial }}</span
+                    class="flex h-5 w-5 shrink-0 items-center justify-center rounded"
+                    :class="
+                        current?.color
+                            ? ''
+                            : 'bg-primary-container text-on-primary text-label-xs font-semibold'
+                    "
+                    :style="
+                        current?.color
+                            ? {
+                                  backgroundColor: `${current.color}1A`,
+                                  color: current.color,
+                              }
+                            : undefined
+                    "
                 >
+                    <AppIcon
+                        v-if="current?.icon"
+                        :name="current.icon"
+                        :size="14"
+                    />
+                    <template v-else>{{ currentInitial }}</template>
+                </span>
                 <span class="text-label-md text-on-surface truncate">{{
                     currentTitle
                 }}</span>
@@ -97,11 +116,30 @@ onBeforeUnmount(() => {
                     @click="open = false"
                 >
                     <span
-                        class="bg-surface-container-high text-label-xs text-on-surface-variant flex h-5 w-5 shrink-0 items-center justify-center rounded font-semibold"
-                        >{{
-                            project.title.trim().charAt(0).toUpperCase()
-                        }}</span
+                        class="flex h-5 w-5 shrink-0 items-center justify-center rounded"
+                        :class="
+                            project.color
+                                ? ''
+                                : 'bg-surface-container-high text-on-surface-variant text-label-xs font-semibold'
+                        "
+                        :style="
+                            project.color
+                                ? {
+                                      backgroundColor: `${project.color}1A`,
+                                      color: project.color,
+                                  }
+                                : undefined
+                        "
                     >
+                        <AppIcon
+                            v-if="project.icon"
+                            :name="project.icon"
+                            :size="14"
+                        />
+                        <template v-else>{{
+                            project.title.trim().charAt(0).toUpperCase()
+                        }}</template>
+                    </span>
                     <span class="flex-1 truncate">{{ project.title }}</span>
                 </Link>
             </template>

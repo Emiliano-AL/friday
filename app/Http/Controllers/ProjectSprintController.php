@@ -120,7 +120,7 @@ class ProjectSprintController extends Controller
 
         abort_unless($sprint->project_id === $project->id, 404);
 
-        $project->loadMissing(['members:id,name,avatar', 'sprints:id,project_id,name,start_date']);
+        $project->loadMissing(['owner:id,name,avatar', 'members:id,name,avatar', 'sprints:id,project_id,name,start_date']);
 
         $tasks = $sprint->tasks()
             ->with(['project:id,title', 'sprint:id,name', 'assignee:id,name,avatar'])
@@ -140,11 +140,14 @@ class ProjectSprintController extends Controller
                 ->values(),
             'taskContext' => [
                 'project' => ['id' => $project->id, 'title' => $project->title],
-                'members' => $project->members->map(fn (User $member) => [
-                    'id' => $member->id,
-                    'name' => $member->name,
-                    'avatar' => $member->avatar,
-                ])->values(),
+                'members' => $project->members
+                    ->prepend($project->owner)
+                    ->unique('id')
+                    ->map(fn (User $member) => [
+                        'id' => $member->id,
+                        'name' => $member->name,
+                        'avatar' => $member->avatar,
+                    ])->values(),
                 'sprints' => $project->sprints->map(fn (Sprint $item) => [
                     'id' => $item->id,
                     'name' => $item->name,

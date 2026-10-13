@@ -52,6 +52,65 @@ test('show payload exposes real task counts', function () {
         );
 });
 
+test('show payload includes backlog fields for each task', function () {
+    $user = User::factory()->create();
+    $author = User::factory()->create();
+    $project = Project::factory()->for($user, 'owner')->create();
+
+    $sprint = Sprint::factory()->for($project)->create(['status' => SprintStatus::Planned]);
+
+    $sprintTask = Task::factory()->for($project)->for($sprint)->for($author, 'author')->create([
+        'code' => 'FRN-9',
+        'points' => 5,
+        'updated_at' => '2026-09-25 10:00:00',
+    ]);
+    $projectTask = Task::factory()->for($project)->for($author, 'author')->create([
+        'code' => 'FRN-10',
+        'points' => null,
+        'updated_at' => '2026-09-24 10:00:00',
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('projects.show', $project))
+        ->assertInertia(fn ($page) => $page
+            ->has('project.tasks', 2)
+            ->where('project.tasks.0.id', $sprintTask->id)
+            ->where('project.tasks.0.code', 'FRN-9')
+            ->where('project.tasks.0.points', 5)
+            ->where('project.tasks.0.createdAt', fn (string $value) => $value !== '')
+            ->where('project.tasks.0.completedAt', null)
+            ->where('project.tasks.0.authorId', $author->id)
+            ->where('project.tasks.0.sprint.id', $sprint->id)
+            ->where('project.tasks.0.sprint.status', 'planned')
+            ->where('project.tasks.1.id', $projectTask->id)
+            ->where('project.tasks.1.code', 'FRN-10')
+            ->where('project.tasks.1.points', null)
+            ->where('project.tasks.1.createdAt', fn (string $value) => $value !== '')
+            ->where('project.tasks.1.completedAt', null)
+            ->where('project.tasks.1.authorId', $author->id)
+            ->where('project.tasks.1.sprint', null)
+        );
+});
+
+test('show payload exposes the project identity fields', function () {
+    $user = User::factory()->create();
+    $project = Project::factory()->for($user, 'owner')->create([
+        'key' => 'FRID',
+        'color' => '#8b5cf6',
+        'icon' => 'rocket',
+        'target_date' => '2026-12-31',
+    ]);
+
+    $this->actingAs($user)
+        ->get("/projects/{$project->id}")
+        ->assertInertia(fn ($page) => $page
+            ->where('project.key', 'FRID')
+            ->where('project.color', '#8b5cf6')
+            ->where('project.icon', 'rocket')
+            ->where('project.targetDate', '2026-12-31')
+        );
+});
+
 test('show payload exposes avatars for owner members and assignees', function () {
     $user = User::factory()->create(['avatar' => 'https://example.com/owner.png']);
     $member = User::factory()->create(['avatar' => 'https://example.com/member.png']);

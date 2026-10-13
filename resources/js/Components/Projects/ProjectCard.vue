@@ -3,8 +3,8 @@ import { computed } from 'vue';
 import AppIcon from '@/Components/AppShell/AppIcon.vue';
 import AvatarStack from '@/Components/Projects/AvatarStack.vue';
 import ProjectContextMenu from '@/Components/Projects/ProjectContextMenu.vue';
-import UiBadge from '@/Components/Projects/UiBadge.vue';
 import type { DirectoryProject } from '@/types/project';
+import { tiptapToPlainText } from '@/utils/tiptapContent';
 
 const props = defineProps<{
     project: DirectoryProject;
@@ -31,10 +31,43 @@ const statusColor = computed(() => {
     }
 });
 
+const statusBorder = computed(() => {
+    switch (props.project.status) {
+        case 'active':
+            return 'border-t-primary';
+        case 'completed':
+            return 'border-t-tertiary';
+        case 'archived':
+            return 'border-t-outline-variant';
+    }
+});
+
+const targetDate = computed(() => {
+    if (!props.project.targetDate) {
+        return null;
+    }
+
+    const date = new Date(`${props.project.targetDate}T00:00:00`);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    return {
+        label: date.toLocaleDateString('es-MX', {
+            day: 'numeric',
+            month: 'short',
+        }),
+        isOverdue: props.project.status === 'active' && date < today,
+    };
+});
+
 const identityClasses = computed(() =>
     props.project.status === 'active'
         ? 'bg-primary/10 text-primary'
         : 'bg-surface-container text-on-surface-variant',
+);
+
+const descriptionExcerpt = computed(() =>
+    tiptapToPlainText(props.project.description),
 );
 
 const people = computed(() => [props.project.owner, ...props.project.members]);
@@ -51,34 +84,52 @@ function onTransition(
     <div
         role="link"
         tabindex="0"
-        class="bg-surface-container-lowest shadow-card hover:shadow-popover group p-space-lg relative flex min-h-[220px] cursor-pointer flex-col justify-between rounded-xl transition-all duration-200"
+        class="bg-surface-container-lowest shadow-card hover:shadow-popover group p-space-lg relative flex min-h-[220px] cursor-pointer flex-col rounded-xl border-t-[3px] transition-shadow duration-200"
+        :class="project.color ? '' : statusBorder"
+        :style="project.color ? { borderTopColor: project.color } : undefined"
         @click="emit('open', project)"
         @keydown.enter="emit('open', project)"
     >
-        <div
-            class="absolute top-0 right-0 left-0 h-1 rounded-t-xl"
-            :class="statusColor"
-        />
-
-        <div class="gap-space-sm flex items-start justify-between">
-            <div class="gap-space-sm flex min-w-0 items-center">
-                <div
-                    class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg"
-                    :class="identityClasses"
+        <div class="gap-space-md flex items-start">
+            <div
+                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg"
+                :class="project.color ? '' : identityClasses"
+                :style="
+                    project.color
+                        ? {
+                              backgroundColor: `${project.color}1A`,
+                              color: project.color,
+                          }
+                        : undefined
+                "
+            >
+                <AppIcon :name="project.icon ?? 'folder'" :size="20" />
+            </div>
+            <div class="min-w-0 flex-1">
+                <h2
+                    class="font-headline-sm text-headline-sm text-on-surface group-hover:text-primary line-clamp-2 text-balance transition-colors"
                 >
-                    <AppIcon name="folder" :size="20" />
-                </div>
-                <div class="min-w-0">
-                    <UiBadge :label="project.statusLabel" tone="neutral" />
-                    <div
-                        class="text-on-surface-variant font-label-xs mt-1 flex items-center gap-1 truncate"
+                    {{ project.title }}
+                </h2>
+                <p
+                    class="text-on-surface-variant text-label-sm font-label-sm mt-0.5 flex min-w-0 items-center gap-1.5"
+                >
+                    <span
+                        v-if="project.key"
+                        class="text-on-surface shrink-0 tracking-wide"
+                        >{{ project.key }}</span
                     >
-                        <AppIcon name="sprint" :size="14" />
-                        <span class="truncate">{{
-                            project.activeSprint?.name ?? 'Sin sprint activo'
-                        }}</span>
-                    </div>
-                </div>
+                    <span
+                        v-if="project.key"
+                        aria-hidden="true"
+                        class="text-outline-variant"
+                        >·</span
+                    >
+                    <AppIcon name="sprint" :size="14" class="shrink-0" />
+                    <span class="truncate">{{
+                        project.activeSprint?.name ?? 'Sin sprint activo'
+                    }}</span>
+                </p>
             </div>
             <ProjectContextMenu
                 :project="project"
@@ -88,61 +139,72 @@ function onTransition(
             />
         </div>
 
-        <div class="min-w-0">
-            <h2
-                class="font-headline-sm text-headline-sm text-on-surface group-hover:text-primary leading-snug transition-colors"
-            >
-                {{ project.title }}
-            </h2>
-            <p
-                v-if="project.description"
-                class="font-body-sm text-body-sm text-on-surface-variant mt-1 line-clamp-2"
-            >
-                {{ project.description }}
-            </p>
-        </div>
+        <p
+            v-if="descriptionExcerpt"
+            class="text-body-md font-body-md text-on-surface-variant mt-space-md line-clamp-2"
+        >
+            {{ descriptionExcerpt }}
+        </p>
 
-        <div class="gap-space-sm pt-space-lg flex flex-col">
-            <div
-                class="font-label-xs text-label-xs flex items-center justify-between"
-            >
-                <span class="flex items-center gap-1.5">
-                    <span
-                        class="h-2 w-2 shrink-0 rounded-full"
-                        :class="statusColor"
-                    />
-                    <span class="text-on-surface-variant">{{
-                        project.statusLabel
-                    }}</span>
+        <div
+            class="border-surface-container gap-space-sm pt-space-md mt-auto flex flex-col border-t"
+            :class="descriptionExcerpt ? 'mt-space-lg' : ''"
+        >
+            <div class="flex items-baseline justify-between">
+                <span
+                    class="text-label-md font-label-md text-on-surface font-semibold tabular-nums"
+                    >{{ project.progress }}%</span
+                >
+                <span
+                    class="text-label-sm text-on-surface-variant tabular-nums"
+                >
+                    {{ project.taskDoneCount }} de
+                    {{ project.taskTotalCount }} tareas
                 </span>
-                <span v-if="project.taskTotalCount > 0">
-                    <strong class="text-on-surface"
-                        >{{ project.progress }}%</strong
-                    >
-                    <span class="text-on-surface-variant font-normal">
-                        ({{ project.taskDoneCount }}/{{
-                            project.taskTotalCount
-                        }})</span
-                    >
-                </span>
-                <strong v-else class="text-on-surface">0%</strong>
             </div>
 
             <div
                 class="bg-surface-container h-1.5 w-full overflow-hidden rounded-full"
+                role="progressbar"
+                :aria-valuenow="project.progress"
+                aria-valuemin="0"
+                aria-valuemax="100"
+                :aria-label="`Avance de ${project.title}`"
             >
                 <div
-                    class="bg-primary h-full rounded-full transition-all"
-                    :style="{ width: `${project.progress}%` }"
+                    class="h-full rounded-full transition-all"
+                    :class="project.color ? '' : 'bg-primary'"
+                    :style="{
+                        width: `${project.progress}%`,
+                        backgroundColor: project.color ?? undefined,
+                    }"
                 />
             </div>
 
-            <div class="pt-space-xs flex items-center justify-between">
+            <div class="gap-space-md flex items-center justify-between pt-1">
                 <span
-                    class="text-on-surface-variant font-label-xs text-label-xs flex items-center gap-1"
+                    class="text-label-sm text-on-surface-variant gap-space-md flex min-w-0 items-center"
                 >
-                    <AppIcon name="flag" :size="14" />
-                    Equipo
+                    <span class="flex items-center gap-1.5">
+                        <span
+                            class="h-2 w-2 shrink-0 rounded-full"
+                            :class="statusColor"
+                        />
+                        {{ project.statusLabel }}
+                    </span>
+                    <span
+                        v-if="targetDate"
+                        class="flex items-center gap-1"
+                        :class="targetDate.isOverdue ? 'text-error' : ''"
+                        :title="
+                            targetDate.isOverdue
+                                ? 'Fecha objetivo vencida'
+                                : 'Fecha objetivo'
+                        "
+                    >
+                        <AppIcon name="calendar_today" :size="13" />
+                        {{ targetDate.label }}
+                    </span>
                 </span>
                 <AvatarStack :people="people" :max="3" />
             </div>

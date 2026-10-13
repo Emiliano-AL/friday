@@ -81,40 +81,49 @@ test('sprint goal rejects more than 50000 characters in store and update', funct
     ])->assertSessionDoesntHaveErrors();
 });
 
-test('structured block content persists as-is through task project and sprint endpoints', function () {
-    $content = json_encode([
-        'time' => 1727654400000,
-        'blocks' => [
-            ['type' => 'paragraph', 'data' => ['text' => 'Contenido <b>enriquecido</b>']],
-        ],
-        'version' => '2.31',
-    ], JSON_THROW_ON_ERROR);
+test('rich text content persists as-is through task project and sprint endpoints', function () {
+    $contents = [
+        'tiptap' => json_encode([
+            'type' => 'doc',
+            'content' => [
+                [
+                    'type' => 'paragraph',
+                    'content' => [
+                        ['type' => 'text', 'text' => 'Contenido enriquecido'],
+                    ],
+                ],
+            ],
+        ], JSON_THROW_ON_ERROR),
+        'plain' => 'Contenido heredado en texto plano',
+    ];
 
     $user = User::factory()->create();
 
-    $this->actingAs($user)->post('/tasks', [
-        'title' => 'Tarea enriquecida',
-        'description' => $content,
-        'assignee_id' => $user->id,
-    ])->assertSessionDoesntHaveErrors();
+    foreach ($contents as $format => $content) {
+        $this->actingAs($user)->post('/tasks', [
+            'title' => "Tarea {$format}",
+            'description' => $content,
+            'assignee_id' => $user->id,
+        ])->assertSessionDoesntHaveErrors();
 
-    $this->assertDatabaseHas('tasks', ['title' => 'Tarea enriquecida', 'description' => $content]);
+        $this->assertDatabaseHas('tasks', ['title' => "Tarea {$format}", 'description' => $content]);
 
-    $this->actingAs($user)->post('/projects', [
-        'title' => 'Proyecto enriquecido',
-        'description' => $content,
-    ])->assertSessionDoesntHaveErrors();
+        $this->actingAs($user)->post('/projects', [
+            'title' => "Proyecto {$format}",
+            'description' => $content,
+        ])->assertSessionDoesntHaveErrors();
 
-    $this->assertDatabaseHas('projects', ['title' => 'Proyecto enriquecido', 'description' => $content]);
+        $this->assertDatabaseHas('projects', ['title' => "Proyecto {$format}", 'description' => $content]);
 
-    $project = Project::query()->where('title', 'Proyecto enriquecido')->sole();
+        $project = Project::query()->where('title', "Proyecto {$format}")->sole();
 
-    $this->actingAs($user)->post("/projects/{$project->id}/sprints", [
-        'name' => 'Sprint enriquecido',
-        'start_date' => '2026-10-01',
-        'end_date' => '2026-10-07',
-        'goal' => $content,
-    ])->assertSessionDoesntHaveErrors();
+        $this->actingAs($user)->post("/projects/{$project->id}/sprints", [
+            'name' => "Sprint {$format}",
+            'start_date' => '2026-10-01',
+            'end_date' => '2026-10-07',
+            'goal' => $content,
+        ])->assertSessionDoesntHaveErrors();
 
-    $this->assertDatabaseHas('sprints', ['name' => 'Sprint enriquecido', 'goal' => $content]);
+        $this->assertDatabaseHas('sprints', ['name' => "Sprint {$format}", 'goal' => $content]);
+    }
 });

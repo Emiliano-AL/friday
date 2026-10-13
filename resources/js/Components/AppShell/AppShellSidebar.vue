@@ -17,7 +17,7 @@ defineProps<{
 
 const emit = defineEmits<{
     collapse: [];
-    newTask: [];
+    quickActions: [];
 }>();
 </script>
 
@@ -50,14 +50,15 @@ const emit = defineEmits<{
         <div class="px-space-md py-space-sm">
             <button
                 type="button"
+                aria-label="Acciones rápidas (⌘K)"
                 class="gap-space-xs bg-primary-container text-label-md text-on-primary shadow-card hover:bg-primary flex h-9 w-full items-center justify-center rounded-lg transition-colors"
-                @click="emit('newTask')"
+                @click="emit('quickActions')"
             >
-                <AppIcon name="add" />
-                <span>Nueva Tarea</span>
-                <span
-                    class="bg-on-primary/20 text-label-xs ml-auto rounded px-1.5 py-0.5 opacity-70"
-                    >C</span
+                <AppIcon name="bolt" />
+                <span>Acciones rápidas</span>
+                <kbd
+                    class="font-label-xs ml-1 rounded bg-white/20 px-1.5 py-0.5 text-[10px] text-white"
+                    >⌘K</kbd
                 >
             </button>
         </div>
