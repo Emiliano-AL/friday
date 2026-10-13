@@ -72,7 +72,7 @@ onMounted(() => titleInput.value?.focus());
 <template>
     <form class="gap-space-xs flex flex-col" @submit.prevent="submit">
         <div
-            class="border-outline-variant/30 bg-surface-container-lowest focus-within:border-primary/40 flex items-center gap-3 rounded-xl border px-space-md py-3 transition-colors"
+            class="border-outline-variant/40 bg-surface-container-lowest shadow-card focus-within:border-primary/50 focus-within:ring-primary/15 flex items-center gap-3 rounded-xl border px-space-md py-3 transition-[border-color,box-shadow] focus-within:ring-4"
         >
             <AppIcon
                 name="bolt"
@@ -90,7 +90,7 @@ onMounted(() => titleInput.value?.focus());
                 type="text"
                 maxlength="255"
                 placeholder="Captura un pendiente y pulsa Enter..."
-                class="text-body-md font-body-md placeholder:text-outline/60 text-on-surface min-w-0 flex-1 bg-transparent focus:outline-none"
+                class="text-body-lg font-body-lg placeholder:text-on-surface-variant/60 text-on-surface min-w-0 flex-1 border-0 bg-transparent p-0 shadow-none focus:ring-0 focus:outline-none"
                 :aria-invalid="form.errors.title ? 'true' : undefined"
             />
             <kbd
@@ -156,12 +156,6 @@ onMounted(() => titleInput.value?.focus());
                     aria-hidden="true"
                 />
             </div>
-
-            <span
-                class="text-label-xs font-label-xs text-on-surface-variant ml-auto"
-            >
-                Se guarda como pendiente del backlog.
-            </span>
         </div>
 
         <p

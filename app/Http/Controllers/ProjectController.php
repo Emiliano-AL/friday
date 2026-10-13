@@ -7,6 +7,7 @@ use App\Enums\TaskStatus;
 use App\Http\Requests\StoreProjectRequest;
 use App\Http\Requests\UpdateProjectRequest;
 use App\Models\Project;
+use App\Models\ProjectInvitation;
 use App\Models\Sprint;
 use App\Models\Task;
 use App\Models\User;
@@ -314,6 +315,14 @@ class ProjectController extends Controller
                 $project->status->transitions(),
             ),
             'isOwner' => $project->isOwnedBy($request->user()),
+            'pendingInvitations' => $project->isOwnedBy($request->user())
+                ? $project->pendingInvitations()->get()->map(fn (ProjectInvitation $invitation) => [
+                    'id' => $invitation->id,
+                    'email' => $invitation->email,
+                    'sentAt' => $invitation->last_sent_at->toIso8601String(),
+                    'isExpired' => $invitation->isExpired(),
+                ])->all()
+                : [],
         ];
     }
 }

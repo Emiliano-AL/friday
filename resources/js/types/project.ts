@@ -80,6 +80,14 @@ export interface ProjectDetail {
     tasks: ProjectTask[];
     allowedTransitions: string[];
     isOwner: boolean;
+    pendingInvitations: PendingInvitation[];
+}
+
+export interface PendingInvitation {
+    id: number;
+    email: string;
+    sentAt: string;
+    isExpired: boolean;
 }
 
 export interface ProjectPerson {

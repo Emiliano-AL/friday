@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use App\Models\Project;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -42,8 +43,12 @@ class HandleInertiaRequests extends Middleware
             'flash' => [
                 'success' => $request->session()->get('success'),
                 'error' => $request->session()->get('error'),
+                'importPreview' => $request->session()->get('importPreview'),
             ],
-            ...($user !== null ? ['projects' => $this->projectSummaries($user)] : []),
+            ...($user !== null ? [
+                'projects' => $this->projectSummaries($user),
+                'taskFormProjects' => Inertia::optional(fn () => Project::taskFormOptionsFor($user)),
+            ] : []),
         ];
     }
 

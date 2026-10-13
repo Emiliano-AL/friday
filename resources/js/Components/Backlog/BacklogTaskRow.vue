@@ -36,16 +36,20 @@ const priorityChips: Record<
         icon: 'south',
         classes: 'text-on-surface-variant',
     },
-    medium: { label: 'Media', icon: 'drag_handle', classes: 'text-primary' },
+    medium: {
+        label: 'Media',
+        icon: 'drag_handle',
+        classes: 'text-on-surface-variant',
+    },
     high: {
         label: 'Alta',
         icon: 'priority_high',
-        classes: 'bg-tertiary-fixed text-on-tertiary-fixed font-semibold',
+        classes: 'text-tertiary font-semibold',
     },
     urgent: {
         label: 'Urgente',
         icon: 'emergency',
-        classes: 'bg-error-container text-on-error-container font-semibold',
+        classes: 'text-error font-semibold',
     },
 };
 
@@ -68,7 +72,7 @@ const assigneeShortName = computed(() => {
     <div
         :role="clickable ? 'button' : undefined"
         :tabindex="clickable ? 0 : undefined"
-        class="border-surface-container-low bg-surface-container-lowest gap-space-md px-space-md py-space-sm flex items-center justify-between border-b transition-colors"
+        class="border-surface-container-low bg-surface-container-lowest gap-space-md px-space-md py-space-sm flex items-center justify-between border-b transition-colors last:border-b-0"
         :class="
             clickable ? 'hover:bg-surface-container-low cursor-pointer' : ''
         "
@@ -76,11 +80,6 @@ const assigneeShortName = computed(() => {
         @keydown.enter.prevent="onSelect"
     >
         <div class="gap-space-sm flex min-w-0 flex-1 items-center">
-            <span
-                class="bg-primary h-1.5 w-1.5 shrink-0 rounded-full"
-                aria-hidden="true"
-            />
-
             <span
                 v-if="task.code"
                 class="text-label-xs font-label-xs bg-surface-container-low text-on-surface-variant shrink-0 rounded px-1.5 py-0.5 font-medium"
@@ -93,66 +92,65 @@ const assigneeShortName = computed(() => {
             >
                 {{ task.title }}
             </span>
-        </div>
-
-        <div
-            class="gap-space-md font-label-xs text-label-xs flex shrink-0 items-center"
-        >
-            <span
-                v-if="!hideProjectChip && task.project"
-                :title="task.project.title"
-                class="bg-surface-container-low text-on-surface-variant flex items-center gap-1.5 rounded px-2 py-1 font-medium"
-            >
-                <span
-                    class="bg-primary h-1.5 w-1.5 shrink-0 rounded-full"
-                    aria-hidden="true"
-                />
-                <span class="max-w-[10rem] truncate">{{
-                    task.project.title
-                }}</span>
-            </span>
-            <span
-                v-else-if="!hideProjectChip"
-                class="bg-surface-container text-on-surface-variant flex items-center gap-1.5 rounded px-2 py-1 font-medium"
-            >
-                <AppIcon name="folder_off" :size="12" />
-                Sin Proyecto
-            </span>
 
             <span
                 v-if="task.points !== null"
-                class="bg-surface-container-low text-on-surface-variant rounded px-2 py-1 font-medium"
+                class="text-label-xs font-label-xs text-on-surface-variant shrink-0 tabular-nums"
                 :title="`${task.points} puntos`"
             >
                 {{ task.points }} pts
             </span>
+        </div>
+
+        <div class="gap-space-md text-label-sm flex shrink-0 items-center">
+            <span
+                v-if="!hideProjectChip"
+                class="text-on-surface-variant hidden w-44 min-w-0 items-center gap-1.5 md:flex"
+                :title="task.project?.title"
+            >
+                <template v-if="task.project">
+                    <span
+                        class="bg-primary h-1.5 w-1.5 shrink-0 rounded-full"
+                        aria-hidden="true"
+                    />
+                    <span class="truncate">{{ task.project.title }}</span>
+                </template>
+                <span v-else class="italic">Sin proyecto</span>
+            </span>
 
             <span
                 :class="priorityChip.classes"
-                class="flex items-center gap-1 rounded px-2 py-1"
+                class="text-label-xs font-label-xs flex w-20 items-center gap-1"
             >
                 <AppIcon :name="priorityChip.icon" :size="13" />
                 {{ priorityChip.label }}
             </span>
 
-            <span v-if="task.assignee" class="flex items-center gap-1.5">
-                <Avatar
-                    :name="task.assignee.name"
-                    :src="task.assignee.avatar"
-                    :size="20"
-                />
-                <span
-                    class="text-on-surface hidden max-w-[6rem] truncate font-medium xl:inline"
-                >
-                    {{ assigneeShortName }}
-                </span>
-            </span>
             <span
-                v-else
-                class="text-on-surface-variant flex items-center gap-1"
+                class="flex w-6 items-center gap-1.5 xl:w-28"
+                :title="task.assignee?.name ?? 'Sin asignar'"
             >
-                <AppIcon name="person" :size="13" />
-                Sin asignar
+                <template v-if="task.assignee">
+                    <Avatar
+                        :name="task.assignee.name"
+                        :src="task.assignee.avatar"
+                        :size="20"
+                    />
+                    <span class="text-on-surface hidden truncate xl:inline">
+                        {{ assigneeShortName }}
+                    </span>
+                </template>
+                <template v-else>
+                    <span
+                        class="border-outline-variant text-on-surface-variant flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-dashed"
+                    >
+                        <AppIcon name="person" :size="11" />
+                    </span>
+                    <span
+                        class="text-on-surface-variant hidden truncate xl:inline"
+                        >Sin asignar</span
+                    >
+                </template>
             </span>
         </div>
     </div>

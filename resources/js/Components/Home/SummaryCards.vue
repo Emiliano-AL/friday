@@ -1,90 +1,77 @@
 <script setup lang="ts">
-import AppIcon from '@/Components/AppShell/AppIcon.vue';
-import DonutProgress from '@/Components/Home/DonutProgress.vue';
-import type { SummaryPayload } from '@/types/dashboard';
+import { computed } from 'vue';
+import type { SummaryPayload, WeeklyInsight } from '@/types/dashboard';
 
-defineProps<{
+const props = defineProps<{
     summary: SummaryPayload;
+    insight: WeeklyInsight | null;
 }>();
+
+const cycleDays = computed(() =>
+    props.insight
+        ? new Intl.NumberFormat('es-MX', {
+              maximumFractionDigits: 1,
+          }).format(props.insight.avgCycleDays)
+        : '',
+);
 </script>
 
 <template>
     <section
         aria-label="Resumen de actividad"
-        class="gap-space-lg grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3"
+        class="bg-surface-container-lowest shadow-card divide-surface-container grid grid-cols-1 divide-y rounded-xl sm:grid-cols-3 sm:divide-x sm:divide-y-0"
     >
-        <article
-            v-if="summary.sprint"
-            class="bg-surface-container-lowest shadow-card gap-space-md p-space-lg flex items-center rounded-xl"
-        >
-            <DonutProgress :percent="summary.sprint.coverage" :size="64" />
-            <div class="gap-space-xs flex min-w-0 flex-col">
-                <p
-                    class="text-body-md font-body-md text-on-surface truncate font-medium"
+        <div class="px-space-lg py-space-md flex flex-col gap-0.5">
+            <p class="text-on-surface flex items-baseline gap-2">
+                <span
+                    class="text-headline-lg font-headline-lg tabular-nums"
+                    >{{ summary.tasks.active }}</span
                 >
-                    {{ summary.sprint.name }}
-                </p>
-                <p class="text-label-xs font-label-xs text-on-surface-variant">
-                    {{ summary.sprint.coverage }}% de avance
-                </p>
-                <p class="text-label-xs font-label-xs text-on-surface-variant">
-                    {{ summary.sprint.daysRemaining }}
-                    {{
-                        summary.sprint.daysRemaining === 1
-                            ? 'día restante'
-                            : 'días restantes'
-                    }}
-                </p>
-            </div>
-        </article>
+                <span class="text-body-md font-body-md">tareas activas</span>
+            </p>
+            <p class="text-label-sm font-label-sm text-on-surface-variant">
+                <span
+                    :class="summary.tasks.urgent > 0 ? 'text-error' : ''"
+                    class="tabular-nums"
+                    >{{ summary.tasks.urgent }}</span
+                >
+                urgentes o de alta prioridad
+            </p>
+        </div>
 
-        <article
-            class="bg-surface-container-lowest shadow-card gap-space-md p-space-lg flex items-center rounded-xl"
-        >
-            <div
-                class="bg-surface-container text-primary flex h-10 w-10 shrink-0 items-center justify-center rounded-lg"
-            >
-                <AppIcon name="task_alt" :size="20" />
-            </div>
-            <div class="min-w-0">
-                <p
-                    class="font-headline-sm text-headline-sm text-on-surface leading-none"
+        <div class="px-space-lg py-space-md flex flex-col gap-0.5">
+            <p class="text-on-surface flex items-baseline gap-2">
+                <span
+                    class="text-headline-lg font-headline-lg tabular-nums"
+                    >{{ insight?.completed ?? 0 }}</span
                 >
-                    {{ summary.tasks.active }}
-                </p>
-                <p
-                    class="font-label-xs text-label-xs text-on-surface-variant mt-1"
+                <span class="text-body-md font-body-md"
+                    >resueltas esta semana</span
                 >
-                    tareas activas
-                </p>
-                <p
-                    class="font-label-xs text-label-xs text-on-surface-variant mt-0.5"
-                >
-                    {{ summary.tasks.urgent }} urgentes / alta prioridad
-                </p>
-            </div>
-        </article>
+            </p>
+            <p class="text-label-sm font-label-sm text-on-surface-variant">
+                <template v-if="insight">
+                    Ciclo medio de {{ cycleDays }}
+                    {{ insight.avgCycleDays === 1 ? 'día' : 'días' }}
+                </template>
+                <template v-else>Aún sin tareas resueltas</template>
+            </p>
+        </div>
 
-        <article
-            class="bg-surface-container-lowest shadow-card gap-space-md p-space-lg flex items-center rounded-xl"
-        >
-            <div
-                class="bg-surface-container text-primary flex h-10 w-10 shrink-0 items-center justify-center rounded-lg"
-            >
-                <AppIcon name="folder" :size="20" />
-            </div>
-            <div class="min-w-0">
-                <p
-                    class="font-headline-sm text-headline-sm text-on-surface leading-none"
+        <div class="px-space-lg py-space-md flex flex-col gap-0.5">
+            <p class="text-on-surface flex items-baseline gap-2">
+                <span
+                    class="text-headline-lg font-headline-lg tabular-nums"
+                    >{{ summary.projects.active }}</span
                 >
-                    {{ summary.projects.active }}
-                </p>
-                <p
-                    class="font-label-xs text-label-xs text-on-surface-variant mt-1"
+                <span class="text-body-md font-body-md"
+                    >{{
+                        summary.projects.active === 1
+                            ? 'proyecto en progreso'
+                            : 'proyectos en progreso'
+                    }}</span
                 >
-                    proyectos en progreso
-                </p>
-            </div>
-        </article>
+            </p>
+        </div>
     </section>
 </template>

@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import BacklogTaskRow from '@/Components/Backlog/BacklogTaskRow.vue';
-import UiBadge from '@/Components/Projects/UiBadge.vue';
 import type { BacklogTask } from '@/types/backlog';
 import type { TaskPriorityValue } from '@/types/task';
 
@@ -67,19 +66,22 @@ const recentTasks = computed(() => [...props.tasks].sort(byNewest));
         />
     </div>
 
-    <div v-else class="gap-space-md flex flex-col">
+    <div v-else class="gap-space-lg flex flex-col">
         <section
             v-for="section in groupedSections"
             :key="section.key"
             class="gap-space-xs flex flex-col"
         >
-            <header class="px-space-xs flex items-center justify-between">
+            <header class="px-space-xs gap-space-sm flex items-center">
                 <h2
-                    class="text-label-sm font-label-sm text-on-surface-variant font-semibold tracking-wider uppercase"
+                    class="text-label-md font-label-md text-on-surface font-semibold"
                 >
                     {{ section.name }}
                 </h2>
-                <UiBadge :label="String(section.tasks.length)" tone="neutral" />
+                <span
+                    class="text-label-sm text-on-surface-variant tabular-nums"
+                    >{{ section.tasks.length }}</span
+                >
             </header>
 
             <div

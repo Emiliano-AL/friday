@@ -5,6 +5,7 @@ import BacklogFilters from '@/Components/Backlog/BacklogFilters.vue';
 import BacklogSectionList from '@/Components/Backlog/BacklogSectionList.vue';
 import NextSprintBanner from '@/Components/Backlog/NextSprintBanner.vue';
 import QuickCapture from '@/Components/Backlog/QuickCapture.vue';
+import TaskImportModal from '@/Components/Tasks/TaskImportModal.vue';
 import TaskFormModal from '@/Components/Tasks/Board/TaskFormModal.vue';
 import type {
     BacklogFilter,
@@ -36,6 +37,7 @@ const filter = ref<BacklogFilter>('all');
 const sort = ref<BacklogSort>('priority');
 
 const modalOpen = ref(false);
+const importOpen = ref(false);
 const editingTask = ref<BacklogTask | null>(null);
 
 function openTask(task: BacklogTask): void {
@@ -91,10 +93,10 @@ const emptyFilterMessage = computed(() => {
                 </span>
             </div>
 
-            <div
-                class="gap-space-md flex flex-col justify-between md:flex-row md:items-end"
+            <header
+                class="gap-space-md flex flex-wrap items-end justify-between"
             >
-                <div class="gap-space-xs flex flex-col">
+                <div class="gap-space-xs flex min-w-0 flex-col">
                     <h1
                         class="text-headline-xl font-headline-xl text-on-surface"
                     >
@@ -103,18 +105,26 @@ const emptyFilterMessage = computed(() => {
                     <p
                         class="text-body-md font-body-md text-on-surface-variant"
                     >
-                        Captura pendientes al vuelo y triéndolos después.
-                    </p>
-                    <p
-                        class="text-body-sm font-body-sm text-on-surface-variant"
-                    >
-                        {{ summary.total }} pendientes ·
-                        {{ summary.totalPoints }} pts
+                        {{ summary.total }}
+                        {{ summary.total === 1 ? 'pendiente' : 'pendientes' }}
+                        <template v-if="summary.totalPoints > 0">
+                            · {{ summary.totalPoints }} pts</template
+                        >
+                        · captúralos al vuelo y triéndolos después.
                     </p>
                 </div>
-            </div>
-
-            <NextSprintBanner :next-sprint="nextSprint" />
+                <div class="gap-space-sm flex flex-wrap items-center">
+                    <button
+                        type="button"
+                        class="bg-surface-container-lowest text-on-surface hover:bg-surface-container-high shadow-card text-label-md font-label-md flex items-center gap-1.5 rounded-lg px-3 py-2 transition-colors"
+                        @click="importOpen = true"
+                    >
+                        <AppIcon name="upload_file" :size="16" />
+                        Importar
+                    </button>
+                    <NextSprintBanner :next-sprint="nextSprint" />
+                </div>
+            </header>
 
             <QuickCapture :projects="projects" />
 
@@ -215,6 +225,12 @@ const emptyFilterMessage = computed(() => {
             :projects="projects"
             :current-user="currentUser"
             @close="modalOpen = false"
+        />
+        <TaskImportModal
+            :open="importOpen"
+            :project-id="null"
+            destination-label="Backlog general"
+            @close="importOpen = false"
         />
     </AuthenticatedLayout>
 </template>

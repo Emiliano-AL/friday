@@ -7,10 +7,13 @@ import type { BoardTask } from '@/types/task';
 const props = defineProps<{
     task: BoardTask;
     draggable?: boolean;
+    dragging?: boolean;
+    landed?: boolean;
 }>();
 
 const emit = defineEmits<{
     dragstart: [event: DragEvent, task: BoardTask];
+    dragend: [];
     open: [task: BoardTask];
     edit: [task: BoardTask];
     comment: [task: BoardTask];
@@ -34,112 +37,97 @@ const priorityChip = computed(() => {
         case 'low':
             return { icon: 'south', classes: 'text-on-surface-variant' };
         case 'medium':
-            return { icon: 'drag_handle', classes: 'text-primary' };
+            return { icon: 'drag_handle', classes: 'text-on-surface-variant' };
         case 'high':
             return {
                 icon: 'priority_high',
-                classes:
-                    'bg-tertiary-fixed text-on-tertiary-fixed font-semibold',
+                classes: 'text-tertiary font-semibold',
             };
         default:
             return {
                 icon: 'emergency',
-                classes:
-                    'bg-error-container text-on-error-container font-semibold',
+                classes: 'text-error font-semibold',
             };
     }
 });
 
-const accentClass = computed(() => {
-    if (props.task.status === 'in_progress') {
-        return 'border-primary';
-    }
-
-    if (props.task.status === 'done') {
-        return 'border-transparent opacity-80';
-    }
-
-    return 'border-transparent hover:border-primary-container';
-});
 </script>
 
 <template>
     <article
         :draggable="draggable"
-        class="group gap-space-xs bg-surface-container-lowest p-space-md shadow-card hover:shadow-popover relative flex cursor-pointer flex-col rounded-lg border-l-2 transition-all duration-150"
-        :class="accentClass"
+        class="group gap-space-sm bg-surface-container-lowest p-space-md shadow-card hover:shadow-popover relative flex flex-col rounded-lg transition-[opacity,box-shadow] duration-150"
+        :class="[
+            draggable ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer',
+            dragging
+                ? 'outline-primary/50 opacity-40 shadow-none outline-2 outline-dashed'
+                : task.status === 'done'
+                  ? 'opacity-80'
+                  : '',
+            landed ? 'task-landed' : '',
+        ]"
         role="button"
         tabindex="0"
         @click="emit('open', task)"
         @keydown.enter="emit('open', task)"
         @dragstart="emit('dragstart', $event, task)"
+        @dragend="emit('dragend')"
     >
-        <div class="flex min-w-0 items-center justify-between">
-            <AppIcon
-                :name="typeIcon.icon"
-                :size="16"
-                :class="typeIcon.classes"
-                class="shrink-0"
-                :title="task.typeLabel"
-            />
-
-            <span
-                v-if="task.project"
-                :title="task.project.title"
-                class="bg-surface-container-low text-on-surface-variant flex items-center gap-1.5 rounded px-2 py-1 font-medium"
+        <div class="flex min-w-0 flex-col gap-1">
+            <h3
+                class="text-body-md font-body-md text-on-surface group-hover:text-primary leading-snug font-medium transition-colors"
+                :class="
+                    task.status === 'done'
+                        ? 'text-on-surface-variant line-through'
+                        : ''
+                "
             >
-                <span
-                    class="bg-primary h-1.5 w-1.5 shrink-0 rounded-full"
-                    aria-hidden="true"
-                />
-                <span class="max-w-[9rem] truncate">{{
-                    task.project.title
-                }}</span>
-            </span>
-            <span
-                v-else
-                class="bg-surface-container text-on-surface-variant flex items-center gap-1.5 rounded px-2 py-1 font-medium"
+                {{ task.title }}
+            </h3>
+            <p
+                class="text-label-sm text-on-surface-variant flex min-w-0 items-center gap-1.5"
             >
-                <AppIcon name="folder_off" :size="12" />
-                Sin Proyecto
-            </span>
+                <template v-if="task.project">
+                    <span
+                        class="bg-primary h-1.5 w-1.5 shrink-0 rounded-full"
+                        aria-hidden="true"
+                    />
+                    <span class="truncate" :title="task.project.title">{{
+                        task.project.title
+                    }}</span>
+                </template>
+                <span v-else class="shrink-0 italic">Sin proyecto</span>
+                <template v-if="task.sprint">
+                    <span aria-hidden="true" class="text-outline-variant"
+                        >·</span
+                    >
+                    <span class="truncate">{{ task.sprint.name }}</span>
+                </template>
+            </p>
         </div>
 
-        <h3
-            class="text-body-md font-body-sm text-on-surface group-hover:text-primary leading-snug font-medium transition-colors"
-            :class="
-                task.status === 'done'
-                    ? 'text-on-surface-variant line-through'
-                    : ''
-            "
-        >
-            {{ task.title }}
-        </h3>
-
-        <p
-            class="text-label-xs font-label-xs"
-            :class="
-                task.sprint
-                    ? 'text-on-surface-variant'
-                    : 'text-on-surface-variant italic'
-            "
-        >
-            {{ task.sprint?.name ?? 'Sin Sprint' }}
-        </p>
-
-        <div class="gap-space-sm pt-space-xs flex items-center justify-between">
-            <div class="flex min-w-0 items-center gap-2">
+        <div class="gap-space-sm flex items-center justify-between">
+            <div
+                class="gap-space-md text-label-xs font-label-xs flex min-w-0 items-center"
+            >
+                <AppIcon
+                    :name="typeIcon.icon"
+                    :size="14"
+                    :class="typeIcon.classes"
+                    class="shrink-0"
+                    :title="task.typeLabel"
+                />
                 <span
                     :class="priorityChip.classes"
-                    class="text-label-xs font-label-xs flex items-center gap-1 rounded px-2 py-1"
+                    class="flex items-center gap-1"
                 >
-                    <AppIcon :name="priorityChip.icon" :size="12" />
+                    <AppIcon :name="priorityChip.icon" :size="13" />
                     {{ task.priorityLabel }}
                 </span>
-
                 <span
                     v-if="task.commentsCount > 0"
-                    class="text-label-xs font-label-xs text-on-surface-variant flex items-center gap-1"
+                    class="text-on-surface-variant flex items-center gap-1"
+                    :aria-label="`${task.commentsCount} comentarios`"
                 >
                     <AppIcon name="chat_bubble_outline" :size="12" />
                     {{ task.commentsCount }}
@@ -150,14 +138,15 @@ const accentClass = computed(() => {
                 v-if="task.assignee"
                 :name="task.assignee.name"
                 :src="task.assignee.avatar"
-                :size="24"
+                :size="22"
             />
-            <AppIcon
+            <span
                 v-else
-                name="person"
-                :size="24"
-                class="text-on-surface-variant"
-            />
+                class="border-outline-variant text-on-surface-variant flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full border border-dashed"
+                title="Sin asignar"
+            >
+                <AppIcon name="person" :size="12" />
+            </span>
         </div>
     </article>
 </template>

@@ -30,19 +30,11 @@ function priorityChip(priority: TaskPriorityValue): {
         case 'low':
             return { icon: 'south', classes: 'text-on-surface-variant' };
         case 'medium':
-            return { icon: 'drag_handle', classes: 'text-primary' };
+            return { icon: 'drag_handle', classes: 'text-on-surface-variant' };
         case 'high':
-            return {
-                icon: 'priority_high',
-                classes:
-                    'bg-tertiary-fixed text-on-tertiary-fixed font-semibold',
-            };
+            return { icon: 'priority_high', classes: 'text-tertiary' };
         default:
-            return {
-                icon: 'emergency',
-                classes:
-                    'bg-error-container text-on-error-container font-semibold',
-            };
+            return { icon: 'emergency', classes: 'text-error' };
     }
 }
 </script>
@@ -52,17 +44,10 @@ function priorityChip(priority: TaskPriorityValue): {
         aria-label="Mis tareas para hoy y prioritarias"
         class="bg-surface-container-lowest shadow-card flex flex-col rounded-xl"
     >
-        <header
-            class="px-space-lg pt-space-lg pb-space-md gap-space-md flex items-center justify-between"
-        >
+        <header class="px-space-lg pt-space-lg pb-space-sm">
             <h2 class="text-headline-sm font-headline-sm text-on-surface">
                 Mis tareas para hoy
             </h2>
-            <span
-                class="bg-surface-container text-label-xs font-label-xs text-on-surface-variant rounded-full px-2 py-0.5"
-            >
-                {{ myTasks.total }}
-            </span>
         </header>
 
         <ul v-if="myTasks.items.length > 0" class="flex flex-col">
@@ -76,49 +61,50 @@ function priorityChip(priority: TaskPriorityValue): {
                     class="h-2.5 w-2.5 shrink-0 rounded-full"
                     :title="task.statusLabel"
                 />
-                <span
-                    class="text-body-md font-body-md text-on-surface min-w-0 flex-1 truncate font-medium"
-                >
+                <span class="gap-space-sm flex min-w-0 flex-1 items-center">
                     <Link
                         :href="showTask.url(task.id)"
-                        class="hover:text-primary transition-colors"
+                        class="text-body-md font-body-md text-on-surface hover:text-primary truncate font-medium transition-colors"
                     >
                         {{ task.title }}
                     </Link>
-                </span>
-                <span
-                    class="bg-surface-container-low text-label-xs font-label-xs text-on-surface-variant hidden shrink-0 rounded px-2 py-1 md:inline"
-                >
-                    {{ task.statusLabel }}
+                    <span
+                        v-if="task.commentsCount > 0"
+                        class="text-on-surface-variant flex shrink-0 items-center gap-1"
+                        :aria-label="`${task.commentsCount} comentarios`"
+                    >
+                        <AppIcon name="chat_bubble_outline" :size="13" />
+                        <span class="text-label-xs font-label-xs">{{
+                            task.commentsCount
+                        }}</span>
+                    </span>
                 </span>
                 <span
                     v-if="task.project"
-                    class="text-label-xs font-label-xs text-on-surface-variant hidden max-w-[10rem] truncate xl:inline"
+                    class="text-label-sm font-label-sm text-on-surface-variant hidden w-44 shrink-0 truncate xl:inline"
                 >
                     {{ task.project.title }}
                 </span>
                 <span
                     v-else
-                    class="text-label-xs font-label-xs text-outline-variant hidden italic xl:inline"
+                    class="text-label-sm font-label-sm text-on-surface-variant hidden w-44 shrink-0 italic xl:inline"
                 >
                     Independiente
                 </span>
-                <span
-                    v-if="task.commentsCount > 0"
-                    class="text-on-surface-variant flex shrink-0 items-center gap-1"
-                >
-                    <AppIcon name="chat_bubble_outline" :size="13" />
-                    <span class="text-label-xs font-label-xs">{{
-                        task.commentsCount
-                    }}</span>
+                <span class="hidden w-24 shrink-0 items-center md:flex">
+                    <span
+                        class="bg-surface-container-low text-label-xs font-label-xs text-on-surface-variant rounded px-2 py-1"
+                    >
+                        {{ task.statusLabel }}
+                    </span>
                 </span>
                 <span
                     :class="priorityChip(task.priority).classes"
-                    class="text-label-xs font-label-xs flex shrink-0 items-center gap-1 rounded px-2 py-1"
+                    class="text-label-xs font-label-xs flex w-20 shrink-0 items-center gap-1"
                 >
                     <AppIcon
                         :name="priorityChip(task.priority).icon"
-                        :size="13"
+                        :size="14"
                     />
                     {{ task.priorityLabel }}
                 </span>

@@ -42,3 +42,24 @@ export interface TaskOption {
     id: number;
     title: string;
 }
+
+export interface ImportPreviewTask {
+    line: number;
+    title: string;
+    type: 'other' | 'feature' | 'bug' | 'test' | null;
+    typeLabel: string | null;
+    priority: TaskPriorityValue | null;
+    priorityLabel: string | null;
+    assignee: { id: number; name: string } | null;
+    responsibleText: string | null;
+    excerpt: string;
+    state: 'ok' | 'warning' | 'error' | 'duplicate' | 'repeated';
+    messages: string[];
+}
+
+export interface ImportPreview {
+    destination: { projectId: number | null; label: string };
+    tasks: ImportPreviewTask[];
+    excluded: Array<{ name: string; reason: string }>;
+    counts: { importable: number; total: number };
+}

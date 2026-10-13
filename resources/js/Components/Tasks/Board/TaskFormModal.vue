@@ -1,10 +1,8 @@
 <script setup lang="ts">
 import AppIcon from '@/Components/AppShell/AppIcon.vue';
 import Avatar from '@/Components/AppShell/Avatar.vue';
-import CollapsibleSection from '@/Components/CollapsibleSection.vue';
 import Modal from '@/Components/Modal.vue';
 import RichTextEditor from '@/Components/RichText/RichTextEditor.vue';
-import UiBadge from '@/Components/Projects/UiBadge.vue';
 import type {
     TaskPriorityValue,
     TaskProjectOption,
@@ -54,8 +52,6 @@ interface BoardTaskShape {
 const titleInput = ref<HTMLInputElement | null>(null);
 const descriptionEditor = ref<InstanceType<typeof RichTextEditor> | null>(null);
 const createAnother = ref(false);
-const linkageOpen = ref(false);
-const estimationOpen = ref(false);
 
 const form = useForm({
     title: '',
@@ -108,9 +104,6 @@ function resetForm(): void {
               ? props.currentUser.id
               : null;
     form.clearErrors();
-
-    linkageOpen.value = form.project_id !== null || form.sprint_id !== null;
-    estimationOpen.value = false;
 }
 
 function onPointsInput(event: Event): void {
@@ -129,15 +122,6 @@ watch(
         }
     },
     { flush: 'sync' },
-);
-
-watch(
-    () => [form.errors.project_id, form.errors.sprint_id],
-    ([projectError, sprintError]) => {
-        if (projectError || sprintError) {
-            linkageOpen.value = true;
-        }
-    },
 );
 
 function onProjectChange(): void {
@@ -215,6 +199,17 @@ const typeOptions: { value: TaskTypeValue; label: string; icon: string }[] = [
     { value: 'test', label: 'Test', icon: 'science' },
 ];
 
+const typeAccent: Record<TaskTypeValue, string> = {
+    other: 'text-on-surface',
+    feature: 'text-primary',
+    bug: 'text-error',
+    test: 'text-tertiary',
+};
+
+const selectedTypeLabel = computed(
+    () => typeOptions.find((option) => option.value === form.type)?.label,
+);
+
 const statusOptions: {
     value: TaskStatusValue;
     label: string;
@@ -257,28 +252,17 @@ const priorityOptions: {
     <Modal :show="open" max-width="2xl" @close="emit('close')">
         <div class="flex max-h-[85vh] flex-col">
             <div
-                class="px-space-lg pt-space-lg pb-space-sm flex items-start justify-between"
+                class="px-space-lg pt-space-lg pb-space-xs flex items-center justify-between"
             >
-                <div class="gap-space-sm flex items-center">
-                    <div
-                        class="bg-surface-container text-primary flex h-8 w-8 items-center justify-center rounded-lg"
-                    >
-                        <AppIcon name="add_task" :size="18" />
-                    </div>
-                    <h3
-                        class="text-headline-sm font-headline-sm text-on-surface"
-                    >
-                        {{
-                            mode === 'create'
-                                ? 'Crear nueva tarea'
-                                : 'Editar tarea'
-                        }}
-                    </h3>
-                </div>
+                <h3 class="text-headline-sm font-headline-sm text-on-surface">
+                    {{
+                        mode === 'create' ? 'Crear nueva tarea' : 'Editar tarea'
+                    }}
+                </h3>
                 <button
                     type="button"
                     aria-label="Cerrar"
-                    class="text-on-surface-variant hover:text-on-surface hover:bg-surface-container flex h-8 w-8 items-center justify-center rounded-lg transition-colors"
+                    class="text-on-surface-variant hover:text-on-surface hover:bg-surface-container -mr-1 flex h-8 w-8 items-center justify-center rounded-lg transition-colors"
                     @click="emit('close')"
                 >
                     <AppIcon name="close" :size="20" />
@@ -291,7 +275,7 @@ const priorityOptions: {
                 @keydown="onFormKeydown"
             >
                 <div
-                    class="gap-space-md px-space-lg py-space-md flex min-h-0 flex-1 flex-col overflow-y-auto"
+                    class="gap-space-lg px-space-lg py-space-md flex min-h-0 flex-1 flex-col overflow-y-auto"
                 >
                     <div class="flex flex-col gap-1">
                         <label class="sr-only" for="task-title"
@@ -304,109 +288,242 @@ const priorityOptions: {
                             type="text"
                             required
                             maxlength="255"
-                            placeholder="Título de la tarea o acción..."
-                            class="text-headline-md font-headline-md placeholder:text-outline/60 focus:ring-primary/20 bg-surface-container-low/60 hover:bg-surface-container-low focus:bg-surface-container-lowest px-space-md focus:border-primary/40 w-full rounded-xl border border-transparent py-2.5 transition-all focus:ring-2 focus:outline-none"
-                            :class="form.errors.title ? 'border-error' : ''"
+                            placeholder="¿Qué hay que hacer?"
+                            class="text-headline-md font-headline-md text-on-surface placeholder:text-on-surface-variant/50 border-outline-variant/60 focus:border-primary focus:ring-primary/20 w-full rounded-lg border px-3 py-2 transition-colors focus:ring-2 focus:outline-none"
+                            :class="
+                                form.errors.title
+                                    ? 'border-error ring-error/20 ring-2'
+                                    : ''
+                            "
                         />
                         <p
                             v-if="form.errors.title"
-                            class="text-label-xs font-label-xs text-error px-space-xs"
+                            class="text-label-xs font-label-xs text-error"
                         >
                             {{ form.errors.title }}
                         </p>
-                        <p
-                            v-else
-                            class="text-label-xs font-label-xs text-on-surface-variant px-space-xs flex items-center gap-1.5 pt-0.5"
-                        >
-                            <AppIcon
-                                name="keyboard_return"
-                                :size="14"
-                                class="text-primary"
-                            />
-                            Usa una descripción imperativa y clara para el
-                            backlog del equipo.
-                        </p>
                     </div>
 
-                    <div
-                        class="border-outline-variant/30 bg-surface-container-low/80 gap-space-sm p-space-md grid grid-cols-1 rounded-xl border sm:grid-cols-2"
-                        :class="
-                            showPoints ? 'lg:grid-cols-5' : 'lg:grid-cols-4'
-                        "
-                    >
-                        <div class="flex flex-col gap-1.5">
+                    <div class="gap-x-space-md gap-y-space-md grid grid-cols-2">
+                        <div
+                            class="col-span-2 flex flex-col gap-1.5 sm:col-span-1"
+                        >
                             <label
-                                for="task-type"
-                                class="text-label-xs font-label-xs text-on-surface-variant flex items-center gap-1 font-semibold tracking-wider uppercase"
+                                for="task-project"
+                                class="text-label-sm font-label-sm text-on-surface"
                             >
-                                <AppIcon name="category" :size="15" />
-                                Tipo
+                                Proyecto
                             </label>
                             <select
-                                id="task-type"
-                                v-model="form.type"
-                                class="text-body-sm font-body-sm border-outline-variant/40 bg-surface-container-lowest text-on-surface focus:ring-primary h-9 w-full cursor-pointer appearance-none rounded-lg border px-3 pr-8 shadow-xs focus:ring-2 focus:outline-none"
+                                id="task-project"
+                                v-model="form.project_id"
+                                :disabled="initialProject !== null"
+                                class="border-outline-variant/60 bg-surface-container-lowest text-body-md font-body-md text-on-surface focus:border-primary focus:ring-primary/20 h-9 w-full cursor-pointer rounded-lg border px-3 pr-8 transition-colors focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
+                                @change="onProjectChange"
                             >
+                                <option :value="null">
+                                    Sin proyecto (independiente)
+                                </option>
                                 <option
-                                    v-for="option in typeOptions"
-                                    :key="option.value"
-                                    :value="option.value"
+                                    v-for="project in projects"
+                                    :key="project.id"
+                                    :value="project.id"
                                 >
-                                    {{ option.label }}
+                                    {{ project.title }}
                                 </option>
                             </select>
+                            <p
+                                v-if="form.errors.project_id"
+                                class="text-label-xs font-label-xs text-error"
+                            >
+                                {{ form.errors.project_id }}
+                            </p>
                         </div>
 
-                        <div class="flex flex-col gap-1.5">
+                        <div
+                            class="col-span-2 flex flex-col gap-1.5 sm:col-span-1"
+                        >
                             <label
-                                for="task-status"
-                                class="text-label-xs font-label-xs text-on-surface-variant flex items-center gap-1 font-semibold tracking-wider uppercase"
+                                for="task-sprint"
+                                class="text-label-sm font-label-sm text-on-surface"
                             >
-                                <AppIcon name="swap_horiz" :size="15" />
-                                {{
-                                    mode === 'create'
-                                        ? 'Estado inicial'
-                                        : 'Estado'
-                                }}
+                                Sprint
                             </label>
                             <select
-                                id="task-status"
-                                v-model="form.status"
-                                class="text-body-sm font-body-sm border-outline-variant/40 bg-surface-container-lowest text-on-surface focus:ring-primary h-9 w-full cursor-pointer appearance-none rounded-lg border px-3 pr-8 shadow-xs focus:ring-2 focus:outline-none"
+                                id="task-sprint"
+                                v-model="form.sprint_id"
+                                :disabled="selectedProject === null"
+                                :title="
+                                    selectedProject === null
+                                        ? 'Elige un proyecto para asignar sprint'
+                                        : undefined
+                                "
+                                class="border-outline-variant/60 bg-surface-container-lowest text-body-md font-body-md text-on-surface focus:border-primary focus:ring-primary/20 h-9 w-full cursor-pointer rounded-lg border px-3 pr-8 transition-colors focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
                             >
+                                <option :value="null">Sin sprint</option>
                                 <option
-                                    v-for="option in visibleStatusOptions"
-                                    :key="option.value"
-                                    :value="option.value"
+                                    v-for="sprint in selectedProject?.sprints ??
+                                    []"
+                                    :key="sprint.id"
+                                    :value="sprint.id"
                                 >
-                                    {{ option.label }}
+                                    {{ sprint.name }}
                                 </option>
                             </select>
+                            <p
+                                v-if="form.errors.sprint_id"
+                                class="text-label-xs font-label-xs text-error"
+                            >
+                                {{ form.errors.sprint_id }}
+                            </p>
                         </div>
 
-                        <div class="flex flex-col gap-1.5">
+                        <div
+                            class="gap-space-md col-span-2 grid items-end"
+                            :class="
+                                showPoints
+                                    ? 'grid-cols-[auto_minmax(0,1fr)_5rem]'
+                                    : 'grid-cols-[auto_minmax(0,1fr)]'
+                            "
+                        >
+                            <div class="flex flex-col gap-1.5">
+                                <span
+                                    id="task-type-label"
+                                    class="text-label-sm font-label-sm text-on-surface"
+                                >
+                                    Tipo
+                                    <span
+                                        class="text-on-surface-variant font-normal"
+                                        >· {{ selectedTypeLabel }}</span
+                                    >
+                                </span>
+                                <div
+                                    class="bg-surface-container-low flex h-9 items-center gap-0.5 rounded-lg p-0.5"
+                                    role="radiogroup"
+                                    aria-labelledby="task-type-label"
+                                >
+                                    <button
+                                        v-for="option in typeOptions"
+                                        :key="option.value"
+                                        type="button"
+                                        role="radio"
+                                        :aria-checked="
+                                            form.type === option.value
+                                        "
+                                        :aria-label="option.label"
+                                        :title="option.label"
+                                        class="flex h-full w-9 items-center justify-center rounded-md transition-colors"
+                                        :class="
+                                            form.type === option.value
+                                                ? [
+                                                      'bg-surface-container-lowest shadow-card',
+                                                      typeAccent[option.value],
+                                                  ]
+                                                : 'text-on-surface-variant hover:text-on-surface'
+                                        "
+                                        @click="form.type = option.value"
+                                    >
+                                        <AppIcon
+                                            :name="option.icon"
+                                            :size="18"
+                                        />
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="flex flex-col gap-1.5">
+                                <label
+                                    for="task-status"
+                                    class="text-label-sm font-label-sm text-on-surface"
+                                >
+                                    {{
+                                        mode === 'create'
+                                            ? 'Estado inicial'
+                                            : 'Estado'
+                                    }}
+                                </label>
+                                <select
+                                    id="task-status"
+                                    v-model="form.status"
+                                    class="border-outline-variant/60 bg-surface-container-lowest text-body-md font-body-md text-on-surface focus:border-primary focus:ring-primary/20 h-9 w-full cursor-pointer rounded-lg border px-3 pr-8 transition-colors focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
+                                >
+                                    <option
+                                        v-for="option in visibleStatusOptions"
+                                        :key="option.value"
+                                        :value="option.value"
+                                    >
+                                        {{ option.label }}
+                                    </option>
+                                </select>
+                            </div>
+
+                            <div
+                                v-if="showPoints"
+                                class="flex flex-col gap-1.5"
+                            >
+                                <label
+                                    for="task-points"
+                                    class="text-label-sm font-label-sm text-on-surface"
+                                >
+                                    Puntos
+                                </label>
+                                <input
+                                    id="task-points"
+                                    :value="form.points ?? ''"
+                                    type="number"
+                                    min="0"
+                                    max="99"
+                                    placeholder="—"
+                                    title="Puntos de estimación (0–99)"
+                                    class="border-outline-variant/60 bg-surface-container-lowest text-body-md font-body-md text-on-surface focus:border-primary focus:ring-primary/20 h-9 w-full rounded-lg border px-3 transition-colors focus:ring-2 focus:outline-none"
+                                    :class="
+                                        form.errors.points ? 'border-error' : ''
+                                    "
+                                    @input="onPointsInput"
+                                />
+                                <p
+                                    v-if="form.errors.points"
+                                    class="text-label-xs font-label-xs text-error"
+                                >
+                                    {{ form.errors.points }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div
+                            class="col-span-2 flex flex-col gap-1.5 sm:col-span-1"
+                        >
                             <span
-                                class="text-label-xs font-label-xs text-on-surface-variant flex items-center gap-1 font-semibold tracking-wider uppercase"
+                                id="task-priority-label"
+                                class="text-label-sm font-label-sm text-on-surface"
                             >
-                                <AppIcon name="flag" :size="15" />
                                 Prioridad
                             </span>
                             <div
-                                class="border-outline-variant/40 bg-surface-container-lowest flex h-9 items-center rounded-lg border p-0.5 shadow-xs"
+                                class="bg-surface-container-low grid h-9 grid-cols-4 rounded-lg p-0.5"
+                                role="radiogroup"
+                                aria-labelledby="task-priority-label"
                             >
                                 <button
                                     v-for="option in priorityOptions"
                                     :key="option.value"
                                     type="button"
-                                    class="text-label-xs font-label-xs h-full flex-1 rounded transition-colors"
+                                    role="radio"
+                                    :aria-checked="
+                                        form.priority === option.value
+                                    "
+                                    class="text-label-sm font-label-sm rounded-md transition-colors"
                                     :class="
                                         form.priority === option.value
-                                            ? option.value === 'urgent'
-                                                ? 'bg-error-container text-on-error-container font-semibold'
-                                                : option.value === 'high'
-                                                  ? 'bg-tertiary-fixed text-on-tertiary-fixed font-semibold'
-                                                  : 'bg-primary-fixed text-on-primary-fixed font-semibold'
-                                            : 'text-on-secondary-container hover:text-on-surface'
+                                            ? [
+                                                  'bg-surface-container-lowest shadow-card font-semibold',
+                                                  option.value === 'urgent'
+                                                      ? 'text-error'
+                                                      : option.value === 'high'
+                                                        ? 'text-tertiary'
+                                                        : 'text-on-surface',
+                                              ]
+                                            : 'text-on-surface-variant hover:text-on-surface'
                                     "
                                     @click="form.priority = option.value"
                                 >
@@ -415,48 +532,17 @@ const priorityOptions: {
                             </div>
                         </div>
 
-                        <div v-if="showPoints" class="flex flex-col gap-1.5">
-                            <label
-                                for="task-points"
-                                class="text-label-xs font-label-xs text-on-surface-variant flex items-center gap-1 font-semibold tracking-wider uppercase"
-                            >
-                                <AppIcon name="speed" :size="15" />
-                                Puntos
-                            </label>
-                            <input
-                                id="task-points"
-                                :value="form.points ?? ''"
-                                type="number"
-                                min="0"
-                                max="99"
-                                placeholder="0-99"
-                                title="Puntos de estimación (0-99)"
-                                class="text-body-sm font-body-sm border-outline-variant/40 bg-surface-container-lowest text-on-surface focus:ring-primary h-9 w-full rounded-lg border px-3 shadow-xs focus:ring-2 focus:outline-none"
-                                :class="
-                                    form.errors.points ? 'border-error' : ''
-                                "
-                                @input="onPointsInput"
-                            />
-                            <p
-                                v-if="form.errors.points"
-                                class="text-label-xs font-label-xs text-error"
-                            >
-                                {{ form.errors.points }}
-                            </p>
-                        </div>
-
-                        <div class="flex flex-col gap-1.5">
+                        <div class="col-span-2 flex flex-col gap-1.5 sm:col-span-1">
                             <label
                                 for="task-assignee"
-                                class="text-label-xs font-label-xs text-on-surface-variant flex items-center gap-1 font-semibold tracking-wider uppercase"
+                                class="text-label-sm font-label-sm text-on-surface"
                             >
-                                <AppIcon name="person" :size="15" />
                                 Responsable
                             </label>
                             <select
                                 id="task-assignee"
                                 v-model="form.assignee_id"
-                                class="text-body-sm font-body-sm border-outline-variant/40 bg-surface-container-lowest text-on-surface focus:ring-primary h-9 w-full cursor-pointer appearance-none rounded-lg border px-2 shadow-xs focus:ring-2 focus:outline-none"
+                                class="border-outline-variant/60 bg-surface-container-lowest text-body-md font-body-md text-on-surface focus:border-primary focus:ring-primary/20 h-9 w-full cursor-pointer rounded-lg border px-3 pr-8 transition-colors focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
                             >
                                 <option :value="null">Sin responsable</option>
                                 <option
@@ -475,160 +561,52 @@ const priorityOptions: {
                         </div>
                     </div>
 
-                    <CollapsibleSection
-                        v-model:open="linkageOpen"
-                        title="Vinculación y alcance"
-                        icon="account_tree"
-                    >
-                        <template #badge>
-                            <UiBadge label="Proyecto opcional" tone="neutral" />
-                        </template>
-                        <div
-                            class="gap-space-md grid grid-cols-1 pt-1 md:grid-cols-2"
-                        >
-                            <div class="flex flex-col gap-1">
-                                <label
-                                    for="task-project"
-                                    class="text-label-sm font-label-sm text-on-surface font-medium"
-                                >
-                                    Proyecto
-                                </label>
-                                <select
-                                    id="task-project"
-                                    v-model="form.project_id"
-                                    :disabled="initialProject !== null"
-                                    class="text-body-sm font-body-sm border-outline-variant/40 bg-surface-container-lowest text-on-surface focus:ring-primary h-9 w-full cursor-pointer appearance-none rounded-lg border px-3 pr-8 shadow-xs focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
-                                    @change="onProjectChange"
-                                >
-                                    <option :value="null">
-                                        Sin Proyecto (Tarea independiente)
-                                    </option>
-                                    <option
-                                        v-for="project in projects"
-                                        :key="project.id"
-                                        :value="project.id"
-                                    >
-                                        {{ project.title }}
-                                    </option>
-                                </select>
-                                <p
-                                    class="text-label-xs font-label-xs text-on-surface-variant mt-0.5 flex items-center gap-1.5"
-                                >
-                                    <span
-                                        class="bg-primary inline-block h-1.5 w-1.5 shrink-0 rounded-full"
-                                    />
-                                    Las tareas no requieren pertenecer a un
-                                    proyecto.
-                                </p>
-                            </div>
-                            <div class="flex flex-col gap-1">
-                                <label
-                                    for="task-sprint"
-                                    class="text-label-sm font-label-sm text-on-surface font-medium"
-                                >
-                                    Sprint
-                                </label>
-                                <select
-                                    id="task-sprint"
-                                    v-model="form.sprint_id"
-                                    :disabled="selectedProject === null"
-                                    class="text-body-sm font-body-sm border-outline-variant/40 bg-surface-container-lowest text-on-surface focus:ring-primary h-9 w-full cursor-pointer appearance-none rounded-lg border px-3 pr-8 shadow-xs focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
-                                >
-                                    <option :value="null">Sin Sprint</option>
-                                    <option
-                                        v-for="sprint in selectedProject?.sprints ??
-                                        []"
-                                        :key="sprint.id"
-                                        :value="sprint.id"
-                                    >
-                                        {{ sprint.name }}
-                                    </option>
-                                </select>
-                            </div>
-                        </div>
-                    </CollapsibleSection>
-
-                    <CollapsibleSection
-                        v-model:open="estimationOpen"
-                        title="Fechas"
-                        icon="event"
-                    >
-                        <template #badge>
-                            <UiBadge label="Próximamente" tone="outline" />
-                        </template>
-                        <div class="gap-space-xs flex flex-col">
-                            <div class="gap-space-md grid grid-cols-1">
-                                <div class="flex flex-col gap-1">
-                                    <label
-                                        class="text-label-sm font-label-sm text-on-surface-variant"
-                                    >
-                                        Fecha de Vencimiento
-                                    </label>
-                                    <input
-                                        type="date"
-                                        disabled
-                                        class="border-outline-variant/40 bg-surface-container-lowest text-body-sm font-body-sm text-on-surface-variant h-9 w-full cursor-not-allowed rounded-lg border px-3 opacity-60 shadow-xs"
-                                    />
-                                </div>
-                            </div>
-                            <p
-                                class="text-label-xs font-label-xs text-on-surface-variant"
-                            >
-                                Más tipos de tarea (seguridad, mejora,
-                                documentación) llegarán próximamente.
-                            </p>
-                        </div>
-                    </CollapsibleSection>
-
                     <div class="flex flex-col gap-1.5">
                         <label
                             for="task-description"
-                            class="text-label-xs font-label-xs text-on-surface-variant flex items-center gap-1 font-semibold tracking-wider uppercase"
+                            class="text-label-sm font-label-sm text-on-surface"
                         >
-                            <AppIcon name="notes" :size="15" />
                             Descripción
                         </label>
                         <RichTextEditor
                             id="task-description"
                             ref="descriptionEditor"
                             :model-value="form.description"
-                            :min-height="240"
+                            :min-height="200"
                             max-height-class="max-h-[420px]"
-                            placeholder="Describe criterios de aceptación, contexto o pruebas..."
+                            placeholder="Criterios de aceptación, contexto o pruebas..."
                             :error="form.errors.description"
                         />
                     </div>
                 </div>
 
                 <div
-                    class="border-outline-variant/30 bg-surface-container-low/90 gap-space-sm px-space-lg py-space-md flex shrink-0 flex-col border-t sm:flex-row sm:items-center sm:justify-between"
+                    class="border-surface-container gap-space-sm px-space-lg py-space-md flex shrink-0 flex-wrap items-center border-t"
                 >
-                    <div class="flex items-center">
-                        <label
-                            v-if="mode === 'create'"
-                            class="text-label-sm font-label-sm text-on-surface flex cursor-pointer items-center gap-2 select-none"
-                        >
-                            <input
-                                v-model="createAnother"
-                                type="checkbox"
-                                class="border-outline-variant text-primary h-4 w-4 rounded"
-                            />
-                            Crear otra tarea al guardar
-                        </label>
-                        <button
-                            v-else
-                            type="button"
-                            class="text-error hover:bg-error-container/50 text-label-sm font-label-sm flex items-center gap-1.5 rounded-lg px-3 py-2 transition-colors"
-                            @click="removeTask"
-                        >
-                            <AppIcon name="delete" :size="16" />
-                            Eliminar tarea
-                        </button>
-                    </div>
-                    <div class="gap-space-sm flex items-center justify-end">
+                    <label
+                        v-if="mode === 'create'"
+                        class="text-label-sm font-label-sm text-on-surface-variant flex cursor-pointer items-center gap-2 select-none"
+                    >
+                        <input
+                            v-model="createAnother"
+                            type="checkbox"
+                            class="border-outline-variant text-primary h-4 w-4 rounded"
+                        />
+                        Crear otra al guardar
+                    </label>
+                    <button
+                        v-else
+                        type="button"
+                        class="text-error hover:bg-error-container/50 text-label-sm font-label-sm -ml-3 flex items-center gap-1.5 rounded-lg px-3 py-1.5 transition-colors"
+                        @click="removeTask"
+                    >
+                        <AppIcon name="delete" :size="16" />
+                        Eliminar
+                    </button>
+                    <div class="gap-space-sm ml-auto flex items-center">
                         <button
                             type="button"
-                            class="text-label-md font-label-md border-outline-variant/40 bg-surface-container-lowest text-on-surface hover:bg-surface-container px-space-md flex items-center gap-1.5 rounded-lg border py-2 transition-colors"
+                            class="text-label-md font-label-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface rounded-lg px-4 py-2 transition-colors"
                             @click="emit('close')"
                         >
                             Cancelar
@@ -636,14 +614,13 @@ const priorityOptions: {
                         <button
                             type="submit"
                             :disabled="form.processing"
-                            class="bg-primary text-on-primary text-label-md font-label-md hover:bg-primary-container px-space-lg flex items-center gap-2 rounded-lg py-2 shadow-md transition-all disabled:opacity-50"
+                            class="bg-primary text-on-primary text-label-md font-label-md hover:bg-primary-container shadow-card flex items-center gap-2 rounded-lg px-4 py-2 transition-colors disabled:opacity-50"
                         >
                             <AppIcon
                                 v-if="form.processing"
                                 name="progress_activity"
                                 :size="16"
                             />
-                            <AppIcon v-else name="add_task" :size="18" />
                             {{
                                 form.processing
                                     ? 'Guardando...'

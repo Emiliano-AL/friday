@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import AppIcon from '@/Components/AppShell/AppIcon.vue';
-import UiBadge from '@/Components/Projects/UiBadge.vue';
 import { show as showSprint } from '@/routes/projects/sprints';
 import type { BacklogNextSprint } from '@/types/backlog';
 import { Link } from '@inertiajs/vue3';
@@ -12,55 +11,38 @@ const props = defineProps<{
 
 const isActive = computed(() => props.nextSprint?.status === 'active');
 
-const statusLabel = computed(() => (isActive.value ? 'Activo' : 'Planificado'));
+const statusLabel = computed(() =>
+    isActive.value ? 'Sprint activo' : 'Próximo sprint',
+);
 </script>
 
 <template>
-    <section
+    <Link
         v-if="nextSprint"
-        class="bg-surface-container-low gap-space-md p-space-md flex flex-wrap items-center justify-between rounded-xl"
+        :href="showSprint.url([nextSprint.projectId, nextSprint.id])"
+        class="group bg-surface-container-lowest shadow-card hover:shadow-popover gap-space-sm px-space-md flex max-w-full min-w-0 items-center rounded-lg py-2 transition-shadow"
+        :title="`${nextSprint.projectTitle} · ${nextSprint.startsAt} – ${nextSprint.endsAt}`"
     >
-        <div class="gap-space-md flex min-w-0 items-center">
-            <div
-                class="bg-surface-container text-primary flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
+        <span
+            class="h-2 w-2 shrink-0 rounded-full"
+            :class="isActive ? 'bg-primary' : 'bg-outline-variant'"
+            aria-hidden="true"
+        />
+        <span class="flex min-w-0 flex-col">
+            <span class="text-label-xs font-label-xs text-on-surface-variant">
+                {{ statusLabel }} · {{ nextSprint.projectTitle }}
+            </span>
+            <span
+                class="text-label-md font-label-md text-on-surface group-hover:text-primary truncate transition-colors"
             >
-                <AppIcon name="event_upcoming" :size="18" />
-            </div>
-            <div class="gap-space-xs flex min-w-0 flex-col">
-                <span
-                    class="text-label-md font-label-md text-on-surface-variant font-semibold tracking-wider uppercase"
-                >
-                    Próximo sprint
-                </span>
-                <div
-                    class="gap-space-xs flex min-w-0 flex-wrap items-center gap-y-1"
-                >
-                    <span
-                        class="text-headline-sm font-headline-sm text-on-surface truncate"
-                    >
-                        {{ nextSprint.name }}
-                    </span>
-                    <UiBadge
-                        :label="statusLabel"
-                        :tone="isActive ? 'primary' : 'outline'"
-                        dot
-                    />
-                </div>
-                <p
-                    class="text-body-sm font-body-sm text-on-surface-variant truncate"
-                >
-                    {{ nextSprint.projectTitle }} ·
-                    {{ nextSprint.startsAt }} – {{ nextSprint.endsAt }}
-                </p>
-            </div>
-        </div>
-
-        <Link
-            :href="showSprint.url([nextSprint.projectId, nextSprint.id])"
-            class="text-label-md font-label-md text-primary hover:text-primary-container flex shrink-0 items-center gap-1 transition-colors"
+                {{ nextSprint.name }}
+            </span>
+        </span>
+        <span
+            class="text-label-sm font-label-sm text-primary ml-space-sm flex shrink-0 items-center gap-1"
         >
-            Abrir planificación
-            <AppIcon name="arrow_forward" :size="16" />
-        </Link>
-    </section>
+            Planificar
+            <AppIcon name="arrow_forward" :size="14" />
+        </span>
+    </Link>
 </template>

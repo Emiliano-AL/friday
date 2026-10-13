@@ -14,7 +14,6 @@ const emit = defineEmits<{
     'update:sort': [value: ProjectsSort];
     'update:view': [value: ProjectsView];
     search: [term: string];
-    create: [];
 }>();
 
 const sortOptions: { value: ProjectsSort; label: string }[] = [
@@ -157,17 +156,5 @@ defineExpose({ focus });
             </button>
         </div>
 
-        <button
-            type="button"
-            class="bg-primary text-on-primary text-label-md font-label-md shadow-card hover:bg-primary-container gap-space-xs flex items-center rounded-lg px-3.5 py-1.5 transition-colors"
-            @click="emit('create')"
-        >
-            <AppIcon name="add" :size="16" />
-            <span>Nuevo Proyecto</span>
-            <kbd
-                class="font-label-xs ml-1 rounded bg-white/20 px-1.5 py-0.5 text-[10px] text-white"
-                >N</kbd
-            >
-        </button>
     </div>
 </template>

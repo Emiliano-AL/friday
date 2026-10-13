@@ -3,9 +3,18 @@ import AppIcon from '@/Components/AppShell/AppIcon.vue';
 import Avatar from '@/Components/AppShell/Avatar.vue';
 import Modal from '@/Components/Modal.vue';
 import UiBadge from '@/Components/Projects/UiBadge.vue';
+import {
+    destroy as destroyInvitation,
+    resend,
+} from '@/routes/projects/invitations';
 import { destroy, store } from '@/routes/projects/members';
-import type { ProjectDetail, ProjectMember } from '@/types/project';
-import { router, useForm } from '@inertiajs/vue3';
+import type {
+    PendingInvitation,
+    ProjectDetail,
+    ProjectMember,
+} from '@/types/project';
+import { relativeTime } from '@/utils/relativeTime';
+import { router, useForm, usePage } from '@inertiajs/vue3';
 import { computed, nextTick, ref, watch } from 'vue';
 
 const props = defineProps<{
@@ -24,6 +33,34 @@ const form = useForm({
 });
 
 const membersCount = computed(() => 1 + props.project.members.length);
+
+const page = usePage<{ flash: { success: string | null; error: string | null } }>();
+
+const busyInvitationId = ref<number | null>(null);
+
+function resendInvitation(invitation: PendingInvitation): void {
+    router.post(
+        resend.url([props.project.id, invitation.id]),
+        {},
+        {
+            preserveScroll: true,
+            onStart: () => (busyInvitationId.value = invitation.id),
+            onFinish: () => (busyInvitationId.value = null),
+        },
+    );
+}
+
+function cancelInvitation(invitation: PendingInvitation): void {
+    if (!window.confirm(`¿Cancelar la invitación a ${invitation.email}?`)) {
+        return;
+    }
+
+    router.delete(destroyInvitation.url([props.project.id, invitation.id]), {
+        preserveScroll: true,
+        onStart: () => (busyInvitationId.value = invitation.id),
+        onFinish: () => (busyInvitationId.value = null),
+    });
+}
 
 watch(
     () => props.open,
@@ -117,7 +154,93 @@ function removeMember(member: ProjectMember): void {
                 >
                     {{ form.errors.email }}
                 </p>
+                <p
+                    v-else-if="page.props.flash.error"
+                    class="text-label-xs font-label-xs text-error"
+                    role="alert"
+                >
+                    {{ page.props.flash.error }}
+                </p>
+                <p
+                    v-else-if="page.props.flash.success"
+                    class="text-label-xs font-label-xs text-primary"
+                    role="status"
+                >
+                    {{ page.props.flash.success }}
+                </p>
+                <p
+                    v-else
+                    class="text-label-xs font-label-xs text-on-surface-variant"
+                >
+                    Si el correo no tiene cuenta en Friday, le enviaremos una
+                    invitación por correo.
+                </p>
             </form>
+
+            <section
+                v-if="project.pendingInvitations.length > 0"
+                aria-label="Invitaciones pendientes"
+                class="gap-space-sm flex flex-col"
+            >
+                <p
+                    class="text-label-sm font-label-sm text-on-surface font-medium"
+                >
+                    Invitaciones pendientes ({{
+                        project.pendingInvitations.length
+                    }})
+                </p>
+                <ul class="gap-space-xs flex flex-col">
+                    <li
+                        v-for="invitation in project.pendingInvitations"
+                        :key="invitation.id"
+                        class="gap-space-sm p-space-sm bg-surface-container-low/50 flex items-center rounded-lg"
+                    >
+                        <span
+                            class="border-outline-variant text-on-surface-variant flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-dashed"
+                            aria-hidden="true"
+                        >
+                            <AppIcon name="mail" :size="16" />
+                        </span>
+                        <div class="min-w-0 flex-1">
+                            <p
+                                class="text-body-sm font-body-sm text-on-surface truncate font-medium"
+                            >
+                                {{ invitation.email }}
+                            </p>
+                            <p
+                                class="text-label-xs font-label-xs text-on-surface-variant flex items-center gap-1.5"
+                            >
+                                Enviada {{ relativeTime(invitation.sentAt) }}
+                                <UiBadge
+                                    v-if="invitation.isExpired"
+                                    label="Vencida"
+                                    tone="error"
+                                />
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            :disabled="busyInvitationId === invitation.id"
+                            :aria-label="`Reenviar invitación a ${invitation.email}`"
+                            title="Reenviar"
+                            class="text-on-surface-variant hover:bg-surface-container hover:text-on-surface flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors disabled:opacity-50"
+                            @click="resendInvitation(invitation)"
+                        >
+                            <AppIcon name="send" :size="16" />
+                        </button>
+                        <button
+                            type="button"
+                            :disabled="busyInvitationId === invitation.id"
+                            :aria-label="`Cancelar invitación a ${invitation.email}`"
+                            title="Cancelar invitación"
+                            class="text-on-surface-variant hover:bg-error-container/50 hover:text-error flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors disabled:opacity-50"
+                            @click="cancelInvitation(invitation)"
+                        >
+                            <AppIcon name="close" :size="16" />
+                        </button>
+                    </li>
+                </ul>
+            </section>
 
             <div
                 class="border-outline-variant/40 bg-surface-container-low/50 gap-space-sm p-space-sm flex flex-col rounded-lg border"

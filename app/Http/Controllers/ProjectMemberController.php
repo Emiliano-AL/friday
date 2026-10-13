@@ -3,15 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Models\Project;
+use App\Models\ProjectInvitation;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 
 class ProjectMemberController extends Controller
 {
     /**
-     * Add an existing user as a project collaborator (owner only).
+     * Add a registered user as collaborator, or invite an unregistered email by link (owner only).
      */
     public function store(Request $request, Project $project): RedirectResponse
     {
@@ -20,32 +20,38 @@ class ProjectMemberController extends Controller
         $this->authorize('manageMembers', $project);
 
         $validated = $request->validate(
-            [
-                'email' => [
-                    'required',
-                    'string',
-                    'email',
-                    Rule::exists('users', 'email'),
-                ],
-            ],
+            ['email' => ['required', 'string', 'email', 'max:255']],
             [
                 'email.required' => 'Escribe el correo del colaborador.',
                 'email.email' => 'Escribe un correo válido.',
-                'email.exists' => 'No encontramos ningún usuario registrado con ese correo.',
             ]
         );
 
-        $user = User::query()->where('email', $validated['email'])->firstOrFail();
+        $user = User::query()->whereRaw('lower(email) = ?', [mb_strtolower($validated['email'])])->first();
 
-        if ($project->isMember($user)) {
+        if ($user !== null) {
+            if ($project->isMember($user)) {
+                return back()->withErrors([
+                    'email' => 'Este usuario ya es miembro del proyecto.',
+                ]);
+            }
+
+            $project->members()->attach($user);
+
+            return redirect()->route('projects.show', $project);
+        }
+
+        if (! $project->status->isActive()) {
             return back()->withErrors([
-                'email' => 'Este usuario ya es miembro del proyecto.',
+                'email' => 'No puedes invitar en un proyecto archivado o completado.',
             ]);
         }
 
-        $project->members()->attach($user);
+        [$invitation, $token] = ProjectInvitation::issue($project, $validated['email'], $request->user());
 
-        return redirect()->route('projects.show', $project);
+        return $invitation->send($token)
+            ? redirect()->route('projects.show', $project)->with('success', "Invitación enviada a {$invitation->email}.")
+            : redirect()->route('projects.show', $project)->with('error', 'No pudimos enviar el correo. Puedes reenviar la invitación.');
     }
 
     /**

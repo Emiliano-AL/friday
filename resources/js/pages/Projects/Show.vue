@@ -17,13 +17,14 @@ import { destroy as destroyTask } from '@/routes/projects/tasks';
 import { show as taskShow, update as updateTaskGlobal } from '@/routes/tasks';
 import { store as storeGlobalTaskComment } from '@/routes/tasks/comments';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { computed, onMounted, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import BacklogSectionList from '@/Components/Backlog/BacklogSectionList.vue';
 import ProjectSprintsSection from '@/Components/Sprints/ProjectSprintsSection.vue';
 import SprintFormModal from '@/Components/Sprints/SprintFormModal.vue';
 import TaskBoard from '@/Components/Tasks/Board/TaskBoard.vue';
 import TaskCommentsModal from '@/Components/Tasks/TaskCommentsModal.vue';
 import TaskFormModal from '@/Components/Tasks/Board/TaskFormModal.vue';
+import TaskImportModal from '@/Components/Tasks/TaskImportModal.vue';
 import TaskListPanel from '@/Components/Tasks/Board/TaskListPanel.vue';
 import type {
     BoardTask,
@@ -44,6 +45,8 @@ const canWriteSprints = computed(
 );
 
 const canWriteTasks = computed(() => props.project.status === 'active');
+
+const importOpen = ref(false);
 
 const activeTab = ref<'general' | 'sprints'>('general');
 
@@ -166,6 +169,57 @@ const transitionLabels: Record<string, string> = {
     archived: 'Archivar',
     completed: 'Completar',
 };
+
+const transitionIcons: Record<string, string> = {
+    active: 'undo',
+    archived: 'archive',
+    completed: 'task_alt',
+};
+
+const canEditProject = computed(
+    () => props.project.isOwner && props.project.status === 'active',
+);
+
+const hasProjectMenu = computed(
+    () =>
+        canEditProject.value ||
+        (props.project.isOwner && props.project.allowedTransitions.length > 0),
+);
+
+const projectMenuOpen = ref(false);
+const projectMenuRoot = ref<HTMLElement | null>(null);
+
+function onProjectMenuDocumentClick(event: MouseEvent): void {
+    if (!projectMenuRoot.value?.contains(event.target as Node)) {
+        projectMenuOpen.value = false;
+    }
+}
+
+function onProjectMenuKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Escape') {
+        projectMenuOpen.value = false;
+    }
+}
+
+watch(projectMenuOpen, (isOpen) => {
+    if (isOpen) {
+        document.addEventListener('click', onProjectMenuDocumentClick, true);
+        document.addEventListener('keydown', onProjectMenuKeydown);
+    } else {
+        document.removeEventListener('click', onProjectMenuDocumentClick, true);
+        document.removeEventListener('keydown', onProjectMenuKeydown);
+    }
+});
+
+onBeforeUnmount(() => {
+    document.removeEventListener('click', onProjectMenuDocumentClick, true);
+    document.removeEventListener('keydown', onProjectMenuKeydown);
+});
+
+function transitionProject(target: string): void {
+    projectMenuOpen.value = false;
+    router.put(status.url(props.project.id), { status: target });
+}
 
 const statusTone = computed<'primary' | 'tertiary' | 'outline'>(() => {
     switch (props.project.status) {
@@ -347,7 +401,12 @@ onMounted(() => {
 
     <AuthenticatedLayout>
         <div
-            class="gap-space-lg py-space-md mx-auto flex w-full max-w-7xl flex-col"
+            class="project-accent-scope gap-space-lg py-space-md mx-auto flex w-full max-w-7xl flex-col"
+            :style="
+                project.color
+                    ? { '--project-accent': project.color }
+                    : undefined
+            "
         >
             <div
                 v-if="project.status !== 'active'"
@@ -370,9 +429,7 @@ onMounted(() => {
                 {{ page.props.errors.project }}
             </div>
 
-            <div
-                class="gap-space-md flex flex-wrap items-center justify-between"
-            >
+            <div class="gap-space-md flex flex-col">
                 <nav
                     aria-label="Migas de pan"
                     class="text-body-sm font-body-sm gap-space-xs flex min-w-0 items-center"
@@ -387,126 +444,145 @@ onMounted(() => {
                     <span aria-hidden="true" class="text-on-surface-variant/40">
                         /
                     </span>
-                    <span
-                        class="text-on-surface min-w-0 truncate font-semibold"
-                    >
+                    <span class="text-on-surface min-w-0 truncate">
                         {{ project.title }}
                     </span>
                 </nav>
 
-                <div class="gap-space-xs flex flex-wrap items-center">
-                    <button
-                        type="button"
-                        disabled
-                        title="Disponible próximamente"
-                        class="bg-surface-container-lowest text-on-surface-variant shadow-card text-label-sm font-label-sm gap-space-xs flex cursor-not-allowed items-center rounded-lg px-3 py-1.5 opacity-60"
+                <header class="gap-space-md flex flex-wrap items-start">
+                    <div
+                        class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl"
+                        :class="
+                            project.color ? '' : 'bg-primary text-on-primary'
+                        "
+                        :style="
+                            project.color
+                                ? {
+                                      backgroundColor: `${project.color}1A`,
+                                      color: project.color,
+                                  }
+                                : undefined
+                        "
                     >
-                        <AppIcon name="share" :size="16" />
-                        <span>Compartir</span>
-                        <UiBadge label="Próximamente" tone="outline" />
-                    </button>
+                        <AppIcon :name="project.icon ?? 'folder'" :size="26" />
+                    </div>
+                    <div class="min-w-0 flex-1 basis-80">
+                        <div class="gap-space-sm flex flex-wrap items-center">
+                            <h1
+                                class="text-headline-xl font-headline-xl text-on-surface"
+                            >
+                                {{ project.title }}
+                            </h1>
+                            <span
+                                v-if="project.key"
+                                class="bg-surface-container-low text-on-surface-variant text-label-sm font-label-sm rounded px-1.5 py-0.5 font-medium tracking-wide"
+                            >
+                                {{ project.key }}
+                            </span>
+                            <UiBadge
+                                :label="project.statusLabel"
+                                :tone="statusTone"
+                                dot
+                            />
+                        </div>
+                        <RichTextContent
+                            v-if="project.description"
+                            :content="project.description"
+                            class="text-on-surface-variant mt-1 max-w-3xl"
+                        />
+                    </div>
 
-                    <button
-                        v-if="project.isOwner && project.status === 'active'"
-                        type="button"
-                        class="bg-surface-container-lowest text-on-surface hover:bg-surface-container-high shadow-card text-label-sm font-label-sm gap-space-xs flex items-center rounded-lg px-3 py-1.5 transition-colors"
-                        @click="editModalOpen = true"
-                    >
-                        <AppIcon name="settings" :size="16" />
-                        <span>Ajustes</span>
-                    </button>
-
-                    <button
-                        type="button"
-                        class="bg-surface-container-lowest text-on-surface hover:bg-surface-container-high shadow-card text-label-sm font-label-sm gap-space-xs flex items-center rounded-lg px-3 py-1.5 transition-colors"
-                        @click="goToSprintsTab"
-                    >
-                        <AppIcon name="pace" :size="16" />
-                        <span>Nuevo Sprint</span>
-                    </button>
-
-                    <template v-if="project.isOwner">
+                    <div class="gap-space-sm flex items-center">
                         <button
-                            v-for="target in project.allowedTransitions"
-                            :key="target"
+                            v-if="canWriteSprints"
                             type="button"
-                            class="bg-surface-container-lowest text-on-surface hover:bg-surface-container-high shadow-card text-label-sm font-label-sm gap-space-xs flex items-center rounded-lg px-3 py-1.5 transition-colors"
+                            class="bg-surface-container-lowest text-on-surface hover:bg-surface-container-high shadow-card text-label-md font-label-md gap-space-xs flex items-center rounded-lg px-3 py-2 transition-colors"
                             @click="
-                                router.put(status.url(project.id), {
-                                    status: target,
-                                })
+                                goToSprintsTab();
+                                openSprintCreate();
                             "
                         >
-                            {{ transitionLabels[target] ?? target }}
+                            <AppIcon name="pace" :size="16" />
+                            <span>Nuevo Sprint</span>
                         </button>
-                    </template>
-
-                    <button
-                        v-if="canWriteTasks"
-                        type="button"
-                        class="bg-primary hover:bg-primary-container text-on-primary shadow-card text-label-md font-label-md gap-space-xs flex items-center rounded-lg px-3.5 py-1.5 transition-colors"
-                        @click="openTaskCreate()"
-                    >
-                        <AppIcon name="add" :size="16" />
-                        <span>Nueva Tarea</span>
-                    </button>
-                </div>
-            </div>
-
-            <div class="gap-space-md flex flex-wrap items-center">
-                <div
-                    class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl"
-                    :class="
-                        project.color ? '' : 'bg-primary text-on-primary'
-                    "
-                    :style="
-                        project.color
-                            ? {
-                                  backgroundColor: `${project.color}1A`,
-                                  color: project.color,
-                              }
-                            : undefined
-                    "
-                >
-                    <AppIcon :name="project.icon ?? 'folder'" :size="26" />
-                </div>
-                <div class="min-w-0 flex-1">
-                    <div class="gap-space-xs flex items-center">
-                        <h1
-                            class="text-headline-xl font-headline-xl text-on-surface"
+                        <button
+                            v-if="canWriteTasks"
+                            type="button"
+                            class="bg-primary hover:bg-primary-container text-on-primary shadow-card text-label-md font-label-md gap-space-xs flex items-center rounded-lg px-3.5 py-2 transition-colors"
+                            @click="openTaskCreate()"
                         >
-                            {{ project.title }}
-                        </h1>
-                        <span
-                            v-if="project.key"
-                            class="bg-surface-container-low text-on-surface-variant text-label-sm font-label-sm rounded px-1.5 py-0.5 font-medium"
+                            <AppIcon name="add" :size="16" />
+                            <span>Nueva Tarea</span>
+                        </button>
+                        <div
+                            v-if="hasProjectMenu"
+                            ref="projectMenuRoot"
+                            class="relative"
                         >
-                            {{ project.key }}
-                        </span>
+                            <button
+                                type="button"
+                                aria-label="Más acciones del proyecto"
+                                aria-haspopup="menu"
+                                :aria-expanded="projectMenuOpen"
+                                class="text-on-surface-variant hover:bg-surface-container hover:text-on-surface flex h-9 w-9 items-center justify-center rounded-lg transition-colors"
+                                @click="projectMenuOpen = !projectMenuOpen"
+                            >
+                                <AppIcon name="more_horiz" :size="20" />
+                            </button>
+                            <div
+                                v-if="projectMenuOpen"
+                                role="menu"
+                                class="bg-surface-container-lowest shadow-popover absolute top-10 right-0 z-30 w-48 rounded-lg py-1"
+                            >
+                                <button
+                                    v-if="canEditProject"
+                                    type="button"
+                                    role="menuitem"
+                                    class="text-label-sm font-label-sm text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface flex w-full items-center gap-2 px-3 py-1.5 text-left transition-colors"
+                                    @click="
+                                        projectMenuOpen = false;
+                                        editModalOpen = true;
+                                    "
+                                >
+                                    <AppIcon name="edit" :size="16" />
+                                    Editar proyecto
+                                </button>
+                                <template v-if="project.isOwner">
+                                    <div
+                                        v-if="
+                                            canEditProject &&
+                                            project.allowedTransitions.length >
+                                                0
+                                        "
+                                        class="border-surface-container my-1 border-t"
+                                    />
+                                    <button
+                                        v-for="target in project.allowedTransitions"
+                                        :key="target"
+                                        type="button"
+                                        role="menuitem"
+                                        class="text-label-sm font-label-sm text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface flex w-full items-center gap-2 px-3 py-1.5 text-left transition-colors"
+                                        @click="transitionProject(target)"
+                                    >
+                                        <AppIcon
+                                            :name="
+                                                transitionIcons[target] ??
+                                                'swap_horiz'
+                                            "
+                                            :size="16"
+                                        />
+                                        {{ transitionLabels[target] ?? target }}
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
                     </div>
-                    <RichTextContent
-                        v-if="project.description"
-                        :content="project.description"
-                        class="text-on-surface-variant mt-1"
-                    />
-                </div>
-                <div class="gap-space-xs flex flex-wrap items-center">
-                    <UiBadge
-                        :label="project.statusLabel"
-                        :tone="statusTone"
-                        dot
-                    />
-                    <UiBadge
-                        v-if="project.activeSprint"
-                        :label="`${project.statusLabel} • ${project.activeSprint.name}`"
-                        tone="neutral"
-                    />
-                </div>
+                </header>
             </div>
 
             <section
                 aria-label="Resumen del proyecto"
-                class="bg-surface-container-lowest shadow-card gap-space-md p-space-md grid grid-cols-2 rounded-xl md:grid-cols-4"
+                class="bg-surface-container-lowest shadow-card gap-space-md p-space-md grid grid-cols-2 rounded-xl border-t-[3px] border-t-(--project-accent) md:grid-cols-4"
             >
                 <div class="gap-space-sm flex items-center">
                     <Avatar
@@ -516,9 +592,9 @@ onMounted(() => {
                     />
                     <div class="min-w-0">
                         <p
-                            class="text-label-xs font-label-xs text-on-surface-variant uppercase"
+                            class="text-label-xs font-label-xs text-on-surface-variant"
                         >
-                            Líder de Proyecto
+                            Líder del proyecto
                         </p>
                         <p
                             class="text-label-md font-label-md text-on-surface truncate font-semibold"
@@ -532,14 +608,19 @@ onMounted(() => {
                     <AvatarStack :people="memberOptions" :max="3" />
                     <div class="min-w-0">
                         <p
-                            class="text-label-xs font-label-xs text-on-surface-variant uppercase"
+                            class="text-label-xs font-label-xs text-on-surface-variant"
                         >
-                            Equipo Asignado
+                            Equipo
                         </p>
                         <p
                             class="text-label-md font-label-md text-on-surface font-semibold"
                         >
-                            {{ 1 + project.members.length }} Especialistas
+                            {{ 1 + project.members.length }}
+                            {{
+                                project.members.length === 0
+                                    ? 'persona'
+                                    : 'personas'
+                            }}
                         </p>
                     </div>
                 </div>
@@ -549,12 +630,12 @@ onMounted(() => {
                         class="gap-space-sm flex items-baseline justify-between"
                     >
                         <p
-                            class="text-label-xs font-label-xs text-on-surface-variant uppercase"
+                            class="text-label-xs font-label-xs text-on-surface-variant"
                         >
-                            Progreso Global
+                            Progreso
                         </p>
                         <p
-                            class="text-label-md font-label-md text-primary font-semibold"
+                            class="text-label-md font-label-md font-semibold text-(--project-accent-ink)"
                         >
                             {{ project.progress }}%
                         </p>
@@ -563,7 +644,7 @@ onMounted(() => {
                         class="bg-surface-container-high h-2 w-full rounded-full"
                     >
                         <div
-                            class="bg-primary h-full rounded-full"
+                            class="h-full rounded-full bg-(--project-accent)"
                             :style="{ width: `${project.progress}%` }"
                         />
                     </div>
@@ -583,9 +664,9 @@ onMounted(() => {
                     </div>
                     <div>
                         <p
-                            class="text-label-xs font-label-xs text-on-surface-variant uppercase"
+                            class="text-label-xs font-label-xs text-on-surface-variant"
                         >
-                            Fecha Objetivo
+                            Fecha objetivo
                         </p>
                         <div
                             v-if="formattedTargetDate"
@@ -670,7 +751,7 @@ onMounted(() => {
                                     este sprint
                                 </span>
                                 <span
-                                    class="text-label-md font-label-md text-primary font-semibold"
+                                    class="text-label-md font-label-md font-semibold text-(--project-accent-ink)"
                                 >
                                     {{ activeSprintProgress }}%
                                 </span>
@@ -679,7 +760,7 @@ onMounted(() => {
                                 class="bg-surface-container-high mt-1 h-2 w-full rounded-full"
                             >
                                 <div
-                                    class="bg-primary h-full rounded-full"
+                                    class="h-full rounded-full bg-(--project-accent)"
                                     :style="{
                                         width: `${activeSprintProgress}%`,
                                     }"
@@ -855,6 +936,15 @@ onMounted(() => {
                         >
                             Tareas
                         </h2>
+                        <button
+                            v-if="canWriteTasks"
+                            type="button"
+                            class="text-label-sm font-label-sm text-on-surface-variant hover:bg-surface-container hover:text-on-surface ml-auto flex items-center gap-1.5 rounded-lg px-3 py-1.5 transition-colors"
+                            @click="importOpen = true"
+                        >
+                            <AppIcon name="upload_file" :size="16" />
+                            Importar
+                        </button>
                         <div
                             class="bg-surface-container-low flex items-center rounded-lg p-0.5"
                         >
@@ -920,8 +1010,7 @@ onMounted(() => {
                                     :key="sprint.id"
                                     :value="sprint.id"
                                 >
-                                    {{ sprint.name }} ·
-                                    {{ sprint.startDate }} —
+                                    {{ sprint.name }} · {{ sprint.startDate }} —
                                     {{ sprint.endDate }}
                                 </option>
                                 <option value="all">Todos</option>
@@ -1086,5 +1175,11 @@ onMounted(() => {
                 @close="membersModalOpen = false"
             />
         </div>
+        <TaskImportModal
+            :open="importOpen"
+            :project-id="project.id"
+            :destination-label="project.title"
+            @close="importOpen = false"
+        />
     </AuthenticatedLayout>
 </template>

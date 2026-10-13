@@ -5,9 +5,7 @@ import ProjectCard from '@/Components/Projects/ProjectCard.vue';
 import ProjectEmptyState from '@/Components/Projects/ProjectEmptyState.vue';
 import ProjectFormModal from '@/Components/Projects/ProjectFormModal.vue';
 import ProjectListRow from '@/Components/Projects/ProjectListRow.vue';
-import ProjectsKpiPanel from '@/Components/Projects/ProjectsKpiPanel.vue';
 import ProjectsToolbar from '@/Components/Projects/ProjectsToolbar.vue';
-import UiBadge from '@/Components/Projects/UiBadge.vue';
 import AppIcon from '@/Components/AppShell/AppIcon.vue';
 import type {
     DirectoryProject,
@@ -177,29 +175,56 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onGlobalKeydown));
                 </span>
             </div>
 
-            <div
-                class="gap-space-lg flex flex-col justify-between md:flex-row md:items-end"
+            <header
+                class="gap-space-md flex flex-wrap items-end justify-between"
             >
-                <div class="gap-space-xs flex flex-col">
-                    <div class="gap-space-md flex items-center">
-                        <h1
-                            class="text-headline-xl font-headline-xl text-on-surface"
-                        >
-                            Proyectos
-                        </h1>
-                        <UiBadge
-                            :label="`${counts.active} Activos`"
-                            tone="primary"
-                        />
-                    </div>
+                <div class="gap-space-xs flex min-w-0 flex-col">
+                    <h1
+                        class="text-headline-xl font-headline-xl text-on-surface"
+                    >
+                        Proyectos
+                    </h1>
                     <p
                         class="text-body-md font-body-md text-on-surface-variant"
                     >
-                        Gestiona los flujos de entrega, dependencias de sprint y
-                        estado operativo de tus iniciativas.
+                        {{ kpis.activeProjects }}
+                        {{
+                            kpis.activeProjects === 1
+                                ? 'proyecto en marcha'
+                                : 'proyectos en marcha'
+                        }}
+                        ·
+                        {{ kpis.completedSprintsThisQuarter }}
+                        {{
+                            kpis.completedSprintsThisQuarter === 1
+                                ? 'sprint completado'
+                                : 'sprints completados'
+                        }}
+                        este trimestre
                     </p>
                 </div>
+                <button
+                    type="button"
+                    class="bg-primary text-on-primary text-label-md font-label-md shadow-card hover:bg-primary-container gap-space-xs flex items-center rounded-lg px-3.5 py-2 transition-colors"
+                    @click="openCreate"
+                >
+                    <AppIcon name="add" :size="16" />
+                    <span>Nuevo Proyecto</span>
+                    <kbd
+                        class="font-label-xs ml-1 rounded bg-white/20 px-1.5 py-0.5 text-[10px] text-white"
+                        >N</kbd
+                    >
+                </button>
+            </header>
 
+            <div
+                class="gap-space-md flex flex-wrap items-center justify-between"
+            >
+                <FilterPills
+                    :counts="counts"
+                    :model-value="filter"
+                    @update:model-value="filter = $event"
+                />
                 <ProjectsToolbar
                     ref="toolbar"
                     :sort="sort"
@@ -207,15 +232,8 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onGlobalKeydown));
                     @update:sort="sort = $event"
                     @update:view="persistView"
                     @search="search = $event"
-                    @create="openCreate"
                 />
             </div>
-
-            <FilterPills
-                :counts="counts"
-                :model-value="filter"
-                @update:model-value="filter = $event"
-            />
 
             <ProjectEmptyState
                 v-if="props.projects.length === 0"
@@ -253,31 +271,13 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onGlobalKeydown));
                 />
                 <button
                     type="button"
-                    class="hover:border-primary/40 group gap-space-sm border-outline-variant p-space-lg flex min-h-[220px] flex-col items-center justify-center rounded-xl border-2 border-dashed text-center transition-colors"
+                    class="hover:border-primary/40 hover:text-primary group gap-space-xs border-outline-variant p-space-lg text-on-surface-variant flex min-h-24 flex-col items-center justify-center rounded-xl border border-dashed text-center transition-colors"
                     @click="openCreate"
                 >
-                    <div
-                        class="bg-surface-container text-on-surface-variant group-hover:bg-primary group-hover:text-on-primary flex h-12 w-12 items-center justify-center rounded-full transition-colors"
-                    >
-                        <AppIcon name="add" :size="24" />
-                    </div>
-                    <div class="flex flex-col gap-0.5">
-                        <span
-                            class="text-headline-sm font-headline-sm text-on-surface group-hover:text-primary transition-colors"
-                        >
-                            Iniciar un nuevo proyecto
-                        </span>
-                        <span
-                            class="text-body-sm font-body-sm text-on-surface-variant"
-                        >
-                            Pulsa
-                            <kbd
-                                class="bg-surface-container font-label-xs rounded px-1.5 py-0.5"
-                                >N</kbd
-                            >
-                            para empezar
-                        </span>
-                    </div>
+                    <AppIcon name="add" :size="20" />
+                    <span class="text-label-md font-label-md">
+                        Nuevo proyecto
+                    </span>
                 </button>
             </div>
 
@@ -292,8 +292,6 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onGlobalKeydown));
                     @transition="transitionProject"
                 />
             </div>
-
-            <ProjectsKpiPanel v-if="props.projects.length > 0" :kpis="kpis" />
         </div>
 
         <ProjectFormModal

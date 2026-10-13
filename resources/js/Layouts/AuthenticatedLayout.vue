@@ -7,6 +7,8 @@ import ProfileMenu from '@/Components/AppShell/ProfileMenu.vue';
 import CommandPalette from '@/Components/AppShell/CommandPalette.vue';
 import NotificationsPopover from '@/Components/AppShell/NotificationsPopover.vue';
 import FlashMessage from '@/Components/AppShell/FlashMessage.vue';
+import TaskFormModal from '@/Components/Tasks/Board/TaskFormModal.vue';
+import type { TaskProjectOption } from '@/types/task';
 import type {
     CommandAction,
     NavItem,
@@ -19,6 +21,7 @@ import { home } from '@/routes';
 import { index as projectsIndex } from '@/routes/projects';
 import { index as tasksIndex } from '@/routes/tasks';
 import { index as backlogIndex } from '@/routes/backlog';
+import { edit as settingsEdit } from '@/routes/settings';
 
 const page = usePage();
 
@@ -66,7 +69,12 @@ const navItems: NavItem[] = [
 ];
 
 const footerItems: NavItem[] = [
-    { label: 'Ajustes', icon: 'settings', to: null, match: '' },
+    {
+        label: 'Ajustes',
+        icon: 'settings',
+        to: settingsEdit.url(),
+        match: '/settings',
+    },
 ];
 
 // Below the lg breakpoint the sidebar becomes an overlay drawer.
@@ -126,14 +134,45 @@ function openPalette(): void {
     paletteOpen.value = true;
 }
 
-function goToQuickCapture(): void {
-    router.visit(backlogIndex.url());
+provide('friday:open-palette', openPalette);
+
+// Global "new task" form: options load on demand (optional shared prop).
+const taskFormOpen = ref(false);
+
+const taskFormProjects = computed(
+    () => page.props.taskFormProjects as TaskProjectOption[] | undefined,
+);
+
+const currentUser = computed(() => ({
+    id: page.props.auth.user.id as number,
+    name: page.props.auth.user.name,
+    avatar: page.props.auth.user.avatar ?? null,
+}));
+
+function openTaskForm(): void {
+    if (taskFormOpen.value) {
+        return;
+    }
+
+    paletteOpen.value = false;
+
+    if (taskFormProjects.value === undefined) {
+        router.reload({
+            only: ['taskFormProjects'],
+            onSuccess: () => (taskFormOpen.value = true),
+        });
+
+        return;
+    }
+
+    taskFormOpen.value = true;
 }
 
-provide('friday:open-palette', openPalette);
+provide('friday:open-task-form', openTaskForm);
 
 const commandActions: CommandAction[] = [
     {
+        group: 'create',
         label: 'Crear nuevo proyecto',
         icon: 'add',
         shortcut: 'N',
@@ -141,23 +180,40 @@ const commandActions: CommandAction[] = [
         run: () => router.visit(`${projectsIndex.url()}?new=1`),
     },
     {
+        group: 'create',
         label: 'Crear nueva tarea',
         icon: 'add_circle',
         shortcut: 'C',
         keywords: ['crear', 'nueva', 'tarea', 'task'],
-        run: () => router.visit(backlogIndex.url()),
+        run: openTaskForm,
     },
     {
+        group: 'navigate',
         label: 'Ir al Panel',
         icon: 'space_dashboard',
         keywords: ['panel', 'inicio', 'home', 'dashboard'],
         run: () => router.visit(home.url()),
     },
     {
+        group: 'navigate',
         label: 'Ir a Proyectos',
         icon: 'folder',
         keywords: ['proyectos', 'projects'],
         run: () => router.visit(projectsIndex.url()),
+    },
+    {
+        group: 'navigate',
+        label: 'Ir a Mis Tareas',
+        icon: 'check_circle',
+        keywords: ['tareas', 'tasks', 'mis tareas'],
+        run: () => router.visit(tasksIndex.url()),
+    },
+    {
+        group: 'navigate',
+        label: 'Ir al Backlog',
+        icon: 'view_list',
+        keywords: ['backlog', 'pendientes', 'captura'],
+        run: () => router.visit(backlogIndex.url()),
     },
 ];
 
@@ -192,9 +248,11 @@ function onGlobalKeydown(event: KeyboardEvent): void {
         !event.metaKey &&
         !event.ctrlKey &&
         !event.altKey &&
-        !isEditableTarget(event.target)
+        !isEditableTarget(event.target) &&
+        !paletteOpen.value &&
+        document.querySelector('dialog[open]') === null
     ) {
-        paletteOpen.value = true;
+        openTaskForm();
     }
 }
 
@@ -241,7 +299,7 @@ onBeforeUnmount(() => {
                 :nav-items="navItems"
                 :footer-items="footerItems"
                 @collapse="toggleSidebar"
-                @new-task="goToQuickCapture"
+                @quick-actions="openPalette"
             />
         </aside>
 
@@ -271,12 +329,23 @@ onBeforeUnmount(() => {
             </main>
         </div>
 
-        <ProfileMenu v-if="activePopover === 'profile'" :user="user" />
+        <ProfileMenu
+            v-if="activePopover === 'profile'"
+            :user="user"
+            @close="activePopover = null"
+        />
         <NotificationsPopover v-if="activePopover === 'notifications'" />
         <CommandPalette
             :open="paletteOpen"
             :actions="commandActions"
             @close="paletteOpen = false"
+        />
+        <TaskFormModal
+            :open="taskFormOpen"
+            mode="create"
+            :projects="taskFormProjects ?? []"
+            :current-user="currentUser"
+            @close="taskFormOpen = false"
         />
     </div>
 </template>

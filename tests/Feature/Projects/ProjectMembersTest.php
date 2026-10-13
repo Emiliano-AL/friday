@@ -2,6 +2,7 @@
 
 use App\Models\Project;
 use App\Models\User;
+use Illuminate\Support\Facades\Mail;
 
 test('owners can add an existing user as collaborator by email', function () {
     $owner = User::factory()->create();
@@ -40,7 +41,8 @@ test('duplicate collaborators are rejected', function () {
     $this->assertDatabaseCount('project_user', 1);
 });
 
-test('unregistered emails are rejected', function () {
+test('unregistered emails are invited instead of added as members', function () {
+    Mail::fake();
     $owner = User::factory()->create();
     $project = Project::factory()->for($owner, 'owner')->create();
 
@@ -48,8 +50,9 @@ test('unregistered emails are rejected', function () {
         'email' => 'nobody@example.com',
     ]);
 
-    $response->assertSessionHasErrors('email');
+    $response->assertSessionHasNoErrors();
     $this->assertDatabaseCount('project_user', 0);
+    $this->assertDatabaseHas('project_invitations', ['project_id' => $project->id, 'email' => 'nobody@example.com']);
 });
 
 test('the owner can not be added as collaborator', function () {

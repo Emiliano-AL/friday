@@ -28,19 +28,6 @@ const tabs: ProjectTab[] = [
         icon: 'dashboard_customize',
     },
     { value: 'sprints', label: 'Sprints y tareas', icon: 'sprint' },
-    {
-        value: 'documentation',
-        label: 'Documentación',
-        icon: 'article',
-        disabled: true,
-    },
-    {
-        value: 'resources',
-        label: 'Recursos y enlaces',
-        icon: 'link',
-        disabled: true,
-    },
-    { value: 'history', label: 'Historial', icon: 'history', disabled: true },
 ];
 
 const root = ref<HTMLElement | null>(null);
@@ -113,7 +100,7 @@ function onKeydown(event: KeyboardEvent): void {
                 tab.disabled
                     ? 'text-on-surface-variant cursor-not-allowed opacity-60'
                     : tab.value === modelValue
-                      ? 'bg-surface-container-lowest text-primary shadow-card'
+                      ? 'bg-surface-container-lowest shadow-card text-(--project-accent-ink)'
                       : 'text-on-surface-variant hover:bg-surface-container-lowest/60 hover:text-on-surface'
             "
             @click="activate(tab)"

@@ -18,7 +18,7 @@ defineProps<{
         <header class="gap-space-md flex items-start justify-between">
             <div class="gap-space-xs flex min-w-0 flex-col">
                 <h2
-                    class="text-headline-md font-headline-md text-on-surface truncate"
+                    class="text-headline-sm font-headline-sm text-on-surface line-clamp-2"
                 >
                     {{ sprint.name }}
                 </h2>

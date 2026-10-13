@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection as SupportCollection;
 
 /**
  * @property int $id
@@ -73,6 +74,26 @@ class Project extends Model
     public function members(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'project_user')->withTimestamps();
+    }
+
+    /**
+     * Get every invitation sent for the project.
+     *
+     * @return HasMany<ProjectInvitation, $this>
+     */
+    public function invitations(): HasMany
+    {
+        return $this->hasMany(ProjectInvitation::class);
+    }
+
+    /**
+     * Get the invitations still awaiting an answer, most recently sent first.
+     *
+     * @return HasMany<ProjectInvitation, $this>
+     */
+    public function pendingInvitations(): HasMany
+    {
+        return $this->invitations()->pending()->latest('last_sent_at');
     }
 
     /**
@@ -138,5 +159,44 @@ class Project extends Model
         $done = $this->tasks()->where('status', TaskStatus::Done)->count();
 
         return $total === 0 ? 0 : (int) round($done / $total * 100);
+    }
+
+    /**
+     * Project choices for the task form: projects the user owns or belongs to,
+     * with their people (owner first) and their active or planned sprints.
+     *
+     * @return SupportCollection<int, array{id: int, title: string, members: SupportCollection<int, array{id: int, name: string, avatar: string|null}>, sprints: SupportCollection<int, array{id: int, name: string}>}>
+     */
+    public static function taskFormOptionsFor(User $user): SupportCollection
+    {
+        return self::query()
+            ->where('owner_id', $user->id)
+            ->orWhereHas('members', fn ($members) => $members->whereKey($user->id))
+            ->with([
+                'owner:id,name,avatar',
+                'members:id,name,avatar',
+                'sprints' => fn ($sprints) => $sprints
+                    ->whereIn('status', [SprintStatus::Active, SprintStatus::Planned])
+                    ->select('id', 'project_id', 'name'),
+            ])
+            ->orderBy('title')
+            ->get(['id', 'title', 'owner_id', 'status'])
+            ->map(fn (Project $project) => [
+                'id' => $project->id,
+                'title' => $project->title,
+                'members' => $project->members
+                    ->prepend($project->owner)
+                    ->unique('id')
+                    ->map(fn (User $member) => [
+                        'id' => $member->id,
+                        'name' => $member->name,
+                        'avatar' => $member->avatar,
+                    ])->values(),
+                'sprints' => $project->sprints->map(fn (Sprint $sprint) => [
+                    'id' => $sprint->id,
+                    'name' => $sprint->name,
+                ])->values(),
+            ])
+            ->values();
     }
 }

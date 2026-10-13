@@ -33,7 +33,7 @@ class BacklogController extends Controller
             'tasks' => $tasks->map(fn (Task $task) => $this->taskPayload($task, $user))->values(),
             'summary' => $this->summary($tasks),
             'nextSprint' => $this->nextSprint($user),
-            'projects' => $this->projectOptions($user),
+            'projects' => Project::taskFormOptionsFor($user),
         ]);
     }
 
@@ -118,43 +118,5 @@ class BacklogController extends Controller
             'startsAt' => $sprint->start_date->toDateString(),
             'endsAt' => $sprint->end_date->toDateString(),
         ];
-    }
-
-    /**
-     * Project choices for the quick capture composer, same shape as
-     * TaskController@index (owner + member projects with their people and sprints).
-     *
-     * @return SupportCollection<int, array<string, mixed>>
-     */
-    private function projectOptions(User $user): SupportCollection
-    {
-        return Project::query()
-            ->where('owner_id', $user->id)
-            ->orWhereHas('members', fn ($members) => $members->whereKey($user->id))
-            ->with([
-                'owner:id,name,avatar',
-                'members:id,name,avatar',
-                'sprints' => fn ($sprints) => $sprints
-                    ->whereIn('status', [SprintStatus::Active, SprintStatus::Planned])
-                    ->select('id', 'project_id', 'name'),
-            ])
-            ->orderBy('title')
-            ->get(['id', 'title', 'owner_id', 'status'])
-            ->map(fn (Project $project) => [
-                'id' => $project->id,
-                'title' => $project->title,
-                'members' => $project->members
-                    ->prepend($project->owner)
-                    ->unique('id')
-                    ->map(fn (User $member) => [
-                        'id' => $member->id,
-                        'name' => $member->name,
-                        'avatar' => $member->avatar,
-                    ])->values(),
-                'sprints' => $project->sprints->map(fn ($sprint) => [
-                    'id' => $sprint->id,
-                    'name' => $sprint->name,
-                ])->values(),
-            ]);
     }
 }

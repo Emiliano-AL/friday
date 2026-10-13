@@ -21,6 +21,7 @@ export interface NavItem {
 }
 
 export interface CommandAction {
+    group: 'create' | 'navigate';
     label: string;
     icon: string;
     shortcut?: string;

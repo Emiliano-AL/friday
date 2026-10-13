@@ -4,6 +4,7 @@ use App\Enums\TaskStatus;
 use App\Models\Project;
 use App\Models\Task;
 use App\Models\User;
+use Illuminate\Support\Facades\Mail;
 
 test('project payload includes open tasks count for owner and each member', function () {
     $owner = User::factory()->create();
@@ -70,13 +71,12 @@ test('users who are not owner or collaborator still get a 404', function () {
     $this->actingAs($member)->get("/projects/{$project->id}")->assertOk();
 });
 
-test('unregistered member emails get a clear spanish message', function () {
+test('unregistered member emails get a clear spanish invitation message', function () {
+    Mail::fake();
     $owner = User::factory()->create();
     $project = Project::factory()->for($owner, 'owner')->create();
 
     $this->actingAs($owner)
         ->post("/projects/{$project->id}/members", ['email' => 'nadie@test.dev'])
-        ->assertSessionHasErrors([
-            'email' => 'No encontramos ningún usuario registrado con ese correo.',
-        ]);
+        ->assertSessionHas('success', 'Invitación enviada a nadie@test.dev.');
 });

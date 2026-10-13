@@ -358,7 +358,7 @@ defineExpose({ focus });
                     v-for="tabOption in visibleTabs"
                     :key="tabOption.value"
                     type="button"
-                    class="flex items-center gap-1.5 rounded-lg px-3 py-1.5 whitespace-nowrap transition-colors"
+                    class="text-label-md font-label-md flex items-center gap-1.5 rounded-lg px-3 py-1.5 whitespace-nowrap transition-colors"
                     :class="
                         tab === tabOption.value
                             ? 'bg-primary-fixed text-on-primary-fixed font-medium'
@@ -407,17 +407,6 @@ defineExpose({ focus });
                     >↓</kbd
                 >
                 <span>Navegar</span>
-                <span aria-hidden="true">•</span>
-                <span
-                    class="cursor-not-allowed gap-1 opacity-50"
-                    title="Próximamente"
-                >
-                    <kbd
-                        class="bg-surface-container rounded px-1.5 py-0.5 text-[10px]"
-                        >Espacio</kbd
-                    >
-                    <span>Previsualizar</span>
-                </span>
             </div>
         </div>
     </div>

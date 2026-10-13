@@ -127,19 +127,19 @@ function statusTone(
                     Sprints
                 </h2>
                 <span
-                    class="text-label-sm font-label-sm text-on-surface-variant"
+                    class="text-label-sm text-on-surface-variant tabular-nums"
                 >
-                    {{ project.sprints.length }} en total
+                    {{ project.sprints.length }}
                 </span>
             </div>
             <button
                 v-if="canWriteSprints"
                 type="button"
-                class="bg-primary-container hover:bg-primary flex items-center gap-1.5 rounded-lg px-3 py-2 text-white shadow-md transition-colors"
+                class="border-outline-variant/60 text-on-surface hover:bg-surface-container text-label-md font-label-md flex items-center gap-1.5 rounded-lg border px-3 py-1.5 transition-colors"
                 @click="emit('create')"
             >
-                <AppIcon name="add" :size="15" />
-                Planificar un sprint
+                <AppIcon name="add" :size="16" />
+                Planificar sprint
             </button>
         </div>
 
@@ -151,11 +151,12 @@ function statusTone(
                 v-for="chip in chips"
                 :key="chip.key"
                 type="button"
-                class="text-label-sm font-label-sm rounded-full border px-3 py-1 transition-colors"
+                :aria-pressed="filter === chip.key"
+                class="text-label-sm font-label-sm rounded-lg px-3 py-1.5 transition-colors"
                 :class="
                     filter === chip.key
-                        ? 'border-primary-container bg-primary-container text-white'
-                        : 'border-outline-variant/40 bg-surface-container-low text-on-surface-variant hover:text-on-surface'
+                        ? 'bg-primary-fixed text-on-primary-fixed'
+                        : 'text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface'
                 "
                 @click="filter = chip.key"
             >
@@ -174,67 +175,74 @@ function statusTone(
         </div>
 
         <template v-else>
-            <div
+            <article
                 v-if="active"
-                class="border-outline-variant/40 bg-surface-container-low/40 gap-space-md p-space-md flex flex-col rounded-xl border"
+                class="gap-space-md p-space-md flex flex-col rounded-xl border border-(--project-accent)/30 bg-(--project-accent-soft)"
             >
-                <div
-                    class="gap-space-sm flex flex-wrap items-center justify-between"
-                >
-                    <div class="flex min-w-0 items-center gap-2">
-                        <UiBadge label="Sprint Activo" tone="primary" dot />
+                <header class="gap-space-sm flex flex-wrap items-start">
+                    <div class="min-w-0 flex-1 basis-full sm:basis-0">
+                        <div class="flex min-w-0 flex-wrap items-center gap-2">
+                            <Link
+                                :href="showSprint.url([project.id, active.id])"
+                                class="text-on-surface hover:text-primary text-headline-sm font-headline-sm truncate transition-colors"
+                            >
+                                {{ active.name }}
+                            </Link>
+                            <UiBadge label="Activo" tone="primary" dot />
+                        </div>
+                        <p class="text-label-sm text-on-surface-variant mt-0.5">
+                            {{ formatRange(active) }} ·
+                            {{
+                                activeDaysRemaining === 1
+                                    ? '1 día restante'
+                                    : `${activeDaysRemaining} días restantes`
+                            }}
+                        </p>
+                    </div>
+                    <div class="gap-space-xs flex items-center">
+                        <button
+                            v-if="canWriteSprints"
+                            type="button"
+                            class="text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-label-md font-label-md inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 transition-colors"
+                            @click="emit('complete')"
+                        >
+                            <AppIcon name="check_circle" :size="16" />
+                            Completar
+                        </button>
                         <Link
                             :href="showSprint.url([project.id, active.id])"
-                            class="text-primary text-headline-sm font-headline-sm truncate font-medium hover:underline"
+                            class="bg-primary/10 text-primary hover:bg-primary/15 text-label-md font-label-md inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 transition-colors"
                         >
-                            {{ active.name }}
+                            <AppIcon name="dashboard" :size="16" />
+                            Ver tablero
                         </Link>
                     </div>
-                    <span
-                        class="bg-surface-container text-label-xs font-label-xs text-on-surface-variant shrink-0 rounded-full px-2 py-0.5"
-                    >
-                        {{
-                            activeDaysRemaining === 1
-                                ? '1 día restante'
-                                : `${activeDaysRemaining} días restantes`
-                        }}
-                    </span>
-                </div>
+                </header>
 
-                <p class="text-label-sm font-label-sm text-on-surface-variant">
-                    {{ formatRange(active) }}
+                <p
+                    v-if="active.goal"
+                    class="text-body-md font-body-md text-on-surface line-clamp-3 max-w-3xl"
+                >
+                    <span class="text-on-surface-variant">Meta:</span>
+                    {{ active.goal }}
                 </p>
 
-                <div v-if="active.goal" class="gap-space-xs flex items-start">
-                    <AppIcon
-                        name="track_changes"
-                        :size="15"
-                        class="text-on-surface-variant mt-0.5 shrink-0"
-                    />
-                    <p
-                        class="text-body-sm font-body-sm text-on-surface line-clamp-3 min-w-0 leading-relaxed"
-                    >
-                        <span class="font-medium">Meta del Sprint:</span>
-                        {{ active.goal }}
-                    </p>
-                </div>
-
                 <div class="gap-space-xs flex flex-col">
-                    <div class="flex items-center justify-between gap-2">
+                    <div class="flex items-baseline justify-between gap-2">
                         <span
-                            class="text-label-sm font-label-sm text-on-surface font-medium"
+                            class="text-label-md font-label-md text-on-surface font-semibold tabular-nums"
                         >
-                            Progreso de tareas
+                            {{ activeMetrics.coverage }}%
                         </span>
                         <span
-                            class="text-label-sm font-label-sm text-on-surface-variant"
+                            class="text-label-sm text-on-surface-variant tabular-nums"
                         >
                             {{ activeMetrics.done }} de
                             {{ activeMetrics.total }} tareas
                         </span>
                     </div>
                     <div
-                        class="bg-surface-container-high h-2 overflow-hidden rounded-full"
+                        class="bg-surface-container-high h-1.5 overflow-hidden rounded-full"
                         role="progressbar"
                         :aria-valuenow="activeMetrics.coverage"
                         aria-valuemin="0"
@@ -242,78 +250,30 @@ function statusTone(
                         :aria-label="`Progreso de ${active.name}`"
                     >
                         <div
-                            class="bg-primary h-full rounded-full transition-all"
+                            class="h-full rounded-full bg-(--project-accent) transition-all"
                             :style="{ width: `${activeMetrics.coverage}%` }"
                         />
                     </div>
                 </div>
-
-                <div
-                    class="border-outline-variant/40 bg-surface-container-low/50 gap-space-sm p-space-sm flex items-center justify-between rounded-lg border"
-                    aria-disabled="true"
-                >
-                    <div class="flex min-w-0 items-center gap-2">
-                        <AppIcon
-                            name="lock"
-                            :size="14"
-                            class="text-on-surface-variant shrink-0"
-                        />
-                        <div class="min-w-0">
-                            <p
-                                class="text-label-sm font-label-sm text-on-surface font-medium"
-                            >
-                                Puntos de historia
-                            </p>
-                            <p
-                                class="text-label-xs font-label-xs text-on-surface-variant"
-                            >
-                                Estimación en puntos y velocidad del equipo.
-                            </p>
-                        </div>
-                    </div>
-                    <UiBadge label="Próximamente" tone="outline" />
-                </div>
-
-                <div class="gap-space-sm flex flex-wrap items-center">
-                    <Link
-                        :href="showSprint.url([project.id, active.id])"
-                        class="bg-primary-container hover:bg-primary inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-white shadow-md transition-colors"
-                    >
-                        <AppIcon name="dashboard" :size="15" />
-                        <span class="text-label-md font-label-md">
-                            Ver tablero
-                        </span>
-                    </Link>
-                    <button
-                        v-if="canWriteSprints"
-                        type="button"
-                        class="border-outline-variant/40 bg-surface-container-lowest text-on-surface hover:bg-surface-container inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 shadow-sm transition-colors"
-                        @click="emit('complete')"
-                    >
-                        <AppIcon name="check_circle" :size="15" />
-                        <span class="text-label-md font-label-md">
-                            Completar sprint
-                        </span>
-                    </button>
-                </div>
-            </div>
+            </article>
 
             <div
                 v-if="
                     counts.active + counts.planned + counts.completed >
                     (active ? 1 : 0)
                 "
-                class="gap-space-sm flex flex-col"
+                class="gap-space-xs flex flex-col"
             >
                 <div class="flex items-center justify-between gap-2">
                     <h3
-                        class="text-label-md font-label-md text-on-surface font-medium"
+                        class="text-label-md font-label-md text-on-surface font-semibold"
                     >
-                        Otros Sprints
+                        Otros sprints
                     </h3>
                     <button
                         type="button"
                         class="text-label-xs font-label-xs text-on-surface-variant hover:text-on-surface inline-flex items-center gap-1 transition-colors"
+                        :aria-expanded="!othersCollapsed"
                         @click="othersCollapsed = !othersCollapsed"
                     >
                         <AppIcon
@@ -322,18 +282,18 @@ function statusTone(
                             "
                             :size="14"
                         />
-                        {{ othersCollapsed ? 'Expandir' : 'Colapsar todos' }}
+                        {{ othersCollapsed ? 'Mostrar' : 'Ocultar' }}
                     </button>
                 </div>
 
                 <ul
                     v-show="!othersCollapsed"
-                    class="gap-space-xs pr-space-xs flex max-h-80 flex-col overflow-y-auto"
+                    class="border-surface-container flex max-h-80 flex-col overflow-y-auto rounded-lg border"
                 >
                     <li
                         v-for="sprint in others"
                         :key="sprint.id"
-                        class="gap-space-sm p-space-sm bg-surface-container-low/50 flex flex-wrap items-center rounded-lg"
+                        class="border-surface-container gap-space-md px-space-sm py-space-sm flex items-center border-b last:border-b-0"
                     >
                         <div class="min-w-0 flex-1">
                             <div class="flex min-w-0 items-center gap-2">
@@ -341,7 +301,7 @@ function statusTone(
                                     :href="
                                         showSprint.url([project.id, sprint.id])
                                     "
-                                    class="text-primary text-body-sm font-body-sm truncate font-medium hover:underline"
+                                    class="text-on-surface hover:text-primary text-body-md font-body-md truncate font-medium transition-colors"
                                 >
                                     {{ sprint.name }}
                                 </Link>
@@ -351,62 +311,85 @@ function statusTone(
                                 />
                             </div>
                             <p
-                                class="text-label-xs font-label-xs text-on-surface-variant truncate"
+                                v-if="sprint.goal"
+                                class="text-label-sm text-on-surface-variant truncate"
+                                :title="sprint.goal"
                             >
-                                {{ formatRange(sprint) }}
-                                <template v-if="sprint.status === 'planned'">
-                                    · {{ metricsFor(sprint).total }} tareas
-                                    planificadas
-                                </template>
-                                <template
-                                    v-else-if="sprint.status === 'completed'"
-                                >
-                                    · {{ metricsFor(sprint).done }} de
-                                    {{ metricsFor(sprint).total }} tareas
-                                    concluidas
-                                </template>
-                                <template v-if="sprint.goal">
-                                    · {{ sprint.goal }}
-                                </template>
+                                {{ sprint.goal }}
                             </p>
                         </div>
+
                         <span
-                            class="text-label-xs font-label-xs text-on-surface-variant w-16 shrink-0 text-right"
+                            class="text-label-sm text-on-surface-variant hidden w-44 shrink-0 md:inline"
                         >
-                            {{ metricsFor(sprint).coverage }}% completado
+                            {{ formatRange(sprint) }}
                         </span>
+
                         <span
-                            v-if="
-                                sprint.status === 'planned' && canWriteSprints
+                            class="hidden w-32 shrink-0 items-center gap-2 sm:flex"
+                            :title="
+                                sprint.status === 'planned'
+                                    ? `${metricsFor(sprint).total} tareas planificadas`
+                                    : `${metricsFor(sprint).done} de ${metricsFor(sprint).total} tareas`
                             "
-                            class="flex shrink-0 gap-3"
                         >
-                            <button
-                                type="button"
-                                class="text-label-xs font-label-xs text-on-surface-variant hover:text-on-surface hover:underline"
-                                @click="emit('edit', sprint)"
+                            <span
+                                class="bg-surface-container-high h-1.5 flex-1 overflow-hidden rounded-full"
                             >
-                                Editar
-                            </button>
-                            <button
-                                type="button"
-                                class="text-label-xs font-label-xs text-error hover:underline"
-                                @click="emit('destroy', sprint)"
+                                <span
+                                    class="block h-full rounded-full bg-(--project-accent)"
+                                    :style="{
+                                        width: `${metricsFor(sprint).coverage}%`,
+                                    }"
+                                />
+                            </span>
+                            <span
+                                class="text-label-xs font-label-xs text-on-surface-variant w-9 text-right tabular-nums"
                             >
-                                Eliminar
-                            </button>
+                                {{ metricsFor(sprint).coverage }}%
+                            </span>
                         </span>
-                        <Link
-                            v-else-if="sprint.status === 'completed'"
-                            :href="showSprint.url([project.id, sprint.id])"
-                            class="text-label-xs font-label-xs text-primary shrink-0 hover:underline"
-                        >
-                            Ver resumen
-                        </Link>
+
+                        <span class="flex w-16 shrink-0 justify-end gap-0.5">
+                            <template
+                                v-if="
+                                    sprint.status === 'planned' &&
+                                    canWriteSprints
+                                "
+                            >
+                                <button
+                                    type="button"
+                                    :aria-label="`Editar ${sprint.name}`"
+                                    title="Editar"
+                                    class="text-on-surface-variant hover:bg-surface-container hover:text-on-surface flex h-7 w-7 items-center justify-center rounded-lg transition-colors"
+                                    @click="emit('edit', sprint)"
+                                >
+                                    <AppIcon name="edit" :size="16" />
+                                </button>
+                                <button
+                                    type="button"
+                                    :aria-label="`Eliminar ${sprint.name}`"
+                                    title="Eliminar"
+                                    class="text-on-surface-variant hover:bg-error-container/50 hover:text-error flex h-7 w-7 items-center justify-center rounded-lg transition-colors"
+                                    @click="emit('destroy', sprint)"
+                                >
+                                    <AppIcon name="delete" :size="16" />
+                                </button>
+                            </template>
+                            <Link
+                                v-else
+                                :href="showSprint.url([project.id, sprint.id])"
+                                :aria-label="`Ver ${sprint.name}`"
+                                title="Ver resumen"
+                                class="text-on-surface-variant hover:bg-surface-container hover:text-on-surface flex h-7 w-7 items-center justify-center rounded-lg transition-colors"
+                            >
+                                <AppIcon name="arrow_forward" :size="16" />
+                            </Link>
+                        </span>
                     </li>
                     <li
                         v-if="others.length === 0"
-                        class="text-body-sm font-body-sm text-on-surface-variant"
+                        class="text-body-sm font-body-sm text-on-surface-variant px-space-sm py-space-sm"
                     >
                         {{ emptyFilterMessage }}
                     </li>

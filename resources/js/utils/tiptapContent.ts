@@ -51,6 +51,36 @@ export function docFromPlainText(text: string): TiptapDoc {
     };
 }
 
+interface TiptapAnyNode {
+    text?: string;
+    content?: TiptapAnyNode[];
+}
+
+function collectText(node: TiptapAnyNode): string {
+    if (typeof node.text === 'string') {
+        return node.text;
+    }
+
+    return (node.content ?? []).map(collectText).join('') + ' ';
+}
+
+/**
+ * Visible plain text of a description: Tiptap JSON is flattened, legacy plain text passes through.
+ */
+export function tiptapToPlainText(value: string | null | undefined): string {
+    if (value === null || value === undefined || value.trim() === '') {
+        return '';
+    }
+
+    if (!isTiptapJson(value)) {
+        return value.trim();
+    }
+
+    return collectText(JSON.parse(value) as TiptapAnyNode)
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
 export function normalizeToTiptap(
     value: string | null | undefined,
 ): TiptapDoc {
