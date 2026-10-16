@@ -34,7 +34,7 @@ const submit = () => {
         <Head title="Crear cuenta" />
 
         <AuthCard
-            title="Crear cuenta en Friday"
+            :title="`Crear cuenta en ${$page.props.name}`"
             subtitle="Empieza a organizar el trabajo de tu equipo"
         >
             <SocialGoogleButton />

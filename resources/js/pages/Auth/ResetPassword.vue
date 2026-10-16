@@ -36,7 +36,7 @@ const submit = () => {
 
         <AuthCard
             title="Nueva contraseña"
-            subtitle="Elige una contraseña segura para tu cuenta de Friday."
+            :subtitle="`Elige una contraseña segura para tu cuenta de ${$page.props.name}.`"
         >
             <form class="gap-space-md flex flex-col" @submit.prevent="submit">
                 <input type="hidden" name="email" :value="form.email" />

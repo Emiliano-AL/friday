@@ -11,7 +11,7 @@ import AuthIcon from '@/Components/Auth/AuthIcon.vue';
             <span
                 class="text-label-xs text-on-surface-variant tracking-wider uppercase"
             >
-                Friday Cloud OS
+                {{ $page.props.name }} Cloud OS
             </span>
         </div>
         <div

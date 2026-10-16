@@ -1,7 +1,7 @@
 <x-mail::message>
 # Te invitaron a colaborar
 
-**{{ $inviterName }}** te invitó a colaborar en el proyecto **{{ $projectTitle }}** en Friday.
+**{{ $inviterName }}** te invitó a colaborar en el proyecto **{{ $projectTitle }}** en {{ config('app.name') }}.
 
 <x-mail::button :url="$url">
 Ver invitación

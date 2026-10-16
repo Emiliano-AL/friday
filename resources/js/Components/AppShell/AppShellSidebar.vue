@@ -31,7 +31,9 @@ const emit = defineEmits<{
                 class="gap-space-sm flex items-center rounded-lg"
             >
                 <AppLogo />
-                <span class="text-headline-sm text-on-surface">Friday</span>
+                <span class="text-headline-sm text-on-surface">{{
+                    $page.props.name
+                }}</span>
             </Link>
             <button
                 type="button"

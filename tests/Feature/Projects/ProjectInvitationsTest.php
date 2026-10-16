@@ -9,6 +9,8 @@ use App\Models\User;
 use Illuminate\Support\Facades\Mail;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\User as SocialiteUser;
+use Symfony\Component\HttpClient\Response\MockResponse;
+use Symfony\Component\Mailer\Exception\HttpTransportException;
 use Symfony\Component\Mailer\Exception\TransportException;
 
 test('owners invite an unregistered email and the invitation link is mailed', function () {
@@ -90,6 +92,22 @@ test('a failed delivery keeps the invitation and tells the owner to resend', fun
     $owner = User::factory()->create();
     $project = Project::factory()->for($owner, 'owner')->create();
     Mail::shouldReceive('to')->andThrow(new TransportException('smtp down'));
+
+    $response = $this->actingAs($owner)->post("/projects/{$project->id}/members", [
+        'email' => 'nuevo@example.com',
+    ]);
+
+    $response->assertSessionHas('error', 'No pudimos enviar el correo. Puedes reenviar la invitación.');
+    $this->assertDatabaseHas('project_invitations', ['email' => 'nuevo@example.com', 'status' => 'pending']);
+});
+
+test('a rejection from the Postmark API keeps the invitation and tells the owner to resend', function () {
+    $owner = User::factory()->create();
+    $project = Project::factory()->for($owner, 'owner')->create();
+    Mail::shouldReceive('to')->andThrow(new HttpTransportException(
+        'Sender signature not confirmed',
+        new MockResponse('', ['http_code' => 422]),
+    ));
 
     $response = $this->actingAs($owner)->post("/projects/{$project->id}/members", [
         'email' => 'nuevo@example.com',

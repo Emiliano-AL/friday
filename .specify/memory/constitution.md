@@ -1,4 +1,14 @@
+<!--
+Sync Impact Report
+- Version: 1.1.0 → 1.1.1 (PATCH: aclaración de nombre)
+- Cambio: se aclara que "Friday" es el codename interno y que el nombre
+  público del producto es "Eunox" (feature 026-rebrand-eunox).
+- Principios modificados: ninguno.
+- Plantillas afectadas: ninguna.
+-->
 # Friday Constitution
+
+> Friday es el codename interno; el nombre público del producto es **Eunox**.
 
 ## Core Principles
 
@@ -95,4 +105,4 @@ documento conflictivo debe actualizarse.
   `AGENTS.md` y `.ai/rules`; esta constitución define las reglas no
   negociables que esos documentos no pueden contradecir.
 
-**Version**: 1.1.0 | **Ratified**: 2026-09-19 | **Last Amended**: 2026-09-19
+**Version**: 1.1.1 | **Ratified**: 2026-09-19 | **Last Amended**: 2026-10-16

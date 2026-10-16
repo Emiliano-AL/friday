@@ -137,6 +137,8 @@ spacing:
     space-3xl: 3rem
 ---
 
+> **Naming**: "Friday" is the internal codename. The public product name shown in the UI and emails is **Eunox** (sourced from `APP_NAME`); never hardcode either name in components.
+
 ## Brand & Style
 
 This design system delivers a calm, razor-sharp productivity workspace tailored for high-focus knowledge work, task orchestration, and cognitive clarity. Blending the refined minimalism of Things 3 with the technical precision and velocity of Linear, the interface operates as a neutral, unobtrusive canvas.
