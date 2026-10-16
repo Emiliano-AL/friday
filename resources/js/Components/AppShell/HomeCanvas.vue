@@ -176,7 +176,7 @@ const openTaskForm = inject<() => void>('friday:open-task-form', () => {});
                 <span class="h-2 w-2 rounded-full bg-emerald-500" />
                 <span>Sincronizado en la nube</span>
                 <span class="text-outline-variant" aria-hidden="true">•</span>
-                <span>Friday v2.4</span>
+                <span>{{ $page.props.name }} v2.4</span>
             </div>
         </div>
     </div>

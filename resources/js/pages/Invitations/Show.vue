@@ -37,7 +37,8 @@ const unavailableMessages: Record<UnavailableReason, string> = {
     used: 'Esta invitación ya fue respondida.',
     inactive_project:
         'El proyecto no está activo, por lo que no se puede aceptar la invitación.',
-    not_found: 'No encontramos esta invitación. Revisa que el enlace esté completo.',
+    not_found:
+        'No encontramos esta invitación. Revisa que el enlace esté completo.',
 };
 
 const title = computed(() =>
@@ -62,10 +63,14 @@ function respond(action: 'accept' | 'decline'): void {
 
     const route = action === 'accept' ? accept : decline;
 
-    router.post(route.url(props.token), {}, {
-        onStart: () => (processing.value = true),
-        onFinish: () => (processing.value = false),
-    });
+    router.post(
+        route.url(props.token),
+        {},
+        {
+            onStart: () => (processing.value = true),
+            onFinish: () => (processing.value = false),
+        },
+    );
 }
 </script>
 
@@ -140,7 +145,10 @@ function respond(action: 'accept' | 'decline'): void {
                     </button>
                 </div>
 
-                <div v-else-if="state === 'guest'" class="gap-space-sm flex flex-col">
+                <div
+                    v-else-if="state === 'guest'"
+                    class="gap-space-sm flex flex-col"
+                >
                     <Link
                         :href="register.url()"
                         class="bg-primary hover:bg-primary-container text-on-primary text-label-md font-label-md shadow-card rounded-lg px-4 py-2.5 text-center transition-colors"
@@ -168,10 +176,12 @@ function respond(action: 'accept' | 'decline'): void {
                 >
                     <p class="text-body-sm font-body-sm text-on-surface">
                         Esta invitación es para
-                        <span class="font-semibold">{{ invitation.email }}</span>
+                        <span class="font-semibold">{{
+                            invitation.email
+                        }}</span>
                         y tu sesión es de
-                        <span class="font-semibold">{{ currentEmail }}</span>.
-                        Cierra sesión y entra con el correo invitado.
+                        <span class="font-semibold">{{ currentEmail }}</span
+                        >. Cierra sesión y entra con el correo invitado.
                     </p>
                     <Link
                         :href="logout.url()"
@@ -192,7 +202,7 @@ function respond(action: 'accept' | 'decline'): void {
                     :href="home.url()"
                     class="text-label-md font-label-md text-primary self-start hover:underline"
                 >
-                    Ir a Friday
+                    Ir a {{ $page.props.name }}
                 </Link>
             </template>
         </AuthCard>
