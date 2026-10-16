@@ -13,7 +13,7 @@ use App\Http\Controllers\TaskController;
 use App\Http\Controllers\TaskImportController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', HomeController::class)->middleware(['auth'])->name('home');
+Route::get('/', HomeController::class)->name('home');
 
 Route::get('invitations/{token}', [InvitationResponseController::class, 'show'])
     ->name('invitations.show');

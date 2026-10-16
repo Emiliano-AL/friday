@@ -20,11 +20,15 @@ use Inertia\Response;
 class HomeController extends Controller
 {
     /**
-     * Display the home dashboard for the authenticated user.
+     * Display the public landing page for guests or the home dashboard for authenticated users.
      */
     public function __invoke(Request $request): Response
     {
         $user = $request->user();
+
+        if ($user === null) {
+            return Inertia::render('Landing');
+        }
 
         if (! $this->hasActivity($user)) {
             return Inertia::render('AppHome', ['dashboard' => null]);

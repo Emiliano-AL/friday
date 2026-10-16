@@ -64,7 +64,7 @@ test('users can logout', function () {
 });
 
 test('guests are redirected to login when accessing internal pages', function () {
-    $response = $this->get('/');
+    $response = $this->get(route('projects.index'));
 
     $response->assertRedirect(route('login', absolute: false));
 });
@@ -79,12 +79,12 @@ test('authenticated users are redirected away from guest pages', function () {
 test('users return to the intended page after logging in', function () {
     $user = User::factory()->create();
 
-    $this->get('/')->assertRedirect(route('login', absolute: false));
+    $this->get(route('projects.index'))->assertRedirect(route('login', absolute: false));
 
     $response = $this->post('/login', [
         'email' => $user->email,
         'password' => 'password',
     ]);
 
-    $response->assertRedirect('/');
+    $response->assertRedirect(route('projects.index'));
 });

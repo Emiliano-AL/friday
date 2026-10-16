@@ -101,7 +101,7 @@ test('failed google callbacks redirect to login without creating a user', functi
 });
 
 test('users return to the intended page after a google login', function () {
-    $this->get('/')->assertRedirect(route('login', absolute: false));
+    $this->get(route('projects.index'))->assertRedirect(route('login', absolute: false));
 
     Socialite::fake('google', SocialiteUser::fake([
         'id' => 'google-123',
@@ -111,5 +111,5 @@ test('users return to the intended page after a google login', function () {
 
     $response = $this->get(route('google.callback', absolute: false));
 
-    $response->assertRedirect('/');
+    $response->assertRedirect(route('projects.index'));
 });
