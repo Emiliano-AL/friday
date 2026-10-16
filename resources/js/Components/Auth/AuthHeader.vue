@@ -1,19 +1,20 @@
 <script setup lang="ts">
+import AppLogo from '@/Components/AppShell/AppLogo.vue';
 import AuthIcon from '@/Components/Auth/AuthIcon.vue';
+import { home } from '@/routes';
+import { Link } from '@inertiajs/vue3';
 </script>
 
 <template>
     <header
         class="px-margin-mobile py-space-lg lg:px-margin flex w-full items-center justify-between"
     >
-        <div class="gap-space-sm flex items-center">
-            <span class="bg-primary h-2 w-2 animate-pulse rounded-full" />
-            <span
-                class="text-label-xs text-on-surface-variant tracking-wider uppercase"
-            >
-                {{ $page.props.name }} Cloud OS
+        <Link :href="home()" class="gap-space-sm flex items-center">
+            <AppLogo />
+            <span class="text-headline-sm text-on-surface font-semibold">
+                {{ $page.props.name }}
             </span>
-        </div>
+        </Link>
         <div
             class="gap-space-sm text-label-xs text-on-surface-variant flex items-center"
         >
