@@ -34,6 +34,7 @@ use Illuminate\Support\Collection as SupportCollection;
  * @property-read User $owner
  * @property-read Collection<int, Sprint> $sprints
  * @property-read Collection<int, Task> $tasks
+ * @property-read Collection<int, ProjectAttachment> $attachments
  * @property-read int|null $tasks_count
  * @property-read int|null $done_tasks_count
  * @property-read int|null $open_tasks_count
@@ -107,6 +108,16 @@ class Project extends Model
     public function sprints(): HasMany
     {
         return $this->hasMany(Sprint::class);
+    }
+
+    /**
+     * Get the attachments of the project (no global order; apply latest() when listing).
+     *
+     * @return HasMany<ProjectAttachment, $this>
+     */
+    public function attachments(): HasMany
+    {
+        return $this->hasMany(ProjectAttachment::class);
     }
 
     /**

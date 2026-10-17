@@ -3,7 +3,7 @@ import AppIcon from '@/Components/AppShell/AppIcon.vue';
 import UiBadge from '@/Components/Projects/UiBadge.vue';
 import { ref } from 'vue';
 
-export type ProjectTabValue = 'general' | 'sprints';
+export type ProjectTabValue = 'general' | 'sprints' | 'files';
 
 const props = defineProps<{
     modelValue: ProjectTabValue;
@@ -28,6 +28,7 @@ const tabs: ProjectTab[] = [
         icon: 'dashboard_customize',
     },
     { value: 'sprints', label: 'Sprints y tareas', icon: 'sprint' },
+    { value: 'files', label: 'Archivos', icon: 'attach_file' },
 ];
 
 const root = ref<HTMLElement | null>(null);
@@ -37,7 +38,11 @@ function activate(tab: ProjectTab): void {
         return;
     }
 
-    if (tab.value !== 'general' && tab.value !== 'sprints') {
+    if (
+        tab.value !== 'general' &&
+        tab.value !== 'sprints' &&
+        tab.value !== 'files'
+    ) {
         return;
     }
 

@@ -130,3 +130,37 @@ export interface FlashMessage {
     success: string | null;
     error: string | null;
 }
+
+export type AttachmentTypeValue = 'document' | 'image' | 'link';
+
+export interface ProjectAttachmentItem {
+    id: number;
+    type: AttachmentTypeValue;
+    typeLabel: string;
+    title: string;
+    url: string | null;
+    domain: string | null;
+    originalName: string | null;
+    mimeType: string | null;
+    size: number | null;
+    width: number | null;
+    height: number | null;
+    author: ProjectPerson | null;
+    createdAt: string;
+    canManage: boolean;
+    openUrl: string | null;
+    downloadUrl: string | null;
+    thumbnailUrl: string | null;
+}
+
+export interface ProjectAttachments {
+    items: ProjectAttachmentItem[];
+    usage: { count: number; maxCount: number; bytes: number; maxBytes: number };
+    canCreate: boolean;
+    limits: {
+        imageMaxBytes: number;
+        documentMaxBytes: number;
+        imageExtensions: string[];
+        accept: string;
+    };
+}
