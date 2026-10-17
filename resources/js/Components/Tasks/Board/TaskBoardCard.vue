@@ -62,7 +62,7 @@ const priorityChip = computed(() => {
         "
         :class="[
             task.project?.color
-                ? 'bg-[color-mix(in_srgb,var(--project-tint)_9%,var(--color-surface-container-lowest))]'
+                ? 'border-t-[3px] border-t-(--project-tint) bg-[color-mix(in_srgb,var(--project-tint)_9%,var(--color-surface-container-lowest))]'
                 : 'bg-surface-container-lowest',
             draggable ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer',
             dragging
