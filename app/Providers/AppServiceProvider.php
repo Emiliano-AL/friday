@@ -53,9 +53,13 @@ class AppServiceProvider extends ServiceProvider
 
         RateLimiter::for('google-oauth-callback', fn (Request $request) => Limit::perMinute(10)->by($request->ip()));
 
-        RateLimiter::for('project-invitations', fn (Request $request) => Limit::perHour(20)->by((string) ($request->user()?->id ?? $request->ip())));
+        RateLimiter::for('register', fn (Request $request) => Limit::perMinute(5)->by($request->ip()));
 
-        RateLimiter::for('account-security', fn (Request $request) => Limit::perMinute(6)->by((string) ($request->user()?->id ?? $request->ip())));
+        RateLimiter::for('password-reset-link', fn (Request $request) => Limit::perMinute(5)->by($request->ip()));
+
+        RateLimiter::for('project-invitations', fn (Request $request) => Limit::perHour(20)->by((string) ($request->user()->id ?? $request->ip())));
+
+        RateLimiter::for('account-security', fn (Request $request) => Limit::perMinute(6)->by((string) ($request->user()->id ?? $request->ip())));
     }
 
     /**

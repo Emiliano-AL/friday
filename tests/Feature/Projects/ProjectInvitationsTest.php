@@ -28,7 +28,7 @@ test('owners invite an unregistered email and the invitation link is mailed', fu
         ->and($invitation->status)->toBe(ProjectInvitationStatus::Pending)
         ->and($invitation->invited_by_id)->toBe($owner->id);
 
-    Mail::assertSent(ProjectInvitationMail::class, fn (ProjectInvitationMail $mail) => $mail->hasTo('nuevo@example.com')
+    Mail::assertQueued(ProjectInvitationMail::class, fn (ProjectInvitationMail $mail) => $mail->hasTo('nuevo@example.com')
         && $invitation->is(ProjectInvitation::findByToken($mail->token)));
     $this->assertDatabaseCount('project_user', 0);
 });
@@ -45,7 +45,7 @@ test('owners still add registered users instantly without an invitation', functi
 
     $this->assertDatabaseHas('project_user', ['project_id' => $project->id, 'user_id' => $collaborator->id]);
     $this->assertDatabaseCount('project_invitations', 0);
-    Mail::assertNothingSent();
+    Mail::assertNothingOutgoing();
 });
 
 test('inviting the same email twice resends the existing pending invitation', function () {
@@ -57,7 +57,7 @@ test('inviting the same email twice resends the existing pending invitation', fu
     $this->actingAs($owner)->post("/projects/{$project->id}/members", ['email' => 'nuevo@example.com']);
 
     $this->assertDatabaseCount('project_invitations', 1);
-    Mail::assertSent(ProjectInvitationMail::class, 2);
+    Mail::assertQueued(ProjectInvitationMail::class, 2);
 });
 
 test('owners can not invite on an inactive project', function () {
@@ -71,7 +71,7 @@ test('owners can not invite on an inactive project', function () {
 
     $response->assertSessionHasErrors(['email' => 'No puedes invitar en un proyecto archivado o completado.']);
     $this->assertDatabaseCount('project_invitations', 0);
-    Mail::assertNothingSent();
+    Mail::assertNothingOutgoing();
 });
 
 test('non-owners can not invite collaborators', function () {
@@ -248,7 +248,7 @@ test('owners resend an invitation with a fresh link and validity period', functi
     expect(ProjectInvitation::findByToken('old-token'))->toBeNull()
         ->and($invitation->fresh()->isExpired())->toBeFalse()
         ->and($invitation->fresh()->expires_at->isAfter(now()->addDays(6)))->toBeTrue();
-    Mail::assertSent(ProjectInvitationMail::class, fn (ProjectInvitationMail $mail) => $invitation->is(ProjectInvitation::findByToken($mail->token)));
+    Mail::assertQueued(ProjectInvitationMail::class, fn (ProjectInvitationMail $mail) => $invitation->is(ProjectInvitation::findByToken($mail->token)));
 });
 
 test('owners cancel an invitation and its link stops working', function () {
@@ -275,7 +275,7 @@ test('only the owner can resend or cancel invitations of their own project', fun
     $this->actingAs($project->owner)->delete("/projects/{$otherProject->id}/invitations/{$invitation->id}")->assertNotFound();
 
     expect($invitation->fresh()->status)->toBe(ProjectInvitationStatus::Pending);
-    Mail::assertNothingSent();
+    Mail::assertNothingOutgoing();
 });
 
 test('invitations can not be resent on an inactive project', function () {
@@ -288,7 +288,7 @@ test('invitations can not be resent on an inactive project', function () {
         ->post("/projects/{$project->id}/invitations/{$invitation->id}/resend")
         ->assertSessionHas('error', 'No puedes invitar en un proyecto archivado o completado.');
 
-    Mail::assertNothingSent();
+    Mail::assertNothingOutgoing();
 });
 
 test('sending invitations is rate limited per user', function () {

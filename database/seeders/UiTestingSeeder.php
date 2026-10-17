@@ -24,8 +24,6 @@ class UiTestingSeeder extends Seeder
 
     private const int MAX_TASKS_PER_SPRINT = 25;
 
-    private const int STANDALONE_TASKS = 12;
-
     public function run(): void
     {
         $user = User::query()->where('email', self::USER_EMAIL)->firstOrFail();
@@ -256,7 +254,7 @@ class UiTestingSeeder extends Seeder
             ],
         ];
 
-        return json_encode($doc, JSON_UNESCAPED_UNICODE);
+        return json_encode($doc, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
     }
 
     /**

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\SaveTaskRequest;
 use App\Http\Requests\StoreCommentRequest;
 use App\Models\Project;
+use App\Models\Sprint;
 use App\Models\Task;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
@@ -53,7 +54,7 @@ class TaskController extends Controller
                         'name' => $member->name,
                         'avatar' => $member->avatar,
                     ])->values(),
-                'sprints' => $project->sprints->map(fn ($sprint) => [
+                'sprints' => $project->sprints->map(fn (Sprint $sprint) => [
                     'id' => $sprint->id,
                     'name' => $sprint->name,
                 ])->values(),
@@ -73,7 +74,7 @@ class TaskController extends Controller
         $validated['author_id'] ??= $request->user()->id;
 
         if ($validated['project_id'] ?? null) {
-            $project = Project::query()->findOrFail($validated['project_id']);
+            $project = Project::query()->findOrFail($request->integer('project_id'));
 
             abort_unless($project->isMember($request->user()), 404);
 
@@ -92,8 +93,8 @@ class TaskController extends Controller
     {
         $this->authorize('update', $task);
 
-        if ($projectId = $request->validated('project_id')) {
-            $project = Project::query()->findOrFail($projectId);
+        if ($request->validated('project_id')) {
+            $project = Project::query()->findOrFail($request->integer('project_id'));
 
             abort_unless($project->isMember($request->user()), 404);
         }

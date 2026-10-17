@@ -141,3 +141,14 @@ test('password can not be reset with a password shorter than 8 characters', func
 
     expect(Hash::check('password', $user->password))->toBeTrue();
 });
+
+test('reset password link requests are rate limited per ip', function () {
+    Notification::fake();
+
+    foreach (range(1, 5) as $attempt) {
+        $this->post('/forgot-password', ['email' => "persona{$attempt}@example.com"]);
+    }
+
+    $this->post('/forgot-password', ['email' => 'una-mas@example.com'])
+        ->assertTooManyRequests();
+});

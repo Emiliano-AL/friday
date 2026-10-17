@@ -7,6 +7,7 @@ use App\Enums\ProjectIcon;
 use App\Enums\ProjectStatus;
 use App\Enums\SprintStatus;
 use App\Enums\TaskStatus;
+use Carbon\CarbonImmutable;
 use Database\Factories\ProjectFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Collection;
@@ -16,7 +17,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection as SupportCollection;
 
 /**
@@ -27,13 +27,16 @@ use Illuminate\Support\Collection as SupportCollection;
  * @property string|null $key
  * @property ProjectColor|null $color
  * @property ProjectIcon|null $icon
- * @property Carbon|null $target_date
+ * @property CarbonImmutable|null $target_date
  * @property ProjectStatus $status
- * @property Carbon|null $created_at
- * @property Carbon|null $updated_at
+ * @property CarbonImmutable|null $created_at
+ * @property CarbonImmutable|null $updated_at
  * @property-read User $owner
  * @property-read Collection<int, Sprint> $sprints
  * @property-read Collection<int, Task> $tasks
+ * @property-read int|null $tasks_count
+ * @property-read int|null $done_tasks_count
+ * @property-read int|null $open_tasks_count
  */
 #[Fillable(['owner_id', 'title', 'description', 'key', 'color', 'icon', 'target_date', 'status'])]
 class Project extends Model

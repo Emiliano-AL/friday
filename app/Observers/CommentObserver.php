@@ -14,7 +14,7 @@ class CommentObserver
      */
     public function created(Comment $comment): void
     {
-        $projectId = $comment->task?->project_id;
+        $projectId = $comment->task->project_id;
 
         if ($projectId === null || ! Auth::check()) {
             return;
