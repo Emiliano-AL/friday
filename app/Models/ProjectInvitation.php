@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\ProjectInvitationStatus;
 use App\Enums\ProjectStatus;
 use App\Mail\ProjectInvitationMail;
+use Carbon\CarbonImmutable;
 use Database\Factories\ProjectInvitationFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -15,6 +16,21 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Throwable;
 
+/**
+ * @property int $id
+ * @property int $project_id
+ * @property int $invited_by_id
+ * @property string $email
+ * @property string $token_hash
+ * @property ProjectInvitationStatus $status
+ * @property CarbonImmutable $expires_at
+ * @property CarbonImmutable|null $last_sent_at
+ * @property CarbonImmutable|null $responded_at
+ * @property CarbonImmutable|null $created_at
+ * @property CarbonImmutable|null $updated_at
+ * @property-read Project $project
+ * @property-read User $invitedBy
+ */
 #[Fillable(['project_id', 'invited_by_id', 'email', 'token_hash', 'status', 'expires_at', 'last_sent_at', 'responded_at'])]
 class ProjectInvitation extends Model
 {
@@ -113,12 +129,12 @@ class ProjectInvitation extends Model
     }
 
     /**
-     * Mail the invitation link; a failed delivery is reported and leaves the invitation pending.
+     * Queue the invitation mail; a failed dispatch is reported and leaves the invitation pending.
      */
     public function send(string $token): bool
     {
         try {
-            Mail::to($this->email)->send(new ProjectInvitationMail($this, $token));
+            Mail::to($this->email)->queue(new ProjectInvitationMail($this, $token));
         } catch (Throwable $exception) {
             report($exception);
 

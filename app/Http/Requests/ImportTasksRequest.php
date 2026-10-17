@@ -78,8 +78,9 @@ class ImportTasksRequest extends FormRequest
         $inExcluded = false;
         $current = null;
         $lastField = null;
+        $fields = [];
 
-        foreach (preg_split('/\R/u', (string) $this->input('content')) as $index => $rawLine) {
+        foreach (preg_split('/\R/u', (string) $this->input('content')) ?: [] as $index => $rawLine) {
             $line = trim($rawLine);
 
             if (preg_match('/^##(?!#)\s*(.*)$/u', $line, $match)) {
@@ -116,13 +117,13 @@ class ImportTasksRequest extends FormRequest
 
             if (preg_match('/^[-*]\s+\*\*([^*]+?)\s*:?\s*\*\*\s*:?\s*(.*)$/u', $line, $match)) {
                 $lastField = $this->normalize(rtrim($match[1], ':'));
-                $tasks[$current]['fields'][$lastField] = trim($match[2]);
+                $fields[$current][$lastField] = trim($match[2]);
 
                 continue;
             }
 
             if ($lastField !== null) {
-                $tasks[$current]['fields'][$lastField] = trim($tasks[$current]['fields'][$lastField].' '.$line);
+                $fields[$current][$lastField] = trim($fields[$current][$lastField].' '.$line);
             }
         }
 
@@ -132,6 +133,10 @@ class ImportTasksRequest extends FormRequest
 
         if (count($tasks) > self::MAX_TASKS) {
             throw ValidationException::withMessages(['content' => 'El archivo tiene más de '.self::MAX_TASKS.' tareas; divídelo en varios.']);
+        }
+
+        foreach (array_keys($tasks) as $index) {
+            $tasks[$index]['fields'] = $fields[$index] ?? [];
         }
 
         return ['tasks' => $tasks, 'excluded' => $excluded];
@@ -239,7 +244,7 @@ class ImportTasksRequest extends FormRequest
         return [
             'destination' => [
                 'projectId' => $project?->id,
-                'label' => $project?->title ?? 'Backlog general',
+                'label' => $project->title ?? 'Backlog general',
             ],
             'tasks' => $tasks,
             'excluded' => $parsed['excluded'],
@@ -256,12 +261,12 @@ class ImportTasksRequest extends FormRequest
             fn (string $part) => preg_match('/^`([^`]+)`$/u', $part, $code)
                 ? ['type' => 'text', 'text' => $code[1], 'marks' => [['type' => 'code']]]
                 : ['type' => 'text', 'text' => $part],
-            preg_split('/(`[^`]+`)/u', $text, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY),
+            preg_split('/(`[^`]+`)/u', $text, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY) ?: [],
         );
 
         return json_encode(
             ['type' => 'doc', 'content' => [['type' => 'paragraph', 'content' => $nodes]]],
-            JSON_UNESCAPED_UNICODE,
+            JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR,
         );
     }
 
@@ -300,9 +305,10 @@ class ImportTasksRequest extends FormRequest
                 ->where('author_id', $user->id)
                 ->orWhere('assignee_id', $user->id));
 
-        return $query->pluck('title')
-            ->mapWithKeys(fn (string $title) => [$this->titleKey($title) => true])
-            ->all();
+        return array_fill_keys(
+            $query->pluck('title')->map(fn (string $title) => $this->titleKey($title))->all(),
+            true,
+        );
     }
 
     private function titleKey(string $title): string

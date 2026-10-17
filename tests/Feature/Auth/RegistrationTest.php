@@ -83,3 +83,12 @@ test('registering from an invitation link prefills the email and returns to the 
         'password_confirmation' => 'password',
     ])->assertRedirect(route('invitations.show', 'valid-token'));
 });
+
+test('registration is rate limited per ip', function () {
+    foreach (range(1, 5) as $attempt) {
+        $this->post('/register', ['name' => '', 'email' => "persona{$attempt}@example.com"]);
+    }
+
+    $this->post('/register', ['name' => '', 'email' => 'una-mas@example.com'])
+        ->assertTooManyRequests();
+});

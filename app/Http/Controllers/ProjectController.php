@@ -7,12 +7,14 @@ use App\Enums\TaskStatus;
 use App\Http\Requests\StoreProjectRequest;
 use App\Http\Requests\UpdateProjectRequest;
 use App\Models\Project;
+use App\Models\ProjectAttachment;
 use App\Models\ProjectInvitation;
 use App\Models\Sprint;
 use App\Models\Task;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -128,6 +130,7 @@ class ProjectController extends Controller
 
         return Inertia::render('Projects/Show', [
             'project' => $this->projectPayload($request, $project),
+            'attachments' => Inertia::optional(fn () => $this->attachmentsPayload($request, $project)),
         ]);
     }
 
@@ -194,7 +197,69 @@ class ProjectController extends Controller
 
         $project->delete();
 
+        Storage::deleteDirectory("projects/{$project->id}");
+
         return redirect()->route('projects.index')->with('success', 'Proyecto eliminado.');
+    }
+
+    /**
+     * Build the files tab payload: attachments newest first, quota usage and upload limits.
+     *
+     * @return array<string, mixed>
+     */
+    private function attachmentsPayload(Request $request, Project $project): array
+    {
+        $user = $request->user();
+
+        $attachments = $project->attachments()->with('user:id,name,avatar')->latest()->latest('id')->get();
+
+        return [
+            'items' => $attachments->map(function (ProjectAttachment $attachment) use ($user, $project) {
+                $attachment->setRelation('project', $project);
+                $hasFile = $attachment->path !== null;
+
+                return [
+                    'id' => $attachment->id,
+                    'type' => $attachment->type->value,
+                    'typeLabel' => $attachment->type->label(),
+                    'title' => $attachment->title,
+                    'url' => $attachment->url,
+                    'domain' => $attachment->url === null ? null : parse_url($attachment->url, PHP_URL_HOST),
+                    'originalName' => $attachment->original_name,
+                    'mimeType' => $attachment->mime_type,
+                    'size' => $attachment->size,
+                    'width' => $attachment->width,
+                    'height' => $attachment->height,
+                    'author' => $attachment->user === null ? null : [
+                        'id' => $attachment->user->id,
+                        'name' => $attachment->user->name,
+                        'avatar' => $attachment->user->avatar,
+                    ],
+                    'createdAt' => $attachment->created_at?->toIso8601String(),
+                    'canManage' => $user->can('update', $attachment),
+                    'openUrl' => $hasFile ? route('projects.attachments.show', [$project, $attachment]) : null,
+                    'downloadUrl' => $hasFile ? route('projects.attachments.show', [$project, $attachment, 'download' => 1]) : null,
+                    'thumbnailUrl' => $attachment->thumbnail_path === null
+                        ? null
+                        : route('projects.attachments.show', [$project, $attachment, 'thumbnail' => 1]),
+                ];
+            })->values(),
+            'usage' => [
+                'count' => $attachments->count(),
+                'maxCount' => ProjectAttachment::MAX_PER_PROJECT,
+                'bytes' => (int) $attachments->sum('size'),
+                'maxBytes' => ProjectAttachment::MAX_BYTES_PER_PROJECT,
+            ],
+            'canCreate' => $user->can('create', [ProjectAttachment::class, $project]),
+            'limits' => [
+                'imageMaxBytes' => ProjectAttachment::IMAGE_MAX_KILOBYTES * 1024,
+                'documentMaxBytes' => ProjectAttachment::DOCUMENT_MAX_KILOBYTES * 1024,
+                'imageExtensions' => ProjectAttachment::IMAGE_EXTENSIONS,
+                'accept' => collect([...ProjectAttachment::DOCUMENT_EXTENSIONS, ...ProjectAttachment::IMAGE_EXTENSIONS])
+                    ->map(fn (string $extension) => ".{$extension}")
+                    ->implode(','),
+            ],
+        ];
     }
 
     /**

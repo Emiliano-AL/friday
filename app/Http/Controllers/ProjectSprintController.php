@@ -186,8 +186,8 @@ class ProjectSprintController extends Controller
             ? ($today->gte($start) ? 100 : 0)
             : (int) round(min(100, max(0, $elapsedDays / $totalDays * 100)));
 
-        $iterationIds = $project->sprints->sortBy('start_date')->pluck('id');
-        $current = $iterationIds->search($sprint->id);
+        $iterationIds = $project->sprints->sortBy('start_date')->pluck('id')->values();
+        $current = array_search($sprint->id, $iterationIds->all(), true);
 
         return [
             'id' => $sprint->id,

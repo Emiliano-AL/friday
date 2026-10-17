@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\SprintStatus;
+use Carbon\CarbonImmutable;
 use Database\Factories\SprintFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Collection;
@@ -10,7 +11,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Carbon;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -19,12 +19,14 @@ use Illuminate\Validation\ValidationException;
  * @property string $name
  * @property string|null $goal
  * @property SprintStatus $status
- * @property Carbon $start_date
- * @property Carbon $end_date
- * @property Carbon|null $created_at
- * @property Carbon|null $updated_at
+ * @property CarbonImmutable $start_date
+ * @property CarbonImmutable $end_date
+ * @property CarbonImmutable|null $created_at
+ * @property CarbonImmutable|null $updated_at
  * @property-read Collection<int, Task> $tasks
  * @property-read Project $project
+ * @property-read int|null $tasks_count
+ * @property-read int|null $done_tasks_count
  */
 #[Fillable(['project_id', 'name', 'goal', 'status', 'start_date', 'end_date'])]
 class Sprint extends Model

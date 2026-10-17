@@ -2,7 +2,7 @@
 import AppIcon from '@/Components/AppShell/AppIcon.vue';
 import Avatar from '@/Components/AppShell/Avatar.vue';
 import Modal from '@/Components/Modal.vue';
-import RichTextEditor from '@/Components/RichText/RichTextEditor.vue';
+import type RichTextEditorComponent from '@/Components/RichText/RichTextEditor.vue';
 import type {
     TaskPriorityValue,
     TaskProjectOption,
@@ -11,7 +11,11 @@ import type {
 } from '@/types/task';
 import { destroy, store, update } from '@/routes/tasks';
 import { useForm } from '@inertiajs/vue3';
-import { computed, nextTick, ref, watch } from 'vue';
+import { computed, defineAsyncComponent, nextTick, ref, watch } from 'vue';
+
+const RichTextEditor = defineAsyncComponent(
+    () => import('@/Components/RichText/RichTextEditor.vue'),
+);
 
 const props = withDefaults(
     defineProps<{
@@ -50,7 +54,7 @@ interface BoardTaskShape {
 }
 
 const titleInput = ref<HTMLInputElement | null>(null);
-const descriptionEditor = ref<InstanceType<typeof RichTextEditor> | null>(null);
+const descriptionEditor = ref<InstanceType<typeof RichTextEditorComponent> | null>(null);
 const createAnother = ref(false);
 
 const form = useForm({
@@ -142,7 +146,8 @@ function onProjectChange(): void {
 }
 
 async function submit(): Promise<void> {
-    form.description = (await descriptionEditor.value?.save()) ?? '';
+    form.description =
+        (await descriptionEditor.value?.save()) ?? form.description ?? '';
     form.clearErrors('description');
 
     const options = {

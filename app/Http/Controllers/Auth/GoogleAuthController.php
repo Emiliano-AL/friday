@@ -5,10 +5,10 @@ namespace App\Http\Controllers\Auth;
 use App\Enums\OAuthProvider;
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use Carbon\CarbonImmutable;
 use GuzzleHttp\Exception\ClientException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Laravel\Socialite\Contracts\User as SocialiteUser;
 use Laravel\Socialite\Facades\Socialite;
@@ -50,7 +50,7 @@ class GoogleAuthController extends Controller
             'oauth_id' => $googleUser->getId(),
         ]);
 
-        $user->email_verified_at ??= Carbon::now();
+        $user->email_verified_at ??= CarbonImmutable::now();
         $user->save();
 
         Auth::login($user);
@@ -75,7 +75,7 @@ class GoogleAuthController extends Controller
             'oauth_provider' => OAuthProvider::Google->value,
             'oauth_id' => $googleUser->getId(),
             'avatar' => $user->avatar ?? $googleUser->getAvatar(),
-            'email_verified_at' => $user->email_verified_at ?? Carbon::now(),
+            'email_verified_at' => $user->email_verified_at ?? CarbonImmutable::now(),
         ])->save();
 
         return $user;

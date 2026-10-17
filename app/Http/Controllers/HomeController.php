@@ -82,6 +82,8 @@ class HomeController extends Controller
 
     /**
      * The most recent active sprint (by start_date) across the user's projects.
+     *
+     * @param  array<int, int>  $projectIds
      */
     private function activeSprint(array $projectIds): ?Sprint
     {
