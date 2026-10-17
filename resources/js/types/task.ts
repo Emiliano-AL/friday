@@ -19,7 +19,7 @@ export interface BoardTask {
     status: TaskStatusValue;
     statusLabel: string;
     points?: number | null;
-    project: { id: number; title: string } | null;
+    project: { id: number; title: string; color?: string | null } | null;
     sprint: { id: number; name: string } | null;
     assignee: { id: number; name: string; avatar: string | null } | null;
     authorId?: number | null;

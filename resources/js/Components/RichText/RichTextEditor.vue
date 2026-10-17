@@ -97,6 +97,13 @@ defineExpose({ save, focus });
     line-height: 20px;
 }
 
+@media (max-width: 767px) {
+    .rich-text-editor__content :deep(.tiptap) {
+        font-size: 16px;
+        line-height: 24px;
+    }
+}
+
 .rich-text-editor__content :deep(.tiptap > * + *) {
     margin-top: 0.5rem;
 }

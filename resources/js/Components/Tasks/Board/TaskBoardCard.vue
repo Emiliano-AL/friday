@@ -56,8 +56,14 @@ const priorityChip = computed(() => {
 <template>
     <article
         :draggable="draggable"
-        class="group gap-space-sm bg-surface-container-lowest p-space-md shadow-card hover:shadow-popover relative flex flex-col rounded-lg transition-[opacity,box-shadow] duration-150"
+        class="group gap-space-sm p-space-md shadow-card hover:shadow-popover relative flex flex-col rounded-lg transition-[opacity,box-shadow] duration-150"
+        :style="
+            task.project?.color ? { '--project-tint': task.project.color } : {}
+        "
         :class="[
+            task.project?.color
+                ? 'bg-[color-mix(in_srgb,var(--project-tint)_9%,var(--color-surface-container-lowest))]'
+                : 'bg-surface-container-lowest',
             draggable ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer',
             dragging
                 ? 'outline-primary/50 opacity-40 shadow-none outline-2 outline-dashed'
@@ -90,6 +96,11 @@ const priorityChip = computed(() => {
                 <template v-if="task.project">
                     <span
                         class="bg-primary h-1.5 w-1.5 shrink-0 rounded-full"
+                        :style="
+                            task.project.color
+                                ? { backgroundColor: task.project.color }
+                                : {}
+                        "
                         aria-hidden="true"
                     />
                     <span class="truncate" :title="task.project.title">{{

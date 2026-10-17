@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\ProjectColor;
 use App\Models\Project;
 use App\Models\Task;
 use App\Models\User;
@@ -59,5 +60,25 @@ test('the tasks page scope includes assigned and member tasks and excludes forei
             ->where('tasks.0.id', $assignedTask->id)
             ->where('tasks.1.id', $memberTask->id)
             ->where('projects.0.id', $memberProject->id)
+        );
+});
+
+test('the tasks page exposes the project color for tinting and null when unset', function () {
+    $user = User::factory()->create();
+    $colored = Project::factory()->for($user, 'owner')->create(['color' => ProjectColor::Green]);
+    $plain = Project::factory()->for($user, 'owner')->create(['color' => null]);
+
+    Carbon::setTestNow('2026-09-28 10:00:00');
+    Task::factory()->for($plain)->create();
+
+    Carbon::setTestNow('2026-09-28 10:05:00');
+    Task::factory()->for($colored)->create();
+    Carbon::setTestNow();
+
+    $this->actingAs($user)
+        ->get('/tasks')
+        ->assertInertia(fn ($page) => $page
+            ->where('tasks.0.project.color', ProjectColor::Green->value)
+            ->where('tasks.1.project.color', null)
         );
 });

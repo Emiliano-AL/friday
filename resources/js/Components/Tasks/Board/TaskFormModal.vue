@@ -294,7 +294,7 @@ const priorityOptions: {
                             required
                             maxlength="255"
                             placeholder="¿Qué hay que hacer?"
-                            class="text-headline-md font-headline-md text-on-surface placeholder:text-on-surface-variant/50 border-outline-variant/60 focus:border-primary focus:ring-primary/20 w-full rounded-lg border px-3 py-2 transition-colors focus:ring-2 focus:outline-none"
+                            class="text-headline-md! font-headline-md text-on-surface placeholder:text-on-surface-variant/50 border-outline-variant/60 focus:border-primary focus:ring-primary/20 w-full rounded-lg border px-3 py-2 transition-colors focus:ring-2 focus:outline-none"
                             :class="
                                 form.errors.title
                                     ? 'border-error ring-error/20 ring-2'
