@@ -62,7 +62,7 @@ const priorityChip = computed(() => {
         "
         :class="[
             task.project?.color
-                ? 'border-t-[3px] border-t-(--project-tint) bg-[color-mix(in_srgb,var(--project-tint)_9%,var(--color-surface-container-lowest))]'
+                ? 'bg-[color-mix(in_srgb,var(--project-tint)_9%,var(--color-surface-container-lowest))]'
                 : 'bg-surface-container-lowest',
             draggable ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer',
             dragging
@@ -79,6 +79,11 @@ const priorityChip = computed(() => {
         @dragstart="emit('dragstart', $event, task)"
         @dragend="emit('dragend')"
     >
+        <span
+            v-if="task.project?.color"
+            aria-hidden="true"
+            class="pointer-events-none absolute inset-y-2.5 left-1 w-[3px] rounded-full bg-(--project-tint) opacity-70"
+        />
         <div class="flex min-w-0 flex-col gap-1">
             <h3
                 class="text-body-md font-body-md text-on-surface group-hover:text-primary leading-snug font-medium transition-colors"
