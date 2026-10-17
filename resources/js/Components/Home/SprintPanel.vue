@@ -4,10 +4,14 @@ import AppIcon from '@/Components/AppShell/AppIcon.vue';
 import BurndownChart from '@/Components/Home/BurndownChart.vue';
 import { show as showSprint } from '@/routes/projects/sprints';
 import type { SprintPanelPayload } from '@/types/dashboard';
+import { tiptapToPlainText } from '@/utils/tiptapContent';
+import { computed } from 'vue';
 
-defineProps<{
+const props = defineProps<{
     sprint: SprintPanelPayload;
 }>();
+
+const goalPreview = computed(() => tiptapToPlainText(props.sprint.goal));
 </script>
 
 <template>
@@ -41,10 +45,10 @@ defineProps<{
         </header>
 
         <p
-            v-if="sprint.goal"
+            v-if="goalPreview"
             class="text-body-sm font-body-sm text-on-surface-variant line-clamp-2"
         >
-            {{ sprint.goal }}
+            {{ goalPreview }}
         </p>
 
         <div class="flex flex-col">

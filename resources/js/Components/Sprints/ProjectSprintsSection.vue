@@ -7,6 +7,7 @@ import { show as showSprint } from '@/routes/projects/sprints';
 import type { ProjectDetail, SprintSummary } from '@/types/project';
 import type { BoardTask } from '@/types/task';
 import { sprintMetrics, weekdayDaysRemaining } from '@/utils/sprint';
+import { tiptapToPlainText } from '@/utils/tiptapContent';
 
 const props = defineProps<{
     project: ProjectDetail;
@@ -72,6 +73,8 @@ const emptyFilterMessage = computed(() => {
 });
 
 const active = computed(() => props.project.activeSprint);
+
+const activeGoalPreview = computed(() => tiptapToPlainText(active.value?.goal));
 
 const activeMetrics = computed(() =>
     active.value === null
@@ -220,11 +223,11 @@ function statusTone(
                 </header>
 
                 <p
-                    v-if="active.goal"
+                    v-if="activeGoalPreview"
                     class="text-body-md font-body-md text-on-surface line-clamp-3 max-w-3xl"
                 >
                     <span class="text-on-surface-variant">Meta:</span>
-                    {{ active.goal }}
+                    {{ activeGoalPreview }}
                 </p>
 
                 <div class="gap-space-xs flex flex-col">
@@ -311,11 +314,11 @@ function statusTone(
                                 />
                             </div>
                             <p
-                                v-if="sprint.goal"
+                                v-if="tiptapToPlainText(sprint.goal)"
                                 class="text-label-sm text-on-surface-variant truncate"
-                                :title="sprint.goal"
+                                :title="tiptapToPlainText(sprint.goal)"
                             >
-                                {{ sprint.goal }}
+                                {{ tiptapToPlainText(sprint.goal) }}
                             </p>
                         </div>
 
