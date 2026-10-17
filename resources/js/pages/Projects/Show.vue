@@ -922,7 +922,7 @@ onMounted(() => {
             <div
                 v-else-if="activeTab === 'files'"
                 role="tabpanel"
-                aria-label="Archivos"
+                aria-label="Documentos"
             >
                 <ProjectAttachments
                     :project-id="project.id"

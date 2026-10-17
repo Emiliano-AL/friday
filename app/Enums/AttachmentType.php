@@ -11,7 +11,7 @@ enum AttachmentType: string
     public function label(): string
     {
         return match ($this) {
-            self::Document => 'Documento',
+            self::Document => 'Archivo',
             self::Image => 'Imagen',
             self::Link => 'Link',
         };

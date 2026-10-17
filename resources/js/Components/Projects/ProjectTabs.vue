@@ -28,7 +28,7 @@ const tabs: ProjectTab[] = [
         icon: 'dashboard_customize',
     },
     { value: 'sprints', label: 'Sprints y tareas', icon: 'sprint' },
-    { value: 'files', label: 'Archivos', icon: 'attach_file' },
+    { value: 'files', label: 'Documentos', icon: 'folder_open' },
 ];
 
 const root = ref<HTMLElement | null>(null);
