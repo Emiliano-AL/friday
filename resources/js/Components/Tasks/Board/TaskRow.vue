@@ -156,11 +156,11 @@ function onAction(key: 'edit' | 'comment' | 'remove') {
     <div
         role="button"
         tabindex="0"
-        class="group border-surface-container-low gap-space-md px-space-md py-space-sm flex items-center justify-between border-b transition-colors"
+        class="group gap-space-md px-space-md py-space-sm flex items-center justify-between border-b transition-colors"
         :class="
             task.project?.color
-                ? 'bg-[color-mix(in_srgb,var(--project-tint)_7%,var(--color-surface-container-lowest))] hover:bg-[color-mix(in_srgb,var(--project-tint)_13%,var(--color-surface-container-lowest))]'
-                : 'bg-surface-container-lowest hover:bg-surface-container-low'
+                ? 'border-b-[color-mix(in_srgb,var(--project-tint)_35%,var(--color-surface-container-low))] bg-[color-mix(in_srgb,var(--project-tint)_7%,var(--color-surface-container-lowest))] hover:bg-[color-mix(in_srgb,var(--project-tint)_13%,var(--color-surface-container-lowest))]'
+                : 'border-surface-container-low bg-surface-container-lowest hover:bg-surface-container-low'
         "
         :style="
             task.project?.color ? { '--project-tint': task.project.color } : {}
