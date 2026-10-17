@@ -38,7 +38,7 @@ class TaskController extends Controller
             ->orWhereHas('members', fn ($members) => $members->whereKey($user->id))
             ->with(['owner:id,name,avatar', 'members:id,name,avatar', 'sprints:id,project_id,name'])
             ->orderBy('title')
-            ->get(['id', 'title', 'owner_id', 'status'])
+            ->get(['id', 'title', 'color', 'owner_id', 'status'])
             ->keyBy('id');
 
         return Inertia::render('Tasks/Index', [
@@ -207,7 +207,7 @@ class TaskController extends Controller
             'priorityLabel' => $task->priority->label(),
             'status' => $task->status->value,
             'statusLabel' => $task->status->label(),
-            'project' => $project !== null ? ['id' => $project->id, 'title' => $project->title] : null,
+            'project' => $project !== null ? ['id' => $project->id, 'title' => $project->title, 'color' => $project->color?->value] : null,
             'sprint' => $task->sprint !== null ? ['id' => $task->sprint->id, 'name' => $task->sprint->name] : null,
             'assignee' => $task->assignee !== null
                 ? ['id' => $task->assignee->id, 'name' => $task->assignee->name, 'avatar' => $task->assignee->avatar]
