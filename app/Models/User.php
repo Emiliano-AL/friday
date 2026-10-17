@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\OAuthProvider;
 use Carbon\CarbonImmutable;
+use App\Notifications\ResetPasswordNotification;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -68,5 +69,15 @@ class User extends Authenticatable
     public function memberProjects(): BelongsToMany
     {
         return $this->belongsToMany(Project::class, 'project_user')->withTimestamps();
+    }
+
+    /**
+     * Send the tagged password reset notification.
+     *
+     * @param  string  $token
+     */
+    public function sendPasswordResetNotification(#[\SensitiveParameter] $token): void
+    {
+        $this->notify(new ResetPasswordNotification($token));
     }
 }

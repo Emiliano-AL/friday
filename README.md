@@ -1,5 +1,7 @@
 # Friday — Project Management System
 
+> **Friday** es el codename interno del proyecto. El nombre público del producto (UI, correos, marketing) es **Eunox**, configurado vía `APP_NAME`.
+
 **Friday** es una plataforma monolítica y ágil para la administración integral de proyectos y flujos de trabajo (software, operaciones, marketing o gestión personal). Permite el seguimiento granular mediante tareas aisladas o estructuradas por sprints, visualizaciones dinámicas (Kanban y Backlog) y métricas de avance global por proyecto.
 
 ---
@@ -12,6 +14,7 @@
 - **Estilos / UI:** Tailwind CSS
 - **Autenticación:** Laravel Breeze (correo y contraseña) / Socialite (OAuth con Google)
 - **Base de Datos:** PostgreSQL
+- **Correo transaccional:** Postmark vía el transporte nativo de Laravel Mail
 
 ---
 
@@ -129,3 +132,37 @@
 | `content`    | Text                | Body of the note/comment   |
 | `created_at` | Timestamp           | Standard Laravel timestamp |
 | `updated_at` | Timestamp           | Standard Laravel timestamp |
+
+---
+
+## Correo transaccional (Postmark)
+
+Todos los correos (invitaciones a proyectos, restablecer contraseña) se envían con `Mail`/`Notification` de Laravel. En producción el proveedor es **Postmark**.
+
+### Variables de entorno
+
+| Variable | Valor |
+| --- | --- |
+| `MAIL_MAILER` | `postmark` en producción; `log` (default) o `smtp` (buzón local de Herd/Mailpit) en desarrollo; los tests usan `array` |
+| `POSTMARK_API_KEY` | Server API Token del servidor de Postmark (secreto, nunca se versiona) |
+| `POSTMARK_MESSAGE_STREAM_ID` | `outbound` (stream transaccional) |
+| `MAIL_FROM_ADDRESS` | Dirección con dominio verificado en Postmark |
+| `MAIL_FROM_NAME` | `${APP_NAME}` (Eunox) |
+
+Después de cambiarlas: `php artisan config:clear`.
+
+### Activar Postmark en un entorno nuevo
+
+1. En Postmark, crea un **Server** y copia su Server API Token.
+2. Verifica el dominio remitente (registros **DKIM** y **Return-Path**) o, como mínimo, un Sender Signature para `MAIL_FROM_ADDRESS`.
+3. Configura las variables de arriba y ejecuta `php artisan config:clear`.
+4. Prueba sin entregar usando `POSTMARK_API_KEY=POSTMARK_API_TEST` (ver `specs/027-postmark-transactional-email/quickstart.md` §3).
+
+### Etiquetas
+
+Cada tipo de correo lleva **una** etiqueta (Postmark solo admite una por mensaje) para filtrarlo en *Activity*:
+
+- `project-invitation`: `App\Mail\ProjectInvitationMail`
+- `password-reset`: `App\Notifications\ResetPasswordNotification`
+
+Si Postmark rechaza un envío, el error se registra en el log y la persona ve un mensaje de "No pudimos enviar el correo" en lugar de una página de error.

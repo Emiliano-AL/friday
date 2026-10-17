@@ -34,7 +34,9 @@ const form = useForm({
 
 const membersCount = computed(() => 1 + props.project.members.length);
 
-const page = usePage<{ flash: { success: string | null; error: string | null } }>();
+const page = usePage<{
+    flash: { success: string | null; error: string | null };
+}>();
 
 const busyInvitationId = ref<number | null>(null);
 
@@ -172,8 +174,8 @@ function removeMember(member: ProjectMember): void {
                     v-else
                     class="text-label-xs font-label-xs text-on-surface-variant"
                 >
-                    Si el correo no tiene cuenta en Friday, le enviaremos una
-                    invitación por correo.
+                    Si el correo no tiene cuenta en {{ $page.props.name }}, le
+                    enviaremos una invitación por correo.
                 </p>
             </form>
 
@@ -391,9 +393,7 @@ function removeMember(member: ProjectMember): void {
             </div>
 
             <div class="flex items-center justify-between gap-3">
-                <p
-                    class="text-label-xs font-label-xs text-on-surface-variant"
-                >
+                <p class="text-label-xs font-label-xs text-on-surface-variant">
                     Los colaboradores podrán recibir tareas asignadas de este
                     proyecto.
                 </p>

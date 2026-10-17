@@ -24,7 +24,8 @@ class ProjectInvitationMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: "{$this->invitation->invitedBy->name} te invitó a {$this->invitation->project->title} en Friday",
+            subject: "{$this->invitation->invitedBy->name} te invitó a {$this->invitation->project->title} en ".config('app.name'),
+            tags: ['project-invitation'],
         );
     }
 
