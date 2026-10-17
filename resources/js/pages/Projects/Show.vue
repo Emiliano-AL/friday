@@ -5,7 +5,9 @@ import Avatar from '@/Components/AppShell/Avatar.vue';
 import AvatarStack from '@/Components/Projects/AvatarStack.vue';
 import MembersModal from '@/Components/Projects/MembersModal.vue';
 import ProjectFormModal from '@/Components/Projects/ProjectFormModal.vue';
+import ProjectAttachments from '@/Components/Projects/ProjectAttachments.vue';
 import ProjectTabs from '@/Components/Projects/ProjectTabs.vue';
+import type { ProjectTabValue } from '@/Components/Projects/ProjectTabs.vue';
 import RichTextContent from '@/Components/RichText/RichTextContent.vue';
 import UiBadge from '@/Components/Projects/UiBadge.vue';
 import { index as projectsIndex, status } from '@/routes/projects';
@@ -32,10 +34,15 @@ import type {
     TaskStatusValue,
 } from '@/types/task';
 import type { BacklogSort, BacklogTask } from '@/types/backlog';
-import type { ProjectDetail, SprintSummary } from '@/types/project';
+import type {
+    ProjectAttachments as ProjectAttachmentsPayload,
+    ProjectDetail,
+    SprintSummary,
+} from '@/types/project';
 
 const props = defineProps<{
     project: ProjectDetail;
+    attachments?: ProjectAttachmentsPayload;
 }>();
 
 const page = usePage();
@@ -48,7 +55,13 @@ const canWriteTasks = computed(() => props.project.status === 'active');
 
 const importOpen = ref(false);
 
-const activeTab = ref<'general' | 'sprints'>('general');
+const activeTab = ref<ProjectTabValue>('general');
+
+watch(activeTab, (tab) => {
+    if (tab === 'files' && props.attachments === undefined) {
+        router.reload({ only: ['attachments'] });
+    }
+});
 
 const editModalOpen = ref(false);
 
@@ -904,6 +917,17 @@ onMounted(() => {
                         </li>
                     </ul>
                 </section>
+            </div>
+
+            <div
+                v-else-if="activeTab === 'files'"
+                role="tabpanel"
+                aria-label="Documentos"
+            >
+                <ProjectAttachments
+                    :project-id="project.id"
+                    :attachments="attachments"
+                />
             </div>
 
             <div

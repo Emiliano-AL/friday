@@ -3,10 +3,12 @@
 use App\Enums\SprintStatus;
 use App\Enums\TaskStatus;
 use App\Models\Project;
+use App\Models\ProjectAttachment;
 use App\Models\Sprint;
 use App\Models\Task;
 use App\Models\User;
 use Illuminate\Support\Carbon;
+use Inertia\Testing\AssertableInertia as Assert;
 
 beforeEach(fn () => Carbon::setTestNow('2026-09-25 12:00:00'));
 
@@ -126,5 +128,64 @@ test('show payload exposes avatars for owner members and assignees', function ()
             ->where('project.owner.avatar', 'https://example.com/owner.png')
             ->where('project.members.0.avatar', 'https://example.com/member.png')
             ->where('project.tasks.0.assignee.avatar', 'https://example.com/assignee.png')
+        );
+});
+
+test('show payload only sends attachments when the files tab asks for them', function () {
+    $project = Project::factory()->create();
+    ProjectAttachment::factory()->for($project)->create();
+
+    $this->actingAs($project->owner)
+        ->get("/projects/{$project->id}")
+        ->assertInertia(fn (Assert $page) => $page
+            ->missing('attachments')
+            ->reloadOnly('attachments', fn (Assert $reload) => $reload
+                ->has('attachments.items', 1)
+            )
+        );
+});
+
+test('show payload lists attachments newest first with usage and permissions', function () {
+    $collaborator = User::factory()->create(['name' => 'Beto']);
+    $project = Project::factory()->hasAttached($collaborator, [], 'members')->create();
+    $older = ProjectAttachment::factory()->document()->for($project)->for($project->owner)
+        ->create(['size' => 1000, 'created_at' => '2026-09-24 10:00:00']);
+    $newer = ProjectAttachment::factory()->image()->for($project)->for($collaborator)
+        ->create(['size' => 500, 'created_at' => '2026-09-25 10:00:00']);
+    ProjectAttachment::factory()->create();
+
+    $this->actingAs($collaborator)
+        ->get("/projects/{$project->id}")
+        ->assertInertia(fn (Assert $page) => $page
+            ->reloadOnly('attachments', fn (Assert $reload) => $reload
+                ->has('attachments.items', 2)
+                ->where('attachments.items.0.id', $newer->id)
+                ->where('attachments.items.0.type', 'image')
+                ->where('attachments.items.0.typeLabel', 'Imagen')
+                ->where('attachments.items.0.author.name', 'Beto')
+                ->where('attachments.items.0.canManage', true)
+                ->where('attachments.items.0.thumbnailUrl', route('projects.attachments.show', [$project, $newer, 'thumbnail' => 1]))
+                ->where('attachments.items.1.id', $older->id)
+                ->where('attachments.items.1.canManage', false)
+                ->where('attachments.items.1.downloadUrl', route('projects.attachments.show', [$project, $older, 'download' => 1]))
+                ->where('attachments.usage', ['count' => 2, 'maxCount' => 30, 'bytes' => 1500, 'maxBytes' => 209715200])
+                ->where('attachments.canCreate', true)
+                ->where('attachments.limits.imageMaxBytes', 5242880)
+                ->where('attachments.limits.documentMaxBytes', 15728640)
+            )
+        );
+});
+
+test('show payload disables adding and managing attachments on inactive projects', function () {
+    $project = Project::factory()->archived()->create();
+    ProjectAttachment::factory()->for($project)->create();
+
+    $this->actingAs($project->owner)
+        ->get("/projects/{$project->id}")
+        ->assertInertia(fn (Assert $page) => $page
+            ->reloadOnly('attachments', fn (Assert $reload) => $reload
+                ->where('attachments.items.0.canManage', false)
+                ->where('attachments.canCreate', false)
+            )
         );
 });

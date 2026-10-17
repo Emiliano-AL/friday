@@ -3,6 +3,7 @@
 use App\Http\Controllers\BacklogController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\InvitationResponseController;
+use App\Http\Controllers\ProjectAttachmentController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ProjectInvitationController;
 use App\Http\Controllers\ProjectMemberController;
@@ -64,6 +65,16 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
         ->name('projects.tasks.destroy');
     Route::post('projects/{project}/tasks/{task}/comments', [ProjectTaskController::class, 'storeComment'])
         ->name('projects.tasks.comments.store');
+    Route::post('projects/{project}/attachments/files', [ProjectAttachmentController::class, 'storeFile'])
+        ->name('projects.attachments.files.store');
+    Route::post('projects/{project}/attachments/links', [ProjectAttachmentController::class, 'storeLink'])
+        ->name('projects.attachments.links.store');
+    Route::get('projects/{project}/attachments/{attachment}', [ProjectAttachmentController::class, 'show'])
+        ->name('projects.attachments.show');
+    Route::put('projects/{project}/attachments/{attachment}', [ProjectAttachmentController::class, 'update'])
+        ->name('projects.attachments.update');
+    Route::delete('projects/{project}/attachments/{attachment}', [ProjectAttachmentController::class, 'destroy'])
+        ->name('projects.attachments.destroy');
 
     Route::get('settings', [SettingsController::class, 'edit'])->name('settings.edit');
     Route::patch('settings/profile', [SettingsController::class, 'updateProfile'])->name('settings.profile.update');
